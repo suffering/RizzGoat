@@ -111,6 +111,15 @@ export default function OnboardingScreen() {
   // Questionnaire animation
   const questionnaireAnim = useRef(new Animated.Value(0)).current;
   const questionnaireScale = useRef(new Animated.Value(0.8)).current;
+  
+  // Bottom emoji animations
+  const emojiAnimations = useRef([
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+  ]).current;
 
   useEffect(() => {
     startIntroAnimation();
@@ -124,6 +133,45 @@ export default function OnboardingScreen() {
         tension: 100,
         useNativeDriver: true,
       }).start();
+      
+      // Start emoji animations
+      emojiAnimations.forEach((anim, index) => {
+        Animated.loop(
+          Animated.sequence([
+            Animated.delay(index * 200),
+            Animated.parallel([
+              Animated.sequence([
+                Animated.timing(anim.translateY, {
+                  toValue: -15,
+                  duration: 1000,
+                  easing: Easing.inOut(Easing.sin),
+                  useNativeDriver: true,
+                }),
+                Animated.timing(anim.translateY, {
+                  toValue: 0,
+                  duration: 1000,
+                  easing: Easing.inOut(Easing.sin),
+                  useNativeDriver: true,
+                }),
+              ]),
+              Animated.sequence([
+                Animated.timing(anim.scale, {
+                  toValue: 1.2,
+                  duration: 1000,
+                  easing: Easing.inOut(Easing.sin),
+                  useNativeDriver: true,
+                }),
+                Animated.timing(anim.scale, {
+                  toValue: 1,
+                  duration: 1000,
+                  easing: Easing.inOut(Easing.sin),
+                  useNativeDriver: true,
+                }),
+              ]),
+            ]),
+          ])
+        ).start();
+      });
     }
   }, [showQuestionnaire]);
 
@@ -944,6 +992,28 @@ export default function OnboardingScreen() {
             )}
           </Animated.View>
         )}
+        
+        {/* Bottom Emoji Animations */}
+        {showQuestionnaire && (
+          <View style={styles.bottomEmojiContainer}>
+            {['🔥', '💪', '😎', '🚀', '⚡'].map((emoji, index) => (
+              <Animated.View
+                key={index}
+                style={[
+                  styles.emojiItem,
+                  {
+                    transform: [
+                      { translateY: emojiAnimations[index].translateY },
+                      { scale: emojiAnimations[index].scale },
+                    ],
+                  },
+                ]}
+              >
+                <Text style={styles.emojiText}>{emoji}</Text>
+              </Animated.View>
+            ))}
+          </View>
+        )}
       </SafeAreaView>
     </View>
   );
@@ -1248,5 +1318,21 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: 1,
+  },
+  bottomEmojiContainer: {
+    position: "absolute",
+    bottom: 40,
+    left: 0,
+    right: 0,
+    flexDirection: "row",
+    justifyContent: "space-evenly",
+    paddingHorizontal: 30,
+  },
+  emojiItem: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  emojiText: {
+    fontSize: 32,
   },
 });
