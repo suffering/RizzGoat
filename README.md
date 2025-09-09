@@ -1,2 +1,2 @@
-# rork-rizzgoat---flirting---self-improvement-app
-Created by Rork
+# RizzGoat
+Created by Daniel Makarovskiy
