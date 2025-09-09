@@ -112,8 +112,8 @@ export default function OnboardingScreen() {
   const questionnaireAnim = useRef(new Animated.Value(0)).current;
   const questionnaireScale = useRef(new Animated.Value(0.8)).current;
   
-  // Bottom emoji animations
-  const emojiAnimations = useRef([
+  // Bottom goat icon animations
+  const goatIconAnimations = useRef([
     { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
     { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
     { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
@@ -134,8 +134,8 @@ export default function OnboardingScreen() {
         useNativeDriver: true,
       }).start();
       
-      // Start emoji animations
-      emojiAnimations.forEach((anim, index) => {
+      // Start goat icon animations
+      goatIconAnimations.forEach((anim, index) => {
         Animated.loop(
           Animated.sequence([
             Animated.delay(index * 200),
@@ -993,23 +993,27 @@ export default function OnboardingScreen() {
           </Animated.View>
         )}
         
-        {/* Bottom Emoji Animations */}
+        {/* Bottom Goat Icon Animations */}
         {showQuestionnaire && (
-          <View style={styles.bottomEmojiContainer}>
-            {['🔥', '💪', '😎', '🚀', '⚡'].map((emoji, index) => (
+          <View style={styles.bottomGoatContainer}>
+            {[0, 1, 2, 3, 4].map((index) => (
               <Animated.View
                 key={index}
                 style={[
-                  styles.emojiItem,
+                  styles.goatIconItem,
                   {
                     transform: [
-                      { translateY: emojiAnimations[index].translateY },
-                      { scale: emojiAnimations[index].scale },
+                      { translateY: goatIconAnimations[index].translateY },
+                      { scale: goatIconAnimations[index].scale },
                     ],
                   },
                 ]}
               >
-                <Text style={styles.emojiText}>{emoji}</Text>
+                <Image
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+                  style={styles.bottomGoatIcon}
+                  resizeMode="contain"
+                />
               </Animated.View>
             ))}
           </View>
@@ -1319,7 +1323,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     letterSpacing: 1,
   },
-  bottomEmojiContainer: {
+  bottomGoatContainer: {
     position: "absolute",
     bottom: 40,
     left: 0,
@@ -1328,11 +1332,13 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
     paddingHorizontal: 30,
   },
-  emojiItem: {
+  goatIconItem: {
     alignItems: "center",
     justifyContent: "center",
   },
-  emojiText: {
-    fontSize: 32,
+  bottomGoatIcon: {
+    width: 40,
+    height: 40,
+    opacity: 0.8,
   },
 });
