@@ -9,6 +9,7 @@ import {
   Platform,
   StatusBar,
   Image,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -27,28 +28,28 @@ interface AnimationStep {
 
 const animationSteps: AnimationStep[] = [
   {
-    title: "SCORE MORE",
-    subtitle: "DATES",
-    description: "Get matches that actually matter",
-    gradient: ["#E3222B", "#FF4757"],
+    title: "BECOME THE",
+    subtitle: "GOAT",
+    description: "Master the game of attraction",
+    gradient: ["#E3222B", "#FF1744"],
   },
   {
-    title: "BE MORE",
-    subtitle: "CONFIDENT",
-    description: "Master the art of conversation",
-    gradient: ["#FF4757", "#FF6B6B"],
+    title: "UNLOCK YOUR",
+    subtitle: "RIZZ",
+    description: "Confidence that speaks volumes",
+    gradient: ["#FF1744", "#FF4569"],
   },
   {
-    title: "SAY THE PERFECT",
-    subtitle: "THINGS",
-    description: "Never run out of words again",
-    gradient: ["#FF6B6B", "#FF8E8E"],
+    title: "DOMINATE THE",
+    subtitle: "GAME",
+    description: "Turn matches into memories",
+    gradient: ["#FF4569", "#FF6B8A"],
   },
   {
-    title: "LAND THE",
-    subtitle: "DATE",
-    description: "Turn conversations into connections",
-    gradient: ["#FF8E8E", "#E3222B"],
+    title: "LEGENDARY",
+    subtitle: "STATUS",
+    description: "Join the elite dating league",
+    gradient: ["#FF6B8A", "#E3222B"],
   },
 ];
 
@@ -58,48 +59,61 @@ export default function OnboardingScreen() {
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [selectedSex, setSelectedSex] = useState<'male' | 'female' | 'other' | null>(null);
   const [selectedAge, setSelectedAge] = useState<'18-24' | '25-34' | '35-44' | '45+' | null>(null);
+  const [showIntro, setShowIntro] = useState(true);
+  
+  // Intro animations
+  const introGoatScale = useRef(new Animated.Value(0)).current;
+  const introGoatRotate = useRef(new Animated.Value(0)).current;
+  const introGoatOpacity = useRef(new Animated.Value(0)).current;
+  const introGlow = useRef(new Animated.Value(0)).current;
+  const introTextOpacity = useRef(new Animated.Value(0)).current;
   
   // Main content animations
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(0.3)).current;
   const slideAnim = useRef(new Animated.Value(100)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  
+  // Step icon animations
+  const stepIconScale = useRef(new Animated.Value(0)).current;
+  const stepIconRotate = useRef(new Animated.Value(0)).current;
+  const stepIconGlow = useRef(new Animated.Value(0)).current;
   
   // Logo animations
   const logoScale = useRef(new Animated.Value(0)).current;
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoRotate = useRef(new Animated.Value(0)).current;
   const logoPulse = useRef(new Animated.Value(1)).current;
+  const logoGlow = useRef(new Animated.Value(0)).current;
   
-  // Floating goat icons
-  const floatingGoats = useRef(Array.from({ length: 8 }, () => ({
+  // Energy particles
+  const energyParticles = useRef(Array.from({ length: 20 }, () => ({
+    translateX: new Animated.Value(0),
     translateY: new Animated.Value(0),
     opacity: new Animated.Value(0),
-    rotate: new Animated.Value(0),
     scale: new Animated.Value(0),
   }))).current;
   
-  // Particle effects - static positions
-  const particleAnims = useRef(Array.from({ length: 15 }, (_, index) => ({
+  // Explosion particles
+  const explosionParticles = useRef(Array.from({ length: 30 }, () => ({
+    translateX: new Animated.Value(0),
     translateY: new Animated.Value(0),
     opacity: new Animated.Value(0),
     scale: new Animated.Value(0),
-    staticPosition: {
-      left: (index % 5) * (width / 5) + (width / 10), // Evenly distribute in 5 columns
-      bottom: Math.floor(index / 5) * 60 + 40, // 3 rows with 60px spacing
-    },
-  })));
+    rotate: new Animated.Value(0),
+  }))).current;
   
-  // Initialize particle animations once
-  const [particleAnimsInitialized, setParticleAnimsInitialized] = useState(false);
+  // Background animations
+  const backgroundScale = useRef(new Animated.Value(1)).current;
+  const backgroundRotate = useRef(new Animated.Value(0)).current;
+  const backgroundOpacity = useRef(new Animated.Value(1)).current;
   
   // Questionnaire animation
   const questionnaireAnim = useRef(new Animated.Value(0)).current;
-  
-  // Background pulse
-  const backgroundPulse = useRef(new Animated.Value(1)).current;
+  const questionnaireScale = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
-    startAnimationSequence();
+    startIntroAnimation();
   }, []);
 
   useEffect(() => {
@@ -113,79 +127,282 @@ export default function OnboardingScreen() {
     }
   }, [showQuestionnaire]);
 
-  const startAnimationSequence = () => {
-    // Start background pulse
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(backgroundPulse, {
-          toValue: 1.05,
-          duration: 2000,
+  const startIntroAnimation = () => {
+    // Epic intro sequence
+    Animated.sequence([
+      // Fade in goat with glow
+      Animated.parallel([
+        Animated.timing(introGoatOpacity, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.timing(backgroundPulse, {
+        Animated.spring(introGoatScale, {
+          toValue: 1.5,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(introGlow, {
           toValue: 1,
-          duration: 2000,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Pulse and rotate
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(introGoatScale, {
+            toValue: 1.8,
+            duration: 400,
+            easing: Easing.out(Easing.back(2)),
+            useNativeDriver: true,
+          }),
+          Animated.timing(introGoatScale, {
+            toValue: 1.5,
+            duration: 400,
+            easing: Easing.in(Easing.back(2)),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(introGoatRotate, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+      // Show text
+      Animated.timing(introTextOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Explosion effect
+      createExplosion();
+      setTimeout(() => {
+        Animated.parallel([
+          Animated.timing(introGoatOpacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(introTextOpacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+          Animated.timing(introGlow, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]).start(() => {
+          setShowIntro(false);
+          startMainSequence();
+        });
+      }, 1500);
+    });
+  };
+  
+  const createExplosion = () => {
+    explosionParticles.forEach((particle, index) => {
+      const angle = (index / explosionParticles.length) * Math.PI * 2;
+      const distance = 150 + Math.random() * 100;
+      const duration = 800 + Math.random() * 400;
+      
+      Animated.parallel([
+        Animated.timing(particle.opacity, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(particle.scale, {
+          toValue: 0.5 + Math.random() * 0.5,
+          duration: duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(particle.translateX, {
+          toValue: Math.cos(angle) * distance,
+          duration: duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(particle.translateY, {
+          toValue: Math.sin(angle) * distance,
+          duration: duration,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(particle.rotate, {
+          toValue: Math.random() * 4 - 2,
+          duration: duration,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        Animated.timing(particle.opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }).start();
+      });
+    });
+  };
+  
+  const startMainSequence = () => {
+    // Start background animation
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(backgroundScale, {
+            toValue: 1.1,
+            duration: 3000,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(backgroundScale, {
+            toValue: 1,
+            duration: 3000,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(backgroundRotate, {
+          toValue: 1,
+          duration: 20000,
+          easing: Easing.linear,
           useNativeDriver: true,
         }),
       ])
     ).start();
     
-    const stepDuration = 2500;
+    const stepDuration = 3000;
     const totalSteps = animationSteps.length;
     
     const animateStep = (stepIndex: number) => {
       setCurrentStep(stepIndex);
       
-      // Animate floating goats for each step
-      animateFloatingGoats(stepIndex);
+      // Animate energy particles
+      animateEnergyParticles();
       
+      // Step icon animation
+      Animated.sequence([
+        Animated.parallel([
+          Animated.spring(stepIconScale, {
+            toValue: 1,
+            friction: 3,
+            tension: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(stepIconRotate, {
+            toValue: 1,
+            duration: 1000,
+            easing: Easing.out(Easing.back(2)),
+            useNativeDriver: true,
+          }),
+          Animated.timing(stepIconGlow, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(stepIconScale, {
+              toValue: 1.1,
+              duration: 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+            Animated.timing(stepIconScale, {
+              toValue: 1,
+              duration: 1000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+          ])
+        ),
+      ]);
+      
+      // Main content animation with 3D effect
       Animated.parallel([
         Animated.timing(fadeAnim, {
           toValue: 1,
-          duration: 800,
+          duration: 600,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
         Animated.spring(scaleAnim, {
           toValue: 1,
-          friction: 6,
-          tension: 80,
+          friction: 4,
+          tension: 60,
           useNativeDriver: true,
         }),
         Animated.spring(slideAnim, {
           toValue: 0,
-          friction: 8,
-          tension: 100,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.timing(rotateAnim, {
+          toValue: 0,
+          duration: 800,
+          easing: Easing.out(Easing.back(1.5)),
           useNativeDriver: true,
         }),
       ]).start(() => {
         if (stepIndex < totalSteps - 1) {
           setTimeout(() => {
+            // Exit animation
             Animated.parallel([
               Animated.timing(fadeAnim, {
                 toValue: 0,
-                duration: 500,
+                duration: 400,
+                easing: Easing.in(Easing.cubic),
                 useNativeDriver: true,
               }),
               Animated.timing(scaleAnim, {
-                toValue: 0.3,
-                duration: 500,
+                toValue: 0.5,
+                duration: 400,
+                easing: Easing.in(Easing.cubic),
                 useNativeDriver: true,
               }),
               Animated.timing(slideAnim, {
-                toValue: -100,
-                duration: 500,
+                toValue: -150,
+                duration: 400,
+                easing: Easing.in(Easing.cubic),
+                useNativeDriver: true,
+              }),
+              Animated.timing(rotateAnim, {
+                toValue: -0.5,
+                duration: 400,
+                useNativeDriver: true,
+              }),
+              Animated.timing(stepIconScale, {
+                toValue: 0,
+                duration: 400,
+                useNativeDriver: true,
+              }),
+              Animated.timing(stepIconGlow, {
+                toValue: 0,
+                duration: 400,
                 useNativeDriver: true,
               }),
             ]).start(() => {
-              hideFloatingGoats();
+              stepIconRotate.setValue(0);
+              rotateAnim.setValue(0.5);
+              slideAnim.setValue(150);
               animateStep(stepIndex + 1);
             });
-          }, stepDuration - 1200);
+          }, stepDuration);
         } else {
           setTimeout(() => {
-            hideFloatingGoats();
-            showRizzGoatBranding();
-          }, stepDuration - 1200);
+            hideEnergyParticles();
+            showEpicFinale();
+          }, stepDuration);
         }
       });
     };
@@ -193,162 +410,40 @@ export default function OnboardingScreen() {
     animateStep(0);
   };
   
-  const animateFloatingGoats = (stepIndex: number) => {
-    floatingGoats.forEach((goat, index) => {
-      const delay = index * 200;
-      const duration = 1500 + Math.random() * 1000;
-      
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(goat.opacity, {
-            toValue: 0.15 + Math.random() * 0.15,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.spring(goat.scale, {
-            toValue: 0.4 + Math.random() * 0.2,
-            friction: 4,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-          Animated.loop(
-            Animated.sequence([
-              Animated.timing(goat.translateY, {
-                toValue: -20 - Math.random() * 30,
-                duration: duration / 2,
-                useNativeDriver: true,
-              }),
-              Animated.timing(goat.translateY, {
-                toValue: 0,
-                duration: duration / 2,
-                useNativeDriver: true,
-              }),
-            ])
-          ),
-          Animated.loop(
-            Animated.timing(goat.rotate, {
-              toValue: 1,
-              duration: 4000 + Math.random() * 2000,
-              useNativeDriver: true,
-            })
-          ),
-        ]).start();
-      }, delay);
-    });
-  };
-  
-  const hideFloatingGoats = () => {
-    floatingGoats.forEach((goat) => {
-      Animated.parallel([
-        Animated.timing(goat.opacity, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-        Animated.timing(goat.scale, {
-          toValue: 0,
-          duration: 400,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  };
-
-  const showRizzGoatBranding = () => {
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 0.3,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentStep(-1);
-      
-      // Epic logo entrance
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(logoOpacity, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-          Animated.spring(logoScale, {
-            toValue: 1.2,
-            friction: 4,
-            tension: 50,
-            useNativeDriver: true,
-          }),
-          Animated.timing(logoRotate, {
-            toValue: 1,
-            duration: 1000,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.spring(logoScale, {
-          toValue: 1,
-          friction: 6,
-          tension: 100,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        // Start logo pulse
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(logoPulse, {
-              toValue: 1.1,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-            Animated.timing(logoPulse, {
-              toValue: 1,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-        
-        startParticleAnimation();
-        setTimeout(() => {
-          setShowQuestionnaire(true);
-        }, 2000);
-      });
-    });
-  };
-
-  const startParticleAnimation = () => {
-    if (particleAnimsInitialized) return; // Prevent re-initialization
-    
-    setParticleAnimsInitialized(true);
-    
-    particleAnims.current.forEach((particle, index) => {
-      const delay = index * 150;
+  const animateEnergyParticles = () => {
+    energyParticles.forEach((particle, index) => {
+      const delay = index * 50;
+      const angle = (index / energyParticles.length) * Math.PI * 2;
+      const radius = 100 + Math.random() * 50;
       
       setTimeout(() => {
         Animated.loop(
           Animated.sequence([
             Animated.parallel([
               Animated.timing(particle.opacity, {
-                toValue: 0.6,
-                duration: 800,
+                toValue: 0.8,
+                duration: 500,
                 useNativeDriver: true,
               }),
               Animated.spring(particle.scale, {
-                toValue: 0.8,
+                toValue: 0.3 + Math.random() * 0.3,
                 friction: 4,
                 tension: 100,
                 useNativeDriver: true,
               }),
+              Animated.timing(particle.translateX, {
+                toValue: Math.cos(angle) * radius,
+                duration: 2000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.translateY, {
+                toValue: Math.sin(angle) * radius,
+                duration: 2000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
             ]),
-            Animated.timing(particle.translateY, {
-              toValue: -100 - Math.random() * 50,
-              duration: 2500 + Math.random() * 1000,
-              useNativeDriver: true,
-            }),
             Animated.parallel([
               Animated.timing(particle.opacity, {
                 toValue: 0,
@@ -361,16 +456,130 @@ export default function OnboardingScreen() {
                 useNativeDriver: true,
               }),
             ]),
-            Animated.timing(particle.translateY, {
-              toValue: 0,
-              duration: 0,
-              useNativeDriver: true,
-            }),
           ])
         ).start();
       }, delay);
     });
   };
+  
+  const hideEnergyParticles = () => {
+    energyParticles.forEach((particle) => {
+      Animated.parallel([
+        Animated.timing(particle.opacity, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.timing(particle.scale, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+  };
+
+  const showEpicFinale = () => {
+    // Clear previous animations
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(stepIconScale, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      setCurrentStep(-1);
+      
+      // Epic finale sequence
+      Animated.sequence([
+        // Logo entrance with dramatic effect
+        Animated.parallel([
+          Animated.timing(logoOpacity, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.spring(logoScale, {
+            toValue: 1.5,
+            friction: 3,
+            tension: 40,
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoRotate, {
+            toValue: 2,
+            duration: 1500,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoGlow, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ]),
+        // Settle animation
+        Animated.spring(logoScale, {
+          toValue: 1.2,
+          friction: 5,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+      ]).start(() => {
+        // Start continuous animations
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(logoPulse, {
+              toValue: 1.15,
+              duration: 1500,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+            Animated.timing(logoPulse, {
+              toValue: 1,
+              duration: 1500,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+        
+        // Start glow animation
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(logoGlow, {
+              toValue: 1.5,
+              duration: 2000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+            Animated.timing(logoGlow, {
+              toValue: 1,
+              duration: 2000,
+              easing: Easing.inOut(Easing.sin),
+              useNativeDriver: true,
+            }),
+          ])
+        ).start();
+        
+        setTimeout(() => {
+          setShowQuestionnaire(true);
+        }, 2000);
+      });
+    });
+  };
+
+
 
   const handleSexSelection = async (sex: 'male' | 'female' | 'other') => {
     if (Platform.OS !== "web") {
@@ -401,78 +610,133 @@ export default function OnboardingScreen() {
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
       
-      {/* Dynamic Background */}
-      <Animated.View style={[StyleSheet.absoluteFillObject, { transform: [{ scale: backgroundPulse }] }]}>
-        <LinearGradient
-          colors={currentStep >= 0 && currentStepData ? currentStepData.gradient as [string, string] : ["#000000", "#000000"]}
-          style={StyleSheet.absoluteFillObject}
-          locations={[0, 1]}
-        />
-      </Animated.View>
-      
-      {/* Floating Goat Icons */}
-      {currentStep >= 0 && floatingGoats.map((goat, index) => {
-        const position = {
-          left: (index % 4) * (width / 4) + Math.random() * (width / 8),
-          top: Math.random() * height * 0.6 + height * 0.2,
-        };
-        
-        return (
-          <Animated.View
-            key={`goat-${index}`}
-            style={[
-              styles.floatingGoat,
-              position,
-              {
-                opacity: goat.opacity,
-                transform: [
-                  { scale: goat.scale },
-                  { translateY: goat.translateY },
+      {/* Intro Animation */}
+      {showIntro && (
+        <View style={StyleSheet.absoluteFillObject}>
+          <LinearGradient
+            colors={["#000000", "#1a0000"]}
+            style={StyleSheet.absoluteFillObject}
+          />
+          <View style={styles.introContainer}>
+            <Animated.View
+              style={[
+                styles.introGoatContainer,
+                {
+                  opacity: introGoatOpacity,
+                  transform: [
+                    { scale: introGoatScale },
+                    {
+                      rotate: introGoatRotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Animated.View
+                style={[
+                  styles.introGlowEffect,
                   {
-                    rotate: goat.rotate.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '360deg'],
-                    }),
+                    opacity: introGlow,
+                    transform: [{ scale: introGlow }],
                   },
-                ],
-              },
-            ]}
-          >
-            <Image 
-              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
-              style={styles.floatingGoatImage}
-              resizeMode="contain"
-            />
-          </Animated.View>
-        );
-      })}
+                ]}
+              />
+              <Image
+                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+                style={styles.introGoatImage}
+                resizeMode="contain"
+              />
+            </Animated.View>
+            <Animated.Text
+              style={[
+                styles.introText,
+                { opacity: introTextOpacity },
+              ]}
+            >
+              RIZZGOAT
+            </Animated.Text>
+          </View>
+          
+          {/* Explosion Particles */}
+          {explosionParticles.map((particle, index) => (
+            <Animated.View
+              key={`explosion-${index}`}
+              style={[
+                styles.explosionParticle,
+                {
+                  opacity: particle.opacity,
+                  transform: [
+                    { translateX: particle.translateX },
+                    { translateY: particle.translateY },
+                    { scale: particle.scale },
+                    {
+                      rotate: particle.rotate.interpolate({
+                        inputRange: [-2, 2],
+                        outputRange: ['-720deg', '720deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <View style={styles.explosionDot} />
+            </Animated.View>
+          ))}
+        </View>
+      )}
       
-      {/* Particle Effects */}
-      {currentStep === -1 && particleAnims.current.map((particle, index) => {
-        return (
-          <Animated.View
-            key={`particle-${index}`}
-            style={[
-              styles.particle,
-              {
-                left: particle.staticPosition.left,
-                bottom: particle.staticPosition.bottom,
-                opacity: particle.opacity,
-                transform: [
-                  { scale: particle.scale },
-                  { translateY: particle.translateY },
-                ],
-              },
-            ]}
-          >
-            <Image 
-              source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/hvz4kgjgv7ihxryzvsx12' }}
-              style={styles.particleGoat}
-              resizeMode="contain"
-            />
-          </Animated.View>
-        );
-      })}
+      {/* Dynamic Background */}
+      {!showIntro && (
+        <Animated.View 
+          style={[
+            StyleSheet.absoluteFillObject, 
+            { 
+              transform: [
+                { scale: backgroundScale },
+                {
+                  rotate: backgroundRotate.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['0deg', '45deg'],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={currentStep >= 0 && currentStepData ? currentStepData.gradient as [string, string] : ["#000000", "#1a0000"]}
+            style={StyleSheet.absoluteFillObject}
+            locations={[0, 1]}
+          />
+        </Animated.View>
+      )}
+      
+      {/* Energy Particles */}
+      {currentStep >= 0 && energyParticles.map((particle, index) => (
+        <Animated.View
+          key={`energy-${index}`}
+          style={[
+            styles.energyParticle,
+            {
+              opacity: particle.opacity,
+              transform: [
+                { translateX: particle.translateX },
+                { translateY: particle.translateY },
+                { scale: particle.scale },
+              ],
+            },
+          ]}
+        >
+          <Image
+            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+            style={styles.energyParticleImage}
+            resizeMode="contain"
+          />
+        </Animated.View>
+      ))}
       
       <SafeAreaView style={styles.safeArea}>
         {/* Animation Steps */}
@@ -485,17 +749,47 @@ export default function OnboardingScreen() {
                 transform: [
                   { scale: scaleAnim },
                   { translateY: slideAnim },
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [-0.5, 0, 0.5],
+                      outputRange: ['-15deg', '0deg', '15deg'],
+                    }),
+                  },
                 ],
               },
             ]}
           >
-            <View style={styles.iconContainer}>
+            <Animated.View 
+              style={[
+                styles.iconContainer,
+                {
+                  transform: [
+                    { scale: stepIconScale },
+                    {
+                      rotate: stepIconRotate.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: ['0deg', '360deg'],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              <Animated.View
+                style={[
+                  styles.iconGlow,
+                  {
+                    opacity: stepIconGlow,
+                    transform: [{ scale: stepIconGlow }],
+                  },
+                ]}
+              />
               <Image 
                 source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
                 style={styles.stepGoatIcon}
                 resizeMode="contain"
               />
-            </View>
+            </Animated.View>
             <Text style={styles.stepTitle}>{currentStepData.title}</Text>
             <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
             <Text style={styles.stepDescription}>{currentStepData.description}</Text>
@@ -513,8 +807,8 @@ export default function OnboardingScreen() {
                   { scale: logoScale },
                   {
                     rotate: logoRotate.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['0deg', '360deg'],
+                      inputRange: [0, 2],
+                      outputRange: ['0deg', '720deg'],
                     }),
                   },
                 ],
@@ -529,6 +823,22 @@ export default function OnboardingScreen() {
                 },
               ]}
             >
+              <Animated.View
+                style={[
+                  styles.logoGlowEffect,
+                  {
+                    opacity: logoGlow,
+                    transform: [
+                      { 
+                        scale: logoGlow.interpolate({
+                          inputRange: [0, 1, 1.5],
+                          outputRange: [1, 1.5, 2],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
               <Image 
                 source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
                 style={styles.logoImage}
@@ -776,20 +1086,79 @@ const styles = StyleSheet.create({
     textAlign: "center",
     textTransform: "uppercase",
   },
-  floatingGoat: {
+  introContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  introGoatContainer: {
+    width: 200,
+    height: 200,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  introGoatImage: {
+    width: 150,
+    height: 150,
+  },
+  introGlowEffect: {
     position: "absolute",
+    width: 250,
+    height: 250,
+    backgroundColor: "#E3222B",
+    borderRadius: 125,
+    opacity: 0.3,
   },
-  floatingGoatImage: {
-    width: 30,
-    height: 30,
-    opacity: 0.6,
+  introText: {
+    fontSize: 48,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 5,
+    marginTop: 30,
+    textShadowColor: "#E3222B",
+    textShadowOffset: { width: 0, height: 4 },
+    textShadowRadius: 20,
   },
-  particle: {
+  explosionParticle: {
     position: "absolute",
+    top: height / 2,
+    left: width / 2,
   },
-  particleGoat: {
-    width: 24,
-    height: 24,
+  explosionDot: {
+    width: 8,
+    height: 8,
+    backgroundColor: "#E3222B",
+    borderRadius: 4,
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 10,
+  },
+  energyParticle: {
+    position: "absolute",
+    top: height / 2,
+    left: width / 2,
+  },
+  energyParticleImage: {
+    width: 20,
+    height: 20,
+    opacity: 0.8,
+  },
+  iconGlow: {
+    position: "absolute",
+    width: 150,
+    height: 150,
+    backgroundColor: "#E3222B",
+    borderRadius: 75,
+    opacity: 0.2,
+  },
+  logoGlowEffect: {
+    position: "absolute",
+    width: 250,
+    height: 250,
+    backgroundColor: "#E3222B",
+    borderRadius: 125,
+    opacity: 0.2,
   },
   questionnaireContainer: {
     width: "100%",
