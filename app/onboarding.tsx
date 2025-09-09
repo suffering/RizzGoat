@@ -13,103 +13,72 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRight } from "lucide-react-native";
+import { ArrowRight, Heart, MessageCircle, Sparkles, Zap, Flame, Crown } from "lucide-react-native";
 import { useAppState } from "@/providers/AppStateProvider";
 import * as Haptics from "expo-haptics";
 
-const { width, height } = Dimensions.get("window");
-
-interface AnimationStep {
-  title: string;
-  subtitle: string;
-  description: string;
-  gradient: string[];
-}
-
-const animationSteps: AnimationStep[] = [
-  {
-    title: "BECOME THE",
-    subtitle: "GOAT",
-    description: "Master the game of attraction",
-    gradient: ["#E3222B", "#FF1744"],
-  },
-  {
-    title: "UNLOCK YOUR",
-    subtitle: "RIZZ",
-    description: "Confidence that speaks volumes",
-    gradient: ["#FF1744", "#FF4569"],
-  },
-  {
-    title: "DOMINATE THE",
-    subtitle: "GAME",
-    description: "Turn matches into memories",
-    gradient: ["#FF4569", "#FF6B8A"],
-  },
-  {
-    title: "LEGENDARY",
-    subtitle: "STATUS",
-    description: "Join the elite dating league",
-    gradient: ["#FF6B8A", "#E3222B"],
-  },
-];
+const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAppState();
-  const [currentStep, setCurrentStep] = useState(0);
+  const [currentPhase, setCurrentPhase] = useState<'logo-reveal' | 'purpose' | 'features' | 'finale' | 'questionnaire'>('logo-reveal');
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [selectedSex, setSelectedSex] = useState<'male' | 'female' | 'other' | null>(null);
   const [selectedAge, setSelectedAge] = useState<'18-24' | '25-34' | '35-44' | '45+' | null>(null);
-  const [showIntro, setShowIntro] = useState(true);
   
-  // Intro animations
-  const introGoatScale = useRef(new Animated.Value(0)).current;
-  const introGoatRotate = useRef(new Animated.Value(0)).current;
-  const introGoatOpacity = useRef(new Animated.Value(0)).current;
-  const introGlow = useRef(new Animated.Value(0)).current;
-  const introTextOpacity = useRef(new Animated.Value(0)).current;
+  // Master opacity for entire intro
+  const masterOpacity = useRef(new Animated.Value(1)).current;
   
-  // Main content animations
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-  const scaleAnim = useRef(new Animated.Value(0.3)).current;
-  const slideAnim = useRef(new Animated.Value(100)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-  
-  // Step icon animations
-  const stepIconScale = useRef(new Animated.Value(0)).current;
-  const stepIconRotate = useRef(new Animated.Value(0)).current;
-  const stepIconGlow = useRef(new Animated.Value(0)).current;
-  
-  // Logo animations
-  const logoScale = useRef(new Animated.Value(0)).current;
+  // Logo Reveal Phase Animations
   const logoOpacity = useRef(new Animated.Value(0)).current;
+  const logoScale = useRef(new Animated.Value(0)).current;
   const logoRotate = useRef(new Animated.Value(0)).current;
-  const logoPulse = useRef(new Animated.Value(1)).current;
   const logoGlow = useRef(new Animated.Value(0)).current;
+  const logoTextOpacity = useRef(new Animated.Value(0)).current;
+  const logoTextScale = useRef(new Animated.Value(0.5)).current;
+  const logoTextSlide = useRef(new Animated.Value(50)).current;
   
-  // Energy particles
-  const energyParticles = useRef(Array.from({ length: 20 }, () => ({
-    translateX: new Animated.Value(0),
-    translateY: new Animated.Value(0),
+  // Glowing streaks
+  const streak1 = useRef(new Animated.Value(0)).current;
+  const streak2 = useRef(new Animated.Value(0)).current;
+  const streak3 = useRef(new Animated.Value(0)).current;
+  
+  // Purpose Phase Animations
+  const purposeOpacity = useRef(new Animated.Value(0)).current;
+  const purposeScale = useRef(new Animated.Value(0.8)).current;
+  const heartScale = useRef(new Animated.Value(0)).current;
+  const messageScale = useRef(new Animated.Value(0)).current;
+  const sparkleScale = useRef(new Animated.Value(0)).current;
+  const purposeTextOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Features Phase Animations
+  const featuresOpacity = useRef(new Animated.Value(0)).current;
+  const feature1Slide = useRef(new Animated.Value(-screenWidth)).current;
+  const feature2Slide = useRef(new Animated.Value(screenWidth)).current;
+  const feature3Slide = useRef(new Animated.Value(-screenWidth)).current;
+  
+  // Finale Phase Animations
+  const finaleOpacity = useRef(new Animated.Value(0)).current;
+  const finaleScale = useRef(new Animated.Value(0.5)).current;
+  const finalePulse = useRef(new Animated.Value(1)).current;
+  const buttonOpacity = useRef(new Animated.Value(0)).current;
+  const buttonScale = useRef(new Animated.Value(0.8)).current;
+  const buttonGlow = useRef(new Animated.Value(0)).current;
+  
+  // Ember particles
+  const emberParticles = useRef(Array.from({ length: 20 }, () => ({
+    translateX: new Animated.Value(Math.random() * screenWidth),
+    translateY: new Animated.Value(screenHeight),
     opacity: new Animated.Value(0),
     scale: new Animated.Value(0),
-  }))).current;
-  
-  // Explosion particles
-  const explosionParticles = useRef(Array.from({ length: 30 }, () => ({
-    translateX: new Animated.Value(0),
-    translateY: new Animated.Value(0),
-    opacity: new Animated.Value(0),
-    scale: new Animated.Value(0),
-    rotate: new Animated.Value(0),
   }))).current;
   
   // Background animations
-  const backgroundScale = useRef(new Animated.Value(1)).current;
-  const backgroundRotate = useRef(new Animated.Value(0)).current;
-  const backgroundOpacity = useRef(new Animated.Value(1)).current;
+  const bgGradientRotate = useRef(new Animated.Value(0)).current;
+  const bgPulse = useRef(new Animated.Value(1)).current;
   
-  // Questionnaire animation
-  const questionnaireAnim = useRef(new Animated.Value(0)).current;
+  // Questionnaire animations
+  const questionnaireOpacity = useRef(new Animated.Value(0)).current;
   const questionnaireScale = useRef(new Animated.Value(0.8)).current;
   
   // Bottom goat icon animations
@@ -122,17 +91,25 @@ export default function OnboardingScreen() {
   ]).current;
 
   useEffect(() => {
-    startIntroAnimation();
+    startEpicIntroSequence();
   }, []);
 
   useEffect(() => {
     if (showQuestionnaire) {
-      Animated.spring(questionnaireAnim, {
-        toValue: 1,
-        friction: 8,
-        tension: 100,
-        useNativeDriver: true,
-      }).start();
+      Animated.parallel([
+        Animated.spring(questionnaireOpacity, {
+          toValue: 1,
+          friction: 8,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(questionnaireScale, {
+          toValue: 1,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+      ]).start();
       
       // Start goat icon animations
       goatIconAnimations.forEach((anim, index) => {
@@ -173,321 +150,82 @@ export default function OnboardingScreen() {
         ).start();
       });
     }
-  }, [showQuestionnaire]);
+  }, [showQuestionnaire, goatIconAnimations, questionnaireOpacity, questionnaireScale]);
 
-  const startIntroAnimation = () => {
-    // Epic intro sequence
-    Animated.sequence([
-      // Fade in goat with glow
-      Animated.parallel([
-        Animated.timing(introGoatOpacity, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.spring(introGoatScale, {
-          toValue: 1.5,
-          friction: 4,
-          tension: 40,
-          useNativeDriver: true,
-        }),
-        Animated.timing(introGlow, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]),
-      // Pulse and rotate
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(introGoatScale, {
-            toValue: 1.8,
-            duration: 400,
-            easing: Easing.out(Easing.back(2)),
-            useNativeDriver: true,
-          }),
-          Animated.timing(introGoatScale, {
-            toValue: 1.5,
-            duration: 400,
-            easing: Easing.in(Easing.back(2)),
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(introGoatRotate, {
-          toValue: 1,
-          duration: 800,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-      ]),
-      // Show text
-      Animated.timing(introTextOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      // Explosion effect
-      createExplosion();
-      setTimeout(() => {
-        Animated.parallel([
-          Animated.timing(introGoatOpacity, {
-            toValue: 0,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(introTextOpacity, {
-            toValue: 0,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-          Animated.timing(introGlow, {
-            toValue: 0,
-            duration: 500,
-            useNativeDriver: true,
-          }),
-        ]).start(() => {
-          setShowIntro(false);
-          startMainSequence();
+  const startEpicIntroSequence = () => {
+    // Start background animations
+    startBackgroundAnimations();
+    startEmberAnimation();
+    
+    // Phase 1: Logo Reveal (3 seconds)
+    logoRevealAnimation(() => {
+      // Phase 2: Purpose Showcase (4 seconds)
+      purposeShowcaseAnimation(() => {
+        // Phase 3: Features (3.5 seconds)
+        featuresAnimation(() => {
+          // Phase 4: Finale (2.5 seconds)
+          finaleAnimation();
         });
-      }, 1500);
-    });
-  };
-  
-  const createExplosion = () => {
-    explosionParticles.forEach((particle, index) => {
-      const angle = (index / explosionParticles.length) * Math.PI * 2;
-      const distance = 150 + Math.random() * 100;
-      const duration = 800 + Math.random() * 400;
-      
-      Animated.parallel([
-        Animated.timing(particle.opacity, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(particle.scale, {
-          toValue: 0.5 + Math.random() * 0.5,
-          duration: duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(particle.translateX, {
-          toValue: Math.cos(angle) * distance,
-          duration: duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(particle.translateY, {
-          toValue: Math.sin(angle) * distance,
-          duration: duration,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.timing(particle.rotate, {
-          toValue: Math.random() * 4 - 2,
-          duration: duration,
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        Animated.timing(particle.opacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }).start();
       });
     });
   };
-  
-  const startMainSequence = () => {
-    // Start background animation
+
+  const startBackgroundAnimations = () => {
+    // Rotating gradient background
     Animated.loop(
-      Animated.parallel([
-        Animated.sequence([
-          Animated.timing(backgroundScale, {
-            toValue: 1.1,
-            duration: 3000,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-          Animated.timing(backgroundScale, {
-            toValue: 1,
-            duration: 3000,
-            easing: Easing.inOut(Easing.sin),
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(backgroundRotate, {
+      Animated.timing(bgGradientRotate, {
+        toValue: 1,
+        duration: 20000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+    
+    // Pulsing background
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bgPulse, {
+          toValue: 1.05,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: true,
+        }),
+        Animated.timing(bgPulse, {
           toValue: 1,
-          duration: 20000,
-          easing: Easing.linear,
+          duration: 3000,
+          easing: Easing.inOut(Easing.sin),
           useNativeDriver: true,
         }),
       ])
     ).start();
-    
-    const stepDuration = 3000;
-    const totalSteps = animationSteps.length;
-    
-    const animateStep = (stepIndex: number) => {
-      setCurrentStep(stepIndex);
-      
-      // Animate energy particles
-      animateEnergyParticles();
-      
-      // Step icon animation
-      Animated.sequence([
-        Animated.parallel([
-          Animated.spring(stepIconScale, {
-            toValue: 1,
-            friction: 3,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(stepIconRotate, {
-            toValue: 1,
-            duration: 1000,
-            easing: Easing.out(Easing.back(2)),
-            useNativeDriver: true,
-          }),
-          Animated.timing(stepIconGlow, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(stepIconScale, {
-              toValue: 1.1,
-              duration: 1000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-            Animated.timing(stepIconScale, {
-              toValue: 1,
-              duration: 1000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-          ])
-        ),
-      ]);
-      
-      // Main content animation with 3D effect
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 600,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: true,
-        }),
-        Animated.spring(scaleAnim, {
-          toValue: 1,
-          friction: 4,
-          tension: 60,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          friction: 6,
-          tension: 80,
-          useNativeDriver: true,
-        }),
-        Animated.timing(rotateAnim, {
-          toValue: 0,
-          duration: 800,
-          easing: Easing.out(Easing.back(1.5)),
-          useNativeDriver: true,
-        }),
-      ]).start(() => {
-        if (stepIndex < totalSteps - 1) {
-          setTimeout(() => {
-            // Exit animation
-            Animated.parallel([
-              Animated.timing(fadeAnim, {
-                toValue: 0,
-                duration: 400,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-              }),
-              Animated.timing(scaleAnim, {
-                toValue: 0.5,
-                duration: 400,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-              }),
-              Animated.timing(slideAnim, {
-                toValue: -150,
-                duration: 400,
-                easing: Easing.in(Easing.cubic),
-                useNativeDriver: true,
-              }),
-              Animated.timing(rotateAnim, {
-                toValue: -0.5,
-                duration: 400,
-                useNativeDriver: true,
-              }),
-              Animated.timing(stepIconScale, {
-                toValue: 0,
-                duration: 400,
-                useNativeDriver: true,
-              }),
-              Animated.timing(stepIconGlow, {
-                toValue: 0,
-                duration: 400,
-                useNativeDriver: true,
-              }),
-            ]).start(() => {
-              stepIconRotate.setValue(0);
-              rotateAnim.setValue(0.5);
-              slideAnim.setValue(150);
-              animateStep(stepIndex + 1);
-            });
-          }, stepDuration);
-        } else {
-          setTimeout(() => {
-            hideEnergyParticles();
-            showEpicFinale();
-          }, stepDuration);
-        }
-      });
-    };
-    
-    animateStep(0);
   };
-  
-  const animateEnergyParticles = () => {
-    energyParticles.forEach((particle, index) => {
-      const delay = index * 50;
-      const angle = (index / energyParticles.length) * Math.PI * 2;
-      const radius = 100 + Math.random() * 50;
-      
+
+  const startEmberAnimation = () => {
+    emberParticles.forEach((particle, index) => {
+      const delay = index * 100;
       setTimeout(() => {
         Animated.loop(
           Animated.sequence([
             Animated.parallel([
               Animated.timing(particle.opacity, {
                 toValue: 0.8,
-                duration: 500,
+                duration: 1000,
                 useNativeDriver: true,
               }),
-              Animated.spring(particle.scale, {
-                toValue: 0.3 + Math.random() * 0.3,
-                friction: 4,
-                tension: 100,
-                useNativeDriver: true,
-              }),
-              Animated.timing(particle.translateX, {
-                toValue: Math.cos(angle) * radius,
-                duration: 2000,
-                easing: Easing.inOut(Easing.sin),
+              Animated.timing(particle.scale, {
+                toValue: 0.5 + Math.random() * 0.5,
+                duration: 1000,
                 useNativeDriver: true,
               }),
               Animated.timing(particle.translateY, {
-                toValue: Math.sin(angle) * radius,
-                duration: 2000,
+                toValue: -100,
+                duration: 4000 + Math.random() * 2000,
+                easing: Easing.out(Easing.quad),
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.translateX, {
+                toValue: Math.random() * screenWidth,
+                duration: 4000,
                 easing: Easing.inOut(Easing.sin),
                 useNativeDriver: true,
               }),
@@ -495,139 +233,328 @@ export default function OnboardingScreen() {
             Animated.parallel([
               Animated.timing(particle.opacity, {
                 toValue: 0,
-                duration: 500,
+                duration: 1000,
                 useNativeDriver: true,
               }),
               Animated.timing(particle.scale, {
                 toValue: 0,
-                duration: 500,
+                duration: 1000,
                 useNativeDriver: true,
               }),
             ]),
-          ])
+          ]),
+          { iterations: -1 }
         ).start();
       }, delay);
     });
   };
-  
-  const hideEnergyParticles = () => {
-    energyParticles.forEach((particle) => {
-      Animated.parallel([
-        Animated.timing(particle.opacity, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.timing(particle.scale, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    });
-  };
 
-  const showEpicFinale = () => {
-    // Clear previous animations
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-      Animated.timing(stepIconScale, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
-    ]).start(() => {
-      setCurrentStep(-1);
-      
-      // Epic finale sequence
-      Animated.sequence([
-        // Logo entrance with dramatic effect
-        Animated.parallel([
-          Animated.timing(logoOpacity, {
+  const logoRevealAnimation = (callback: () => void) => {
+    setCurrentPhase('logo-reveal');
+    
+    Animated.sequence([
+      // Goat icon emerges with glow
+      Animated.parallel([
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 800,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoScale, {
+          toValue: 1.2,
+          friction: 4,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoGlow, {
+          toValue: 1,
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        // Animated streaks
+        Animated.stagger(100, [
+          Animated.timing(streak1, {
             toValue: 1,
-            duration: 800,
-            easing: Easing.out(Easing.cubic),
+            duration: 600,
             useNativeDriver: true,
           }),
-          Animated.spring(logoScale, {
-            toValue: 1.5,
-            friction: 3,
-            tension: 40,
-            useNativeDriver: true,
-          }),
-          Animated.timing(logoRotate, {
-            toValue: 2,
-            duration: 1500,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(logoGlow, {
+          Animated.timing(streak2, {
             toValue: 1,
-            duration: 1000,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(streak3, {
+            toValue: 1,
+            duration: 600,
             useNativeDriver: true,
           }),
         ]),
-        // Settle animation
-        Animated.spring(logoScale, {
-          toValue: 1.2,
+      ]),
+      // Rotate and pulse
+      Animated.parallel([
+        Animated.timing(logoRotate, {
+          toValue: 1,
+          duration: 1000,
+          easing: Easing.out(Easing.back(2)),
+          useNativeDriver: true,
+        }),
+        Animated.sequence([
+          Animated.timing(logoScale, {
+            toValue: 1.5,
+            duration: 400,
+            easing: Easing.out(Easing.back(2)),
+            useNativeDriver: true,
+          }),
+          Animated.timing(logoScale, {
+            toValue: 1.2,
+            duration: 400,
+            easing: Easing.in(Easing.back(2)),
+            useNativeDriver: true,
+          }),
+        ]),
+      ]),
+      // RizzGoat text appears
+      Animated.parallel([
+        Animated.timing(logoTextOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoTextScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoTextSlide, {
+          toValue: 0,
+          duration: 600,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setTimeout(callback, 500);
+    });
+  };
+
+  const purposeShowcaseAnimation = (callback: () => void) => {
+    setCurrentPhase('purpose');
+    
+    // Fade out logo
+    Animated.parallel([
+      Animated.timing(logoOpacity, {
+        toValue: 0.3,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.timing(logoTextOpacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+    
+    // Show purpose elements
+    Animated.sequence([
+      Animated.parallel([
+        Animated.timing(purposeOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(purposeScale, {
+          toValue: 1,
           friction: 5,
           tension: 80,
           useNativeDriver: true,
         }),
-      ]).start(() => {
-        // Start continuous animations
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(logoPulse, {
-              toValue: 1.15,
-              duration: 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-            Animated.timing(logoPulse, {
-              toValue: 1,
-              duration: 1500,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-        
-        // Start glow animation
-        Animated.loop(
-          Animated.sequence([
-            Animated.timing(logoGlow, {
-              toValue: 1.5,
-              duration: 2000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-            Animated.timing(logoGlow, {
-              toValue: 1,
-              duration: 2000,
-              easing: Easing.inOut(Easing.sin),
-              useNativeDriver: true,
-            }),
-          ])
-        ).start();
-        
-        setTimeout(() => {
-          setShowQuestionnaire(true);
-        }, 2000);
+      ]),
+      // Animate icons
+      Animated.stagger(200, [
+        Animated.spring(heartScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(messageScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+        Animated.spring(sparkleScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 100,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(purposeTextOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+    ]).start(() => {
+      // Pulse animation for icons
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(heartScale, {
+            toValue: 1.2,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(heartScale, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ]),
+        { iterations: 2 }
+      ).start(() => {
+        setTimeout(callback, 500);
       });
     });
   };
 
+  const featuresAnimation = (callback: () => void) => {
+    setCurrentPhase('features');
+    
+    // Fade out purpose
+    Animated.timing(purposeOpacity, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    
+    // Show features with slide animations
+    Animated.sequence([
+      Animated.timing(featuresOpacity, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+      Animated.stagger(300, [
+        Animated.spring(feature1Slide, {
+          toValue: 0,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(feature2Slide, {
+          toValue: 0,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.spring(feature3Slide, {
+          toValue: 0,
+          friction: 6,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      setTimeout(callback, 1500);
+    });
+  };
 
+  const finaleAnimation = () => {
+    setCurrentPhase('finale');
+    
+    // Fade out features
+    Animated.timing(featuresOpacity, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start();
+    
+    // Epic finale
+    Animated.sequence([
+      // Logo and text reappear
+      Animated.parallel([
+        Animated.timing(finaleOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(finaleScale, {
+          toValue: 1,
+          friction: 3,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoScale, {
+          toValue: 1.5,
+          friction: 4,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+      ]),
+      // Button appears
+      Animated.parallel([
+        Animated.timing(buttonOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.spring(buttonScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 80,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonGlow, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+      ]),
+    ]).start(() => {
+      // Continuous pulse
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(finalePulse, {
+            toValue: 1.1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+          Animated.timing(finalePulse, {
+            toValue: 1,
+            duration: 1500,
+            easing: Easing.inOut(Easing.sin),
+            useNativeDriver: true,
+          }),
+        ])
+      ).start();
+    });
+  };
+
+  const handleGetStarted = () => {
+    if (Platform.OS !== "web") {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
+    
+    // Fade out intro
+    Animated.timing(masterOpacity, {
+      toValue: 0,
+      duration: 500,
+      useNativeDriver: true,
+    }).start(() => {
+      setCurrentPhase('questionnaire');
+      setShowQuestionnaire(true);
+    });
+  };
 
   const handleSexSelection = async (sex: 'male' | 'female' | 'other') => {
     if (Platform.OS !== "web") {
@@ -652,122 +579,40 @@ export default function OnboardingScreen() {
     }
   };
 
-  const currentStepData = animationSteps[currentStep];
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
       
-      {/* Intro Animation */}
-      {showIntro && (
-        <View style={StyleSheet.absoluteFillObject}>
-          <LinearGradient
-            colors={["#000000", "#1a0000"]}
-            style={StyleSheet.absoluteFillObject}
-          />
-          <View style={styles.introContainer}>
-            <Animated.View
-              style={[
-                styles.introGoatContainer,
-                {
-                  opacity: introGoatOpacity,
-                  transform: [
-                    { scale: introGoatScale },
-                    {
-                      rotate: introGoatRotate.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg'],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <Animated.View
-                style={[
-                  styles.introGlowEffect,
-                  {
-                    opacity: introGlow,
-                    transform: [{ scale: introGlow }],
-                  },
-                ]}
-              />
-              <Image
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
-                style={styles.introGoatImage}
-                resizeMode="contain"
-              />
-            </Animated.View>
-            <Animated.Text
-              style={[
-                styles.introText,
-                { opacity: introTextOpacity },
-              ]}
-            >
-              RIZZGOAT
-            </Animated.Text>
-          </View>
-          
-          {/* Explosion Particles */}
-          {explosionParticles.map((particle, index) => (
-            <Animated.View
-              key={`explosion-${index}`}
-              style={[
-                styles.explosionParticle,
-                {
-                  opacity: particle.opacity,
-                  transform: [
-                    { translateX: particle.translateX },
-                    { translateY: particle.translateY },
-                    { scale: particle.scale },
-                    {
-                      rotate: particle.rotate.interpolate({
-                        inputRange: [-2, 2],
-                        outputRange: ['-720deg', '720deg'],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
-              <View style={styles.explosionDot} />
-            </Animated.View>
-          ))}
-        </View>
-      )}
+      {/* Animated Background */}
+      <Animated.View 
+        style={[
+          StyleSheet.absoluteFillObject,
+          {
+            transform: [
+              { scale: bgPulse },
+              {
+                rotate: bgGradientRotate.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: ['0deg', '360deg'],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <LinearGradient
+          colors={["#000000", "#1a0000", "#000000"]}
+          style={StyleSheet.absoluteFillObject}
+          locations={[0, 0.5, 1]}
+        />
+      </Animated.View>
       
-      {/* Dynamic Background */}
-      {!showIntro && (
-        <Animated.View 
-          style={[
-            StyleSheet.absoluteFillObject, 
-            { 
-              transform: [
-                { scale: backgroundScale },
-                {
-                  rotate: backgroundRotate.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: ['0deg', '45deg'],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={currentStep >= 0 && currentStepData ? currentStepData.gradient as [string, string] : ["#000000", "#1a0000"]}
-            style={StyleSheet.absoluteFillObject}
-            locations={[0, 1]}
-          />
-        </Animated.View>
-      )}
-      
-      {/* Energy Particles */}
-      {currentStep >= 0 && energyParticles.map((particle, index) => (
+      {/* Ember Particles */}
+      {emberParticles.map((particle, index) => (
         <Animated.View
-          key={`energy-${index}`}
+          key={`ember-${index}`}
           style={[
-            styles.energyParticle,
+            styles.emberParticle,
             {
               opacity: particle.opacity,
               transform: [
@@ -778,143 +623,250 @@ export default function OnboardingScreen() {
             },
           ]}
         >
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
-            style={styles.energyParticleImage}
-            resizeMode="contain"
-          />
+          <View style={styles.emberDot} />
         </Animated.View>
       ))}
       
-      <SafeAreaView style={styles.safeArea}>
-        {/* Animation Steps */}
-        {currentStep >= 0 && currentStepData && (
-          <Animated.View
-            style={[
-              styles.stepContainer,
-              {
-                opacity: fadeAnim,
-                transform: [
-                  { scale: scaleAnim },
-                  { translateY: slideAnim },
-                  {
-                    rotate: rotateAnim.interpolate({
-                      inputRange: [-0.5, 0, 0.5],
-                      outputRange: ['-15deg', '0deg', '15deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <Animated.View 
-              style={[
-                styles.iconContainer,
-                {
-                  transform: [
-                    { scale: stepIconScale },
-                    {
-                      rotate: stepIconRotate.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: ['0deg', '360deg'],
-                      }),
-                    },
-                  ],
-                },
-              ]}
-            >
+      {/* Main Intro Content */}
+      {!showQuestionnaire && (
+        <Animated.View style={[styles.introContent, { opacity: masterOpacity }]}>
+          {/* Logo Reveal Phase */}
+          {(currentPhase === 'logo-reveal' || currentPhase === 'finale') && (
+            <View style={styles.centerContent}>
+              {/* Glowing Streaks */}
               <Animated.View
                 style={[
-                  styles.iconGlow,
+                  styles.streak,
+                  styles.streak1,
                   {
-                    opacity: stepIconGlow,
-                    transform: [{ scale: stepIconGlow }],
-                  },
-                ]}
-              />
-              <Image 
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
-                style={styles.stepGoatIcon}
-                resizeMode="contain"
-              />
-            </Animated.View>
-            <Text style={styles.stepTitle}>{currentStepData.title}</Text>
-            <Text style={styles.stepSubtitle}>{currentStepData.subtitle}</Text>
-            <Text style={styles.stepDescription}>{currentStepData.description}</Text>
-          </Animated.View>
-        )}
-        
-        {/* RizzGoat Branding */}
-        {currentStep === -1 && !showQuestionnaire && (
-          <Animated.View
-            style={[
-              styles.brandingContainer,
-              {
-                opacity: logoOpacity,
-                transform: [
-                  { scale: logoScale },
-                  {
-                    rotate: logoRotate.interpolate({
-                      inputRange: [0, 2],
-                      outputRange: ['0deg', '720deg'],
-                    }),
-                  },
-                ],
-              },
-            ]}
-          >
-            <Animated.View 
-              style={[
-                styles.logoContainer,
-                {
-                  transform: [{ scale: logoPulse }],
-                },
-              ]}
-            >
-              <Animated.View
-                style={[
-                  styles.logoGlowEffect,
-                  {
-                    opacity: logoGlow,
+                    opacity: streak1,
                     transform: [
-                      { 
-                        scale: logoGlow.interpolate({
-                          inputRange: [0, 1, 1.5],
-                          outputRange: [1, 1.5, 2],
+                      {
+                        translateX: streak1.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [-200, 0],
                         }),
                       },
                     ],
                   },
                 ]}
               />
-              <Image 
-                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
-                style={styles.logoImage}
-                resizeMode="contain"
+              <Animated.View
+                style={[
+                  styles.streak,
+                  styles.streak2,
+                  {
+                    opacity: streak2,
+                    transform: [
+                      {
+                        translateX: streak2.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [200, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
               />
-            </Animated.View>
-            <View style={styles.brandingTextContainer}>
-              <Text style={styles.brandingText}>RizzGoat</Text>
-              <Text style={styles.brandingSubtext}>Master Your Game</Text>
+              <Animated.View
+                style={[
+                  styles.streak,
+                  styles.streak3,
+                  {
+                    opacity: streak3,
+                    transform: [
+                      {
+                        translateY: streak3.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: [200, 0],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              />
+              
+              {/* Goat Logo */}
+              <Animated.View
+                style={[
+                  styles.logoContainer,
+                  {
+                    opacity: logoOpacity,
+                    transform: [
+                      { scale: logoScale },
+                      {
+                        rotate: logoRotate.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
+                    ],
+                  },
+                ]}
+              >
+                <Animated.View
+                  style={[
+                    styles.logoGlow,
+                    {
+                      opacity: logoGlow,
+                      transform: [{ scale: logoGlow }],
+                    },
+                  ]}
+                />
+                <Image
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+                  style={styles.goatIcon}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+              
+              {/* RizzGoat Text */}
+              <Animated.Text
+                style={[
+                  styles.logoText,
+                  {
+                    opacity: logoTextOpacity,
+                    transform: [
+                      { scale: logoTextScale },
+                      { translateY: logoTextSlide },
+                    ],
+                  },
+                ]}
+              >
+                RIZZGOAT
+              </Animated.Text>
             </View>
-          </Animated.View>
-        )}
-        
-        {/* Questionnaire */}
-        {showQuestionnaire && (
+          )}
+          
+          {/* Purpose Showcase Phase */}
+          {currentPhase === 'purpose' && (
+            <Animated.View
+              style={[
+                styles.purposeContainer,
+                {
+                  opacity: purposeOpacity,
+                  transform: [{ scale: purposeScale }],
+                },
+              ]}
+            >
+              <View style={styles.iconsRow}>
+                <Animated.View style={[styles.iconWrapper, { transform: [{ scale: heartScale }] }]}>
+                  <Heart size={50} color="#E3222B" fill="#E3222B" />
+                </Animated.View>
+                <Animated.View style={[styles.iconWrapper, { transform: [{ scale: messageScale }] }]}>
+                  <MessageCircle size={50} color="#FF6B6B" fill="#FF6B6B" />
+                </Animated.View>
+                <Animated.View style={[styles.iconWrapper, { transform: [{ scale: sparkleScale }] }]}>
+                  <Sparkles size={50} color="#FFD700" fill="#FFD700" />
+                </Animated.View>
+              </View>
+              <Animated.View style={{ opacity: purposeTextOpacity }}>
+                <Text style={styles.purposeTitle}>AI-POWERED DATING</Text>
+                <Text style={styles.purposeSubtitle}>Level up your game with intelligent conversation</Text>
+              </Animated.View>
+            </Animated.View>
+          )}
+          
+          {/* Features Phase */}
+          {currentPhase === 'features' && (
+            <Animated.View
+              style={[
+                styles.featuresContainer,
+                { opacity: featuresOpacity },
+              ]}
+            >
+              <Animated.View
+                style={[
+                  styles.featureCard,
+                  { transform: [{ translateX: feature1Slide }] },
+                ]}
+              >
+                <Zap size={40} color="#E3222B" />
+                <Text style={styles.featureTitle}>INSTANT RIZZ</Text>
+                <Text style={styles.featureText}>Generate perfect responses in seconds</Text>
+              </Animated.View>
+              
+              <Animated.View
+                style={[
+                  styles.featureCard,
+                  { transform: [{ translateX: feature2Slide }] },
+                ]}
+              >
+                <Flame size={40} color="#FF6B6B" />
+                <Text style={styles.featureTitle}>HOT OPENERS</Text>
+                <Text style={styles.featureText}>Break the ice with confidence</Text>
+              </Animated.View>
+              
+              <Animated.View
+                style={[
+                  styles.featureCard,
+                  { transform: [{ translateX: feature3Slide }] },
+                ]}
+              >
+                <Crown size={40} color="#FFD700" />
+                <Text style={styles.featureTitle}>ELITE STATUS</Text>
+                <Text style={styles.featureText}>Join the top 1% of daters</Text>
+              </Animated.View>
+            </Animated.View>
+          )}
+          
+          {/* Finale Phase */}
+          {currentPhase === 'finale' && (
+            <Animated.View
+              style={[
+                styles.finaleContainer,
+                {
+                  opacity: finaleOpacity,
+                  transform: [{ scale: Animated.multiply(finaleScale, finalePulse) }],
+                },
+              ]}
+            >
+              <TouchableOpacity
+                onPress={handleGetStarted}
+                activeOpacity={0.8}
+              >
+                <Animated.View
+                  style={[
+                    {
+                      opacity: buttonOpacity,
+                      transform: [{ scale: buttonScale }],
+                    },
+                  ]}
+                >
+                  <LinearGradient
+                    colors={["#E3222B", "#FF6B6B"]}
+                    style={styles.getStartedButton}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                  >
+                    <Animated.View
+                      style={[
+                        styles.buttonGlow,
+                        {
+                          opacity: buttonGlow,
+                          transform: [{ scale: buttonGlow }],
+                        },
+                      ]}
+                    />
+                    <Text style={styles.getStartedText}>GET STARTED</Text>
+                    <ArrowRight size={24} color="#FFFFFF" />
+                  </LinearGradient>
+                </Animated.View>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+        </Animated.View>
+      )}
+      
+      {/* Questionnaire */}
+      {showQuestionnaire && (
+        <SafeAreaView style={styles.safeArea}>
           <Animated.View
             style={[
               styles.questionnaireContainer,
               {
-                opacity: questionnaireAnim,
-                transform: [
-                  {
-                    translateY: questionnaireAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [50, 0],
-                    }),
-                  },
-                ],
+                opacity: questionnaireOpacity,
+                transform: [{ scale: questionnaireScale }],
               },
             ]}
           >
@@ -991,10 +943,8 @@ export default function OnboardingScreen() {
               </TouchableOpacity>
             )}
           </Animated.View>
-        )}
-        
-        {/* Bottom Goat Icon Animations */}
-        {showQuestionnaire && (
+          
+          {/* Bottom Goat Icon Animations */}
           <View style={styles.bottomGoatContainer}>
             {[0, 1, 2, 3, 4].map((index) => (
               <Animated.View
@@ -1017,8 +967,8 @@ export default function OnboardingScreen() {
               </Animated.View>
             ))}
           </View>
-        )}
-      </SafeAreaView>
+        </SafeAreaView>
+      )}
     </View>
   );
 }
@@ -1032,221 +982,185 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: 'transparent',
   },
-  stepContainer: {
-    alignItems: "center",
-    paddingHorizontal: 40,
-    backgroundColor: "rgba(0, 0, 0, 0.3)",
-    borderRadius: 25,
-    paddingVertical: 30,
-    marginHorizontal: 20,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-  iconContainer: {
-    marginBottom: 30,
-    shadowColor: "#E3222B",
-    shadowOffset: { width: 0, height: 15 },
-    shadowOpacity: 0.4,
-    shadowRadius: 25,
-    elevation: 15,
-  },
-  stepGoatIcon: {
-    width: 100,
-    height: 100,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 50,
-    padding: 10,
-  },
-  stepTitle: {
-    fontSize: 42,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    textAlign: "center",
-    letterSpacing: 2,
-    marginBottom: 5,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 15,
-    fontFamily: Platform.select({
-      ios: 'TTCommons-DemiBold',
-      android: 'TTCommons-DemiBold',
-      web: 'TT Commons Pro, system-ui, -apple-system, sans-serif',
-    }),
-  },
-  stepSubtitle: {
-    fontSize: 46,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    textAlign: "center",
-    letterSpacing: 3,
-    marginBottom: 15,
-    textShadowColor: "rgba(0,0,0,0.5)",
-    textShadowOffset: { width: 0, height: 3 },
-    textShadowRadius: 15,
-    fontFamily: Platform.select({
-      ios: 'TTCommons-DemiBold',
-      android: 'TTCommons-DemiBold',
-      web: 'TT Commons Pro, system-ui, -apple-system, sans-serif',
-    }),
-  },
-  stepDescription: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "rgba(255,255,255,0.9)",
-    textAlign: "center",
-    letterSpacing: 1,
-    textShadowColor: "rgba(0,0,0,0.3)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 5,
-  },
-  brandingContainer: {
-    alignItems: "center",
-  },
-  logoContainer: {
-    marginBottom: 25,
-    shadowColor: "#E3222B",
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.6,
-    shadowRadius: 40,
-    elevation: 20,
-  },
-  logoImage: {
-    width: 180,
-    height: 180,
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 90,
-    padding: 25,
-  },
-  brandingTextContainer: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    paddingHorizontal: 45,
-    paddingVertical: 20,
-    borderRadius: 30,
-    borderWidth: 3,
-    borderColor: "rgba(227, 34, 43, 0.6)",
-    alignItems: "center",
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 15,
-  },
-  brandingText: {
-    fontSize: 52,
-    fontWeight: "900",
-    color: "#E3222B",
-    letterSpacing: 4,
-    textAlign: "center",
-    marginBottom: 5,
-    textShadowColor: "rgba(0,0,0,0.3)",
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 10,
-    fontFamily: Platform.select({
-      ios: 'TTCommons-DemiBold',
-      android: 'TTCommons-DemiBold',
-      web: 'TT Commons Pro, system-ui, -apple-system, sans-serif',
-    }),
-  },
-  brandingSubtext: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "rgba(227, 34, 43, 0.8)",
-    letterSpacing: 2,
-    textAlign: "center",
-    textTransform: "uppercase",
-  },
-  introContainer: {
+  introContent: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
   },
-  introGoatContainer: {
+  centerContent: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  streak: {
+    position: "absolute",
+    width: 300,
+    height: 4,
+    backgroundColor: "#E3222B",
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 20,
+  },
+  streak1: {
+    top: -100,
+    transform: [{ rotate: '45deg' }],
+  },
+  streak2: {
+    top: 100,
+    transform: [{ rotate: '-45deg' }],
+  },
+  streak3: {
+    width: 4,
+    height: 300,
+  },
+  logoContainer: {
     width: 200,
     height: 200,
     justifyContent: "center",
     alignItems: "center",
   },
-  introGoatImage: {
+  logoGlow: {
+    position: "absolute",
+    width: 300,
+    height: 300,
+    backgroundColor: "#E3222B",
+    borderRadius: 150,
+    opacity: 0.3,
+  },
+  goatIcon: {
     width: 150,
     height: 150,
   },
-  introGlowEffect: {
-    position: "absolute",
-    width: 250,
-    height: 250,
-    backgroundColor: "#E3222B",
-    borderRadius: 125,
-    opacity: 0.3,
-  },
-  introText: {
-    fontSize: 48,
+  logoText: {
+    fontSize: 56,
     fontWeight: "900",
     color: "#FFFFFF",
-    letterSpacing: 5,
+    letterSpacing: 6,
     marginTop: 30,
     textShadowColor: "#E3222B",
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 20,
   },
-  explosionParticle: {
-    position: "absolute",
-    top: height / 2,
-    left: width / 2,
+  purposeContainer: {
+    alignItems: "center",
+    padding: 40,
   },
-  explosionDot: {
-    width: 8,
-    height: 8,
+  iconsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 40,
+    gap: 30,
+  },
+  iconWrapper: {
+    padding: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    borderRadius: 40,
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+  },
+  purposeTitle: {
+    fontSize: 32,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    textAlign: "center",
+    letterSpacing: 3,
+    marginBottom: 10,
+  },
+  purposeSubtitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "rgba(255, 255, 255, 0.8)",
+    textAlign: "center",
+  },
+  featuresContainer: {
+    padding: 30,
+    gap: 20,
+  },
+  featureCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderRadius: 20,
+    padding: 25,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: "rgba(227, 34, 43, 0.3)",
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 15,
+  },
+  featureTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    marginTop: 15,
+    marginBottom: 8,
+    letterSpacing: 2,
+  },
+  featureText: {
+    fontSize: 16,
+    fontWeight: "500",
+    color: "rgba(255, 255, 255, 0.7)",
+    textAlign: "center",
+  },
+  finaleContainer: {
+    position: "absolute",
+    bottom: 100,
+  },
+  getStartedButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 50,
+    paddingVertical: 20,
+    borderRadius: 35,
+    gap: 15,
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 25,
+    elevation: 10,
+  },
+  buttonGlow: {
+    position: "absolute",
+    top: -20,
+    left: -20,
+    right: -20,
+    bottom: -20,
     backgroundColor: "#E3222B",
-    borderRadius: 4,
+    borderRadius: 45,
+    opacity: 0.2,
+  },
+  getStartedText: {
+    fontSize: 20,
+    fontWeight: "900",
+    color: "#FFFFFF",
+    letterSpacing: 2,
+  },
+  emberParticle: {
+    position: "absolute",
+  },
+  emberDot: {
+    width: 6,
+    height: 6,
+    backgroundColor: "#E3222B",
+    borderRadius: 3,
     shadowColor: "#E3222B",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 10,
-  },
-  energyParticle: {
-    position: "absolute",
-    top: height / 2,
-    left: width / 2,
-  },
-  energyParticleImage: {
-    width: 20,
-    height: 20,
-    opacity: 0.8,
-  },
-  iconGlow: {
-    position: "absolute",
-    width: 150,
-    height: 150,
-    backgroundColor: "#E3222B",
-    borderRadius: 75,
-    opacity: 0.2,
-  },
-  logoGlowEffect: {
-    position: "absolute",
-    width: 250,
-    height: 250,
-    backgroundColor: "#E3222B",
-    borderRadius: 125,
-    opacity: 0.2,
+    shadowRadius: 8,
   },
   questionnaireContainer: {
     width: "100%",
+    maxWidth: 400,
     paddingHorizontal: 30,
     alignItems: "center",
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
     borderRadius: 25,
-    paddingVertical: 30,
-    marginHorizontal: 20,
-    shadowColor: "#000000",
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 15,
+    paddingVertical: 40,
+    borderWidth: 1,
+    borderColor: "rgba(227, 34, 43, 0.2)",
   },
   questionnaireTitle: {
     fontSize: 28,
@@ -1268,9 +1182,6 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textAlign: "center",
     marginBottom: 20,
-    textShadowColor: "rgba(0,0,0,0.3)",
-    textShadowOffset: { width: 0, height: 1 },
-    textShadowRadius: 5,
   },
   optionsContainer: {
     flexDirection: "row",
@@ -1282,14 +1193,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 25,
-    backgroundColor: "rgba(255,255,255,0.2)",
+    backgroundColor: "rgba(255,255,255,0.1)",
     borderWidth: 2,
-    borderColor: "rgba(255,255,255,0.3)",
+    borderColor: "rgba(255,255,255,0.2)",
     minWidth: 100,
   },
   optionButtonSelected: {
-    backgroundColor: "rgba(255,255,255,0.3)",
-    borderColor: "#FFFFFF",
+    backgroundColor: "rgba(227, 34, 43, 0.3)",
+    borderColor: "#E3222B",
   },
   optionText: {
     fontSize: 16,
