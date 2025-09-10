@@ -1081,7 +1081,7 @@ const styles = StyleSheet.create({
   },
   logoTextContainer: {
     position: "absolute",
-    bottom: -45,
+    bottom: -65,
     alignItems: "center",
     justifyContent: "center",
   },
