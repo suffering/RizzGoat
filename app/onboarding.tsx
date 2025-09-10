@@ -1069,25 +1069,25 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
   },
   logoContainer: {
-    width: 200,
-    height: 200,
+    width: 160,
+    height: 160,
     justifyContent: "center",
     alignItems: "center",
   },
 
   goatIcon: {
-    width: 150,
-    height: 150,
+    width: 120,
+    height: 120,
   },
   logoTextContainer: {
     position: "absolute",
-    bottom: -60,
+    bottom: -45,
     alignItems: "center",
     justifyContent: "center",
   },
   logoText: {
-    width: 300,
-    height: 80,
+    width: 200,
+    height: 50,
   },
   purposeContainer: {
     alignItems: "center",
