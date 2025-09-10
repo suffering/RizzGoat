@@ -668,23 +668,7 @@ export default function OnboardingScreen() {
                   },
                 ]}
               />
-              <Animated.View
-                style={[
-                  styles.streak,
-                  styles.streak3,
-                  {
-                    opacity: streak3,
-                    transform: [
-                      {
-                        translateY: streak3.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [200, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
+
               
               {/* Goat Logo */}
               <Animated.View
@@ -1010,10 +994,7 @@ const styles = StyleSheet.create({
     top: 100,
     transform: [{ rotate: '-45deg' }],
   },
-  streak3: {
-    width: 4,
-    height: 300,
-  },
+
   logoContainer: {
     width: 200,
     height: 200,
