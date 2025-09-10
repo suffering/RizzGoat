@@ -1088,8 +1088,8 @@ const styles = StyleSheet.create({
   },
 
   goatIcon: {
-    width: 120,
-    height: 120,
+    width: 160,
+    height: 160,
   },
   logoTextContainer: {
     position: "absolute",
@@ -1098,8 +1098,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logoText: {
-    width: 560,
-    height: 140,
+    width: 700,
+    height: 175,
   },
   purposeContainer: {
     alignItems: "center",
