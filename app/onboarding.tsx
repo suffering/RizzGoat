@@ -421,7 +421,7 @@ export default function OnboardingScreen() {
         ]).start();
       });
       
-      setTimeout(callback, 800);
+      setTimeout(callback, 1800);
     });
   };
 
@@ -1076,8 +1076,8 @@ const styles = StyleSheet.create({
   },
 
   goatIcon: {
-    width: 90,
-    height: 90,
+    width: 120,
+    height: 120,
   },
   logoTextContainer: {
     position: "absolute",
@@ -1086,8 +1086,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   logoText: {
-    width: 420,
-    height: 105,
+    width: 560,
+    height: 140,
   },
   purposeContainer: {
     alignItems: "center",
