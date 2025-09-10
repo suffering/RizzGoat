@@ -580,7 +580,18 @@ export default function OnboardingScreen() {
           useNativeDriver: true,
         }),
         Animated.spring(logoScale, {
-          toValue: 1.5,
+          toValue: 1.3,
+          friction: 4,
+          tension: 60,
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoTextOpacity, {
+          toValue: 1,
+          duration: 800,
+          useNativeDriver: true,
+        }),
+        Animated.spring(logoTextScale, {
+          toValue: 1.4,
           friction: 4,
           tension: 60,
           useNativeDriver: true,
@@ -1081,7 +1092,7 @@ const styles = StyleSheet.create({
   },
   logoTextContainer: {
     position: "absolute",
-    bottom: -65,
+    bottom: -75,
     alignItems: "center",
     justifyContent: "center",
   },
