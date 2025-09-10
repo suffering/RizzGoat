@@ -1134,12 +1134,22 @@ const styles = StyleSheet.create({
     textAlign: "center",
     letterSpacing: 3,
     marginBottom: 10,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   purposeSubtitle: {
     fontSize: 18,
     fontWeight: "600",
     color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   featuresContainer: {
     padding: 30,
@@ -1164,12 +1174,22 @@ const styles = StyleSheet.create({
     marginTop: 15,
     marginBottom: 8,
     letterSpacing: 2,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   featureText: {
     fontSize: 16,
     fontWeight: "500",
     color: "rgba(255, 255, 255, 0.7)",
     textAlign: "center",
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   finaleContainer: {
     position: "absolute",
@@ -1203,6 +1223,11 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#FFFFFF",
     letterSpacing: 2,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   emberParticle: {
     position: "absolute",
@@ -1237,6 +1262,11 @@ const styles = StyleSheet.create({
     textShadowColor: "rgba(0,0,0,0.3)",
     textShadowOffset: { width: 0, height: 2 },
     textShadowRadius: 10,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   questionSection: {
     width: "100%",
@@ -1248,6 +1278,11 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     textAlign: "center",
     marginBottom: 20,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   optionsContainer: {
     flexDirection: "row",
@@ -1273,6 +1308,11 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     color: "rgba(255,255,255,0.8)",
     textAlign: "center",
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   optionTextSelected: {
     color: "#FFFFFF",
@@ -1299,6 +1339,11 @@ const styles = StyleSheet.create({
     fontWeight: "800",
     color: "#FFFFFF",
     letterSpacing: 1,
+    fontFamily: Platform.select({
+      ios: 'TT Commons Pro',
+      android: 'TT Commons Pro',
+      web: 'TT Commons Pro, Arial, sans-serif',
+    }),
   },
   bottomGoatContainer: {
     position: "absolute",
