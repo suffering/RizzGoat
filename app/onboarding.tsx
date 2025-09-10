@@ -1292,8 +1292,10 @@ const styles = StyleSheet.create({
   profileDemoContainer: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
+    justifyContent: "flex-start",
     paddingHorizontal: 20,
+    paddingTop: 60,
+    paddingBottom: 40,
   },
   typingContainer: {
     height: 60,
@@ -1318,8 +1320,8 @@ const styles = StyleSheet.create({
     fontWeight: "300",
   },
   profileCard: {
-    width: screenWidth * 0.85,
-    maxWidth: 350,
+    width: screenWidth * 0.7,
+    maxWidth: 280,
     aspectRatio: 0.75,
     borderRadius: 20,
     overflow: "hidden",
@@ -1328,7 +1330,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
-    marginBottom: 30,
+    marginBottom: 20,
   },
   profileCardImage: {
     width: "100%",
@@ -1338,6 +1340,9 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 300,
     gap: 12,
+    paddingBottom: 60,
+    flex: 1,
+    justifyContent: "flex-start",
   },
   replyBubble: {
     backgroundColor: "#007AFF",
