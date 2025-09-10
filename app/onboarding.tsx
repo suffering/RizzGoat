@@ -13,7 +13,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRight, Heart, MessageCircle, Sparkles, Zap, Flame, Crown } from "lucide-react-native";
+import { ArrowRight, Heart, MessageCircle, Sparkles } from "lucide-react-native";
 import { useAppState } from "@/providers/AppStateProvider";
 import * as Haptics from "expo-haptics";
 
@@ -21,7 +21,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get("window");
 
 export default function OnboardingScreen() {
   const { completeOnboarding } = useAppState();
-  const [currentPhase, setCurrentPhase] = useState<'logo-reveal' | 'purpose' | 'features' | 'finale' | 'questionnaire'>('logo-reveal');
+  const [currentPhase, setCurrentPhase] = useState<'logo-reveal' | 'purpose' | 'profile-demo' | 'finale' | 'questionnaire'>('logo-reveal');
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
   const [selectedSex, setSelectedSex] = useState<'male' | 'female' | 'other' | null>(null);
   const [selectedAge, setSelectedAge] = useState<'18-24' | '25-34' | '35-44' | '45+' | null>(null);
@@ -32,11 +32,9 @@ export default function OnboardingScreen() {
   // Logo Reveal Phase Animations
   const logoOpacity = useRef(new Animated.Value(0)).current;
   const logoScale = useRef(new Animated.Value(0)).current;
-  const logoRotate = useRef(new Animated.Value(0)).current;
   const logoGlow = useRef(new Animated.Value(0)).current;
   const logoTextOpacity = useRef(new Animated.Value(0)).current;
   const logoTextScale = useRef(new Animated.Value(0.5)).current;
-  const logoTextSlide = useRef(new Animated.Value(50)).current;
   
   // Slapping animation values
   const logoSlapX = useRef(new Animated.Value(-screenWidth)).current;
@@ -63,11 +61,24 @@ export default function OnboardingScreen() {
   const sparkleScale = useRef(new Animated.Value(0)).current;
   const purposeTextOpacity = useRef(new Animated.Value(0)).current;
   
-  // Features Phase Animations
-  const featuresOpacity = useRef(new Animated.Value(0)).current;
-  const feature1Slide = useRef(new Animated.Value(-screenWidth)).current;
-  const feature2Slide = useRef(new Animated.Value(screenWidth)).current;
-  const feature3Slide = useRef(new Animated.Value(-screenWidth)).current;
+  // Profile Demo Phase Animations
+  const profileDemoOpacity = useRef(new Animated.Value(0)).current;
+  const profileCardScale = useRef(new Animated.Value(0.8)).current;
+  const profileCardOpacity = useRef(new Animated.Value(0)).current;
+  
+  // Typing animations
+  const typingText1Opacity = useRef(new Animated.Value(0)).current;
+  const typingText2Opacity = useRef(new Animated.Value(0)).current;
+  const [displayText1, setDisplayText1] = useState('');
+  const [displayText2, setDisplayText2] = useState('');
+  const [showReplies, setShowReplies] = useState(false);
+  
+  // Reply bubbles animations
+  const replyBubbles = useRef(Array.from({ length: 5 }, () => ({
+    opacity: new Animated.Value(0),
+    translateY: new Animated.Value(30),
+    scale: new Animated.Value(0.8),
+  }))).current;
   
   // Finale Phase Animations
   const finaleOpacity = useRef(new Animated.Value(0)).current;
@@ -179,8 +190,8 @@ export default function OnboardingScreen() {
     logoRevealAnimation(() => {
       // Phase 2: Purpose Showcase (4 seconds)
       purposeShowcaseAnimation(() => {
-        // Phase 3: Features (3.5 seconds)
-        featuresAnimation(() => {
+        // Phase 3: Profile Demo (6 seconds)
+        profileDemoAnimation(() => {
           // Phase 4: Finale (2.5 seconds)
           finaleAnimation();
         });
@@ -507,8 +518,34 @@ export default function OnboardingScreen() {
     });
   };
 
-  const featuresAnimation = (callback: () => void) => {
-    setCurrentPhase('features');
+  const typeText = (text: string, setter: (text: string) => void, callback?: () => void) => {
+    let currentIndex = 0;
+    const interval = setInterval(() => {
+      if (currentIndex <= text.length) {
+        setter(text.substring(0, currentIndex));
+        currentIndex++;
+      } else {
+        clearInterval(interval);
+        if (callback) callback();
+      }
+    }, 50);
+  };
+  
+  const eraseText = (setter: (text: string) => void, currentText: string, callback?: () => void) => {
+    let currentIndex = currentText.length;
+    const interval = setInterval(() => {
+      if (currentIndex >= 0) {
+        setter(currentText.substring(0, currentIndex));
+        currentIndex--;
+      } else {
+        clearInterval(interval);
+        if (callback) callback();
+      }
+    }, 30);
+  };
+
+  const profileDemoAnimation = (callback: () => void) => {
+    setCurrentPhase('profile-demo');
     
     // Fade out purpose
     Animated.timing(purposeOpacity, {
@@ -517,43 +554,104 @@ export default function OnboardingScreen() {
       useNativeDriver: true,
     }).start();
     
-    // Show features with slide animations
+    // Show profile demo
     Animated.sequence([
-      Animated.timing(featuresOpacity, {
+      // Show container
+      Animated.timing(profileDemoOpacity, {
         toValue: 1,
         duration: 500,
         useNativeDriver: true,
       }),
-      Animated.stagger(300, [
-        Animated.spring(feature1Slide, {
-          toValue: 0,
-          friction: 6,
-          tension: 80,
+      // Show profile card
+      Animated.parallel([
+        Animated.timing(profileCardOpacity, {
+          toValue: 1,
+          duration: 600,
           useNativeDriver: true,
         }),
-        Animated.spring(feature2Slide, {
-          toValue: 0,
-          friction: 6,
-          tension: 80,
-          useNativeDriver: true,
-        }),
-        Animated.spring(feature3Slide, {
-          toValue: 0,
+        Animated.spring(profileCardScale, {
+          toValue: 1,
           friction: 6,
           tension: 80,
           useNativeDriver: true,
         }),
       ]),
+      // Show first typing text
+      Animated.timing(typingText1Opacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }),
     ]).start(() => {
-      setTimeout(callback, 1500);
+      // Start typing animation
+      typeText('Upload a chat or bio', setDisplayText1, () => {
+        setTimeout(() => {
+          // Erase first text
+          eraseText(setDisplayText1, 'Upload a chat or bio', () => {
+            // Show second text
+            Animated.timing(typingText2Opacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }).start(() => {
+              typeText('Get instant replies', setDisplayText2, () => {
+                setTimeout(() => {
+                  // Fade out typing texts and show replies
+                  Animated.parallel([
+                    Animated.timing(typingText1Opacity, {
+                      toValue: 0,
+                      duration: 300,
+                      useNativeDriver: true,
+                    }),
+                    Animated.timing(typingText2Opacity, {
+                      toValue: 0,
+                      duration: 300,
+                      useNativeDriver: true,
+                    }),
+                  ]).start(() => {
+                    setShowReplies(true);
+                    // Animate reply bubbles
+                    replyBubbles.forEach((bubble, index) => {
+                      Animated.sequence([
+                        Animated.delay(index * 400),
+                        Animated.parallel([
+                          Animated.timing(bubble.opacity, {
+                            toValue: 1,
+                            duration: 400,
+                            useNativeDriver: true,
+                          }),
+                          Animated.spring(bubble.translateY, {
+                            toValue: 0,
+                            friction: 6,
+                            tension: 80,
+                            useNativeDriver: true,
+                          }),
+                          Animated.spring(bubble.scale, {
+                            toValue: 1,
+                            friction: 6,
+                            tension: 80,
+                            useNativeDriver: true,
+                          }),
+                        ]),
+                      ]).start();
+                    });
+                    
+                    setTimeout(callback, 3000);
+                  });
+                }, 1000);
+              });
+            });
+          });
+        }, 1500);
+      });
     });
   };
 
   const finaleAnimation = () => {
     setCurrentPhase('finale');
     
-    // Fade out features
-    Animated.timing(featuresOpacity, {
+    // Fade out profile demo
+    Animated.timing(profileDemoOpacity, {
       toValue: 0,
       duration: 500,
       useNativeDriver: true,
@@ -830,53 +928,96 @@ export default function OnboardingScreen() {
                   <Sparkles size={50} color="#FFD700" fill="#FFD700" />
                 </Animated.View>
               </View>
-              <Animated.View style={{ opacity: purposeTextOpacity }}>
+              <Animated.View style={[styles.purposeTextContainer, { opacity: purposeTextOpacity }]}>
                 <Text style={styles.purposeTitle}>AI-POWERED DATING</Text>
                 <Text style={styles.purposeSubtitle}>Level up your game with intelligent conversation</Text>
               </Animated.View>
             </Animated.View>
           )}
           
-          {/* Features Phase */}
-          {currentPhase === 'features' && (
+          {/* Profile Demo Phase */}
+          {currentPhase === 'profile-demo' && (
             <Animated.View
               style={[
-                styles.featuresContainer,
-                { opacity: featuresOpacity },
+                styles.profileDemoContainer,
+                { opacity: profileDemoOpacity },
               ]}
             >
+              {/* Typing Text Above Card */}
+              <View style={styles.typingContainer}>
+                <Animated.Text
+                  style={[
+                    styles.typingText,
+                    { opacity: typingText1Opacity },
+                  ]}
+                >
+                  <Text>
+                    {displayText1}
+                    {displayText1.length > 0 && displayText1.length < 'Upload a chat or bio'.length && (
+                      <Text style={styles.cursor}>|</Text>
+                    )}
+                  </Text>
+                </Animated.Text>
+                <Animated.Text
+                  style={[
+                    styles.typingText,
+                    { opacity: typingText2Opacity },
+                  ]}
+                >
+                  <Text>
+                    {displayText2}
+                    {displayText2.length > 0 && displayText2.length < 'Get instant replies'.length && (
+                      <Text style={styles.cursor}>|</Text>
+                    )}
+                  </Text>
+                </Animated.Text>
+              </View>
+              
+              {/* Dating Profile Card */}
               <Animated.View
                 style={[
-                  styles.featureCard,
-                  { transform: [{ translateX: feature1Slide }] },
+                  styles.profileCard,
+                  {
+                    opacity: profileCardOpacity,
+                    transform: [{ scale: profileCardScale }],
+                  },
                 ]}
               >
-                <Zap size={40} color="#E3222B" />
-                <Text style={styles.featureTitle}>INSTANT RIZZ</Text>
-                <Text style={styles.featureText}>Generate perfect responses in seconds</Text>
+                <Image
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/dhgspy1tcrjketv3h7yg1' }}
+                  style={styles.profileCardImage}
+                  resizeMode="cover"
+                />
               </Animated.View>
               
-              <Animated.View
-                style={[
-                  styles.featureCard,
-                  { transform: [{ translateX: feature2Slide }] },
-                ]}
-              >
-                <Flame size={40} color="#FF6B6B" />
-                <Text style={styles.featureTitle}>HOT OPENERS</Text>
-                <Text style={styles.featureText}>Break the ice with confidence</Text>
-              </Animated.View>
-              
-              <Animated.View
-                style={[
-                  styles.featureCard,
-                  { transform: [{ translateX: feature3Slide }] },
-                ]}
-              >
-                <Crown size={40} color="#FFD700" />
-                <Text style={styles.featureTitle}>ELITE STATUS</Text>
-                <Text style={styles.featureText}>Join the top 1% of daters</Text>
-              </Animated.View>
+              {/* Reply Bubbles */}
+              {showReplies && (
+                <View style={styles.repliesContainer}>
+                  {[
+                    "Are you a magician? Because you just turned this swipe into my favorite trick.",
+                    "I was today years old when I realized my type is exactly you 😉",
+                    "So... when do we tell people we met on here, or do we keep it our little secret?",
+                    "Warning: I might just be the reason you delete this app.",
+                    "Are you free this week, or should I schedule my daydreams around you?"
+                  ].map((reply, replyIndex) => (
+                    <Animated.View
+                      key={`reply-${replyIndex}`}
+                      style={[
+                        styles.replyBubble,
+                        {
+                          opacity: replyBubbles[replyIndex].opacity,
+                          transform: [
+                            { translateY: replyBubbles[replyIndex].translateY },
+                            { scale: replyBubbles[replyIndex].scale },
+                          ],
+                        },
+                      ]}
+                    >
+                      <Text style={styles.replyText}>{reply}</Text>
+                    </Animated.View>
+                  ))}
+                </View>
+              )}
             </Animated.View>
           )}
           
@@ -940,11 +1081,11 @@ export default function OnboardingScreen() {
               },
             ]}
           >
-            <Text style={styles.questionnaireTitle}>Let's personalize your experience</Text>
+            <Text style={styles.questionnaireTitle}>Let&apos;s personalize your experience</Text>
             
             {/* Sex Selection */}
             <View style={styles.questionSection}>
-              <Text style={styles.questionText}>What's your sex?</Text>
+              <Text style={styles.questionText}>What&apos;s your sex?</Text>
               <View style={styles.optionsContainer}>
                 {(['male', 'female', 'other'] as const).map((sex) => (
                   <TouchableOpacity
@@ -970,7 +1111,7 @@ export default function OnboardingScreen() {
             
             {/* Age Selection */}
             <View style={styles.questionSection}>
-              <Text style={styles.questionText}>What's your age range?</Text>
+              <Text style={styles.questionText}>What&apos;s your age range?</Text>
               <View style={styles.optionsContainer}>
                 {(['18-24', '25-34', '35-44', '45+'] as const).map((age) => (
                   <TouchableOpacity
@@ -1007,7 +1148,7 @@ export default function OnboardingScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.continueButtonText}>Let's Go!</Text>
+                  <Text style={styles.continueButtonText}>Let&apos;s Go!</Text>
                   <ArrowRight size={20} color="#FFFFFF" />
                 </LinearGradient>
               </TouchableOpacity>
@@ -1148,36 +1289,74 @@ const styles = StyleSheet.create({
     padding: 30,
     gap: 20,
   },
-  featureCard: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderRadius: 20,
-    padding: 25,
+  profileDemoContainer: {
+    flex: 1,
     alignItems: "center",
-    borderWidth: 1,
-    borderColor: "rgba(227, 34, 43, 0.3)",
-    shadowColor: "#E3222B",
-    shadowOffset: { width: 0, height: 5 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
+    justifyContent: "center",
+    paddingHorizontal: 20,
   },
-  featureTitle: {
+  typingContainer: {
+    height: 60,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 30,
+  },
+  typingText: {
     fontSize: 24,
-    fontWeight: "800",
+    fontWeight: "700",
     color: "#FFFFFF",
-    marginTop: 15,
-    marginBottom: 8,
-    letterSpacing: 2,
+    textAlign: "center",
     fontFamily: Platform.select({
       ios: 'TT Commons Pro',
       android: 'TT Commons Pro',
       web: 'TT Commons Pro, Arial, sans-serif',
     }),
   },
-  featureText: {
+  cursor: {
+    color: "#E3222B",
+    fontSize: 24,
+    fontWeight: "300",
+  },
+  profileCard: {
+    width: screenWidth * 0.85,
+    maxWidth: 350,
+    aspectRatio: 0.75,
+    borderRadius: 20,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    marginBottom: 30,
+  },
+  profileCardImage: {
+    width: "100%",
+    height: "100%",
+  },
+  repliesContainer: {
+    width: "100%",
+    maxWidth: 300,
+    gap: 12,
+  },
+  replyBubble: {
+    backgroundColor: "#007AFF",
+    borderRadius: 18,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    alignSelf: "flex-end",
+    maxWidth: "85%",
+    shadowColor: "#007AFF",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  replyText: {
     fontSize: 16,
     fontWeight: "500",
-    color: "rgba(255, 255, 255, 0.7)",
-    textAlign: "center",
+    color: "#FFFFFF",
+    lineHeight: 20,
     fontFamily: Platform.select({
       ios: 'TT Commons Pro',
       android: 'TT Commons Pro',
@@ -1355,5 +1534,8 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     opacity: 0.8,
+  },
+  purposeTextContainer: {
+    alignItems: "center",
   },
 });
