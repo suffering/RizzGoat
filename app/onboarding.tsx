@@ -762,33 +762,19 @@ export default function OnboardingScreen() {
                   },
                 ]}
               >
-                <Animated.View
-                  style={[
-                    styles.logoGlow,
-                    {
-                      opacity: logoGlow,
-                      transform: [{ scale: logoGlow }],
-                    },
-                  ]}
-                />
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/l6m65ldv3proi19kao2wp' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ay01pgwiacxn125yge777' }}
                   style={styles.goatIcon}
                   resizeMode="contain"
                 />
               </Animated.View>
               
               {/* RizzGoat Text */}
-              <Animated.Text
+              <Animated.View
                 style={[
-                  styles.logoText,
+                  styles.logoTextContainer,
                   {
                     opacity: logoTextOpacity,
-                    fontFamily: Platform.select({
-                      ios: 'TT Commons Pro',
-                      android: 'TT Commons Pro',
-                      web: 'TT Commons Pro, Arial, sans-serif',
-                    }),
                     transform: [
                       { translateX: textSlapX },
                       { scale: Animated.multiply(logoTextScale, textImpactScale) },
@@ -802,8 +788,12 @@ export default function OnboardingScreen() {
                   },
                 ]}
               >
-                RizzGoat
-              </Animated.Text>
+                <Image
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/xycqmecdu06shvcjclqr4' }}
+                  style={styles.logoText}
+                  resizeMode="contain"
+                />
+              </Animated.View>
             </View>
           )}
           
@@ -1084,29 +1074,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  logoGlow: {
-    position: "absolute",
-    width: 300,
-    height: 300,
-    backgroundColor: "#E3222B",
-    borderRadius: 150,
-    opacity: 0.3,
-  },
+
   goatIcon: {
     width: 150,
     height: 150,
   },
-  logoText: {
-    fontSize: 56,
-    fontWeight: "900",
-    color: "#FFFFFF",
-    letterSpacing: 6,
-    marginTop: -20,
-    textShadowColor: "#E3222B",
-    textShadowOffset: { width: 0, height: 4 },
-    textShadowRadius: 20,
+  logoTextContainer: {
     position: "absolute",
-    bottom: -40,
+    bottom: -60,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  logoText: {
+    width: 300,
+    height: 80,
   },
   purposeContainer: {
     alignItems: "center",
