@@ -77,6 +77,15 @@ export default function OnboardingScreen() {
   const buttonScale = useRef(new Animated.Value(0.8)).current;
   const buttonGlow = useRef(new Animated.Value(0)).current;
   
+  // Finale particle animations
+  const finaleParticleAnimations = useRef(Array.from({ length: 12 }, () => ({
+    opacity: new Animated.Value(0),
+    scale: new Animated.Value(0),
+    translateX: new Animated.Value(0),
+    translateY: new Animated.Value(0),
+    rotate: new Animated.Value(0),
+  }))).current;
+  
   // Floating ember particles
   const emberParticles = useRef(Array.from({ length: 15 }, () => ({
     translateX: new Animated.Value(Math.random() * screenWidth),
@@ -617,6 +626,71 @@ export default function OnboardingScreen() {
         }),
       ]),
     ]).start(() => {
+      // Start finale particle animation
+      finaleParticleAnimations.forEach((particle, index) => {
+        const angle = (index / 12) * Math.PI * 2;
+        const radius = 200;
+        
+        // Reset particle position
+        particle.translateX.setValue(0);
+        particle.translateY.setValue(0);
+        particle.opacity.setValue(0);
+        particle.scale.setValue(0);
+        particle.rotate.setValue(0);
+        
+        Animated.loop(
+          Animated.sequence([
+            Animated.delay(index * 100),
+            Animated.parallel([
+              Animated.timing(particle.opacity, {
+                toValue: 0.8,
+                duration: 800,
+                useNativeDriver: true,
+              }),
+              Animated.spring(particle.scale, {
+                toValue: 1,
+                friction: 4,
+                tension: 100,
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.translateX, {
+                toValue: Math.cos(angle) * radius,
+                duration: 3000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.translateY, {
+                toValue: Math.sin(angle) * radius,
+                duration: 3000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.rotate, {
+                toValue: 1,
+                duration: 3000,
+                easing: Easing.linear,
+                useNativeDriver: true,
+              }),
+            ]),
+            Animated.parallel([
+              Animated.timing(particle.translateX, {
+                toValue: 0,
+                duration: 3000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+              Animated.timing(particle.translateY, {
+                toValue: 0,
+                duration: 3000,
+                easing: Easing.inOut(Easing.sin),
+                useNativeDriver: true,
+              }),
+            ]),
+          ]),
+          { iterations: -1 }
+        ).start();
+      });
+      
       // Continuous pulse
       Animated.loop(
         Animated.sequence([
@@ -882,48 +956,74 @@ export default function OnboardingScreen() {
           
           {/* Finale Phase */}
           {currentPhase === 'finale' && (
-            <Animated.View
-              style={[
-                styles.finaleContainer,
-                {
-                  opacity: finaleOpacity,
-                  transform: [{ scale: Animated.multiply(finaleScale, finalePulse) }],
-                },
-              ]}
-            >
-              <TouchableOpacity
-                onPress={handleGetStarted}
-                activeOpacity={0.8}
-              >
+            <View style={styles.centerContent}>
+              {/* Finale Particles */}
+              {finaleParticleAnimations.map((particle, index) => (
                 <Animated.View
+                  key={`finale-particle-${index}`}
                   style={[
+                    styles.finaleParticle,
                     {
-                      opacity: buttonOpacity,
-                      transform: [{ scale: buttonScale }],
+                      opacity: particle.opacity,
+                      transform: [
+                        { translateX: particle.translateX },
+                        { translateY: particle.translateY },
+                        { scale: particle.scale },
+                        {
+                          rotate: particle.rotate.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '360deg'],
+                          }),
+                        },
+                      ],
                     },
                   ]}
+                />
+              ))}
+              
+              <Animated.View
+                style={[
+                  styles.finaleContainer,
+                  {
+                    opacity: finaleOpacity,
+                    transform: [{ scale: Animated.multiply(finaleScale, finalePulse) }],
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  onPress={handleGetStarted}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={["#E3222B", "#FF6B6B"]}
-                    style={styles.getStartedButton}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
+                  <Animated.View
+                    style={[
+                      {
+                        opacity: buttonOpacity,
+                        transform: [{ scale: buttonScale }],
+                      },
+                    ]}
                   >
-                    <Animated.View
-                      style={[
-                        styles.buttonGlow,
-                        {
-                          opacity: buttonGlow,
-                          transform: [{ scale: buttonGlow }],
-                        },
-                      ]}
-                    />
-                    <Text style={styles.getStartedText}>GET STARTED</Text>
-                    <ArrowRight size={24} color="#FFFFFF" />
-                  </LinearGradient>
-                </Animated.View>
-              </TouchableOpacity>
-            </Animated.View>
+                    <LinearGradient
+                      colors={["#E3222B", "#FF6B6B"]}
+                      style={styles.getStartedButton}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    >
+                      <Animated.View
+                        style={[
+                          styles.buttonGlow,
+                          {
+                            opacity: buttonGlow,
+                            transform: [{ scale: buttonGlow }],
+                          },
+                        ]}
+                      />
+                      <Text style={styles.getStartedText}>GET STARTED</Text>
+                      <ArrowRight size={24} color="#FFFFFF" />
+                    </LinearGradient>
+                  </Animated.View>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
           )}
         </Animated.View>
       )}
@@ -1186,6 +1286,17 @@ const styles = StyleSheet.create({
   finaleContainer: {
     position: "absolute",
     bottom: 100,
+  },
+  finaleParticle: {
+    position: "absolute",
+    width: 16,
+    height: 16,
+    backgroundColor: "#E3222B",
+    borderRadius: 8,
+    shadowColor: "#E3222B",
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 1,
+    shadowRadius: 12,
   },
   getStartedButton: {
     flexDirection: "row",
