@@ -7,7 +7,7 @@ interface Favorite {
   type: "pickup-line" | "reply";
   content: string;
   metadata?: any;
-  createdAt?: Date;
+  createdAt?: string;
 }
 
 interface UserProfile {
@@ -72,7 +72,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
 
   const addFavorite = async (favorite: Favorite) => {
-    const newFavorite = { ...favorite, createdAt: new Date() };
+    const newFavorite = { ...favorite, createdAt: new Date().toISOString() };
     const updatedFavorites = [...favorites, newFavorite];
     setFavorites(updatedFavorites);
     
