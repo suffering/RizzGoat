@@ -668,7 +668,6 @@ export default function OnboardingScreen() {
                   },
                 ]}
               />
-
               
               {/* Goat Logo */}
               <Animated.View
