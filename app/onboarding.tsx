@@ -785,9 +785,9 @@ export default function OnboardingScreen() {
                   {
                     opacity: logoTextOpacity,
                     fontFamily: Platform.select({
-                      ios: 'Helvetica Neue',
-                      android: 'sans-serif-condensed',
-                      web: 'Arial Black, sans-serif',
+                      ios: 'TT Commons Pro',
+                      android: 'TT Commons Pro',
+                      web: 'TT Commons Pro, Arial, sans-serif',
                     }),
                     transform: [
                       { translateX: textSlapX },
