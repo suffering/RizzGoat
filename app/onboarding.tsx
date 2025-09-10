@@ -802,7 +802,7 @@ export default function OnboardingScreen() {
                   },
                 ]}
               >
-                RIZZGOAT
+                RizzGoat
               </Animated.Text>
             </View>
           )}
@@ -1101,10 +1101,12 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     color: "#FFFFFF",
     letterSpacing: 6,
-    marginTop: 30,
+    marginTop: -20,
     textShadowColor: "#E3222B",
     textShadowOffset: { width: 0, height: 4 },
     textShadowRadius: 20,
+    position: "absolute",
+    bottom: -40,
   },
   purposeContainer: {
     alignItems: "center",
