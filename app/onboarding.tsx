@@ -1292,9 +1292,8 @@ const styles = StyleSheet.create({
   profileDemoContainer: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "flex-start",
+    justifyContent: "center",
     paddingHorizontal: 15,
-    paddingTop: 60,
     paddingBottom: 40,
   },
   typingContainer: {
@@ -1341,7 +1340,6 @@ const styles = StyleSheet.create({
     maxWidth: screenWidth * 0.9,
     gap: 12,
     paddingHorizontal: 20,
-    paddingBottom: 60,
   },
   replyBubble: {
     backgroundColor: "#007AFF",
