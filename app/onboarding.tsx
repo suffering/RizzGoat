@@ -1340,12 +1340,12 @@ const styles = StyleSheet.create({
   },
   bottomGoatContainer: {
     position: "absolute",
-    bottom: 40,
+    bottom: 30,
     left: 0,
     right: 0,
     flexDirection: "row",
     justifyContent: "space-evenly",
-    paddingHorizontal: 30,
+    paddingHorizontal: 20,
   },
   goatIconItem: {
     alignItems: "center",
