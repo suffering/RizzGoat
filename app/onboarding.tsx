@@ -74,7 +74,7 @@ export default function OnboardingScreen() {
   const [showReplies, setShowReplies] = useState(false);
   
   // Reply bubbles animations
-  const replyBubbles = useRef(Array.from({ length: 5 }, () => ({
+  const replyBubbles = useRef(Array.from({ length: 3 }, () => ({
     opacity: new Animated.Value(0),
     translateY: new Animated.Value(30),
     scale: new Animated.Value(0.8),
@@ -996,9 +996,7 @@ export default function OnboardingScreen() {
                   {[
                     "Are you a magician? Because you just turned this swipe into my favorite trick.",
                     "I was today years old when I realized my type is exactly you 😉",
-                    "So... when do we tell people we met on here, or do we keep it our little secret?",
-                    "Warning: I might just be the reason you delete this app.",
-                    "Are you free this week, or should I schedule my daydreams around you?"
+                    "So... when do we tell people we met on here, or do we keep it our little secret?"
                   ].map((reply, replyIndex) => (
                     <Animated.View
                       key={`reply-${replyIndex}`}
