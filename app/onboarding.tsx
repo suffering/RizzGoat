@@ -38,10 +38,14 @@ export default function OnboardingScreen() {
   const logoTextScale = useRef(new Animated.Value(0.5)).current;
   const logoTextSlide = useRef(new Animated.Value(50)).current;
   
-  // Glowing streaks
-  const streak1 = useRef(new Animated.Value(0)).current;
-  const streak2 = useRef(new Animated.Value(0)).current;
-  const streak3 = useRef(new Animated.Value(0)).current;
+  // Particle effects for logo reveal
+  const particleAnimations = useRef(Array.from({ length: 8 }, () => ({
+    opacity: new Animated.Value(0),
+    scale: new Animated.Value(0),
+    translateX: new Animated.Value(0),
+    translateY: new Animated.Value(0),
+    rotate: new Animated.Value(0),
+  }))).current;
   
   // Purpose Phase Animations
   const purposeOpacity = useRef(new Animated.Value(0)).current;
@@ -65,8 +69,8 @@ export default function OnboardingScreen() {
   const buttonScale = useRef(new Animated.Value(0.8)).current;
   const buttonGlow = useRef(new Animated.Value(0)).current;
   
-  // Ember particles
-  const emberParticles = useRef(Array.from({ length: 20 }, () => ({
+  // Floating ember particles
+  const emberParticles = useRef(Array.from({ length: 15 }, () => ({
     translateX: new Animated.Value(Math.random() * screenWidth),
     translateY: new Animated.Value(screenHeight),
     opacity: new Animated.Value(0),
@@ -81,13 +85,13 @@ export default function OnboardingScreen() {
   const questionnaireOpacity = useRef(new Animated.Value(0)).current;
   const questionnaireScale = useRef(new Animated.Value(0.8)).current;
   
-  // Bottom goat icon animations
+  // Bottom goat icon animations for questionnaire
   const goatIconAnimations = useRef([
-    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
-    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
-    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
-    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
-    { translateY: new Animated.Value(0), scale: new Animated.Value(1) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1), rotate: new Animated.Value(0) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1), rotate: new Animated.Value(0) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1), rotate: new Animated.Value(0) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1), rotate: new Animated.Value(0) },
+    { translateY: new Animated.Value(0), scale: new Animated.Value(1), rotate: new Animated.Value(0) },
   ]).current;
 
   useEffect(() => {
@@ -119,32 +123,38 @@ export default function OnboardingScreen() {
             Animated.parallel([
               Animated.sequence([
                 Animated.timing(anim.translateY, {
-                  toValue: -15,
-                  duration: 1000,
+                  toValue: -20,
+                  duration: 1200,
                   easing: Easing.inOut(Easing.sin),
                   useNativeDriver: true,
                 }),
                 Animated.timing(anim.translateY, {
                   toValue: 0,
-                  duration: 1000,
+                  duration: 1200,
                   easing: Easing.inOut(Easing.sin),
                   useNativeDriver: true,
                 }),
               ]),
               Animated.sequence([
                 Animated.timing(anim.scale, {
-                  toValue: 1.2,
-                  duration: 1000,
+                  toValue: 1.3,
+                  duration: 1200,
                   easing: Easing.inOut(Easing.sin),
                   useNativeDriver: true,
                 }),
                 Animated.timing(anim.scale, {
                   toValue: 1,
-                  duration: 1000,
+                  duration: 1200,
                   easing: Easing.inOut(Easing.sin),
                   useNativeDriver: true,
                 }),
               ]),
+              Animated.timing(anim.rotate, {
+                toValue: 1,
+                duration: 2400,
+                easing: Easing.linear,
+                useNativeDriver: true,
+              }),
             ]),
           ])
         ).start();
@@ -202,30 +212,30 @@ export default function OnboardingScreen() {
 
   const startEmberAnimation = () => {
     emberParticles.forEach((particle, index) => {
-      const delay = index * 100;
+      const delay = index * 150;
       setTimeout(() => {
         Animated.loop(
           Animated.sequence([
             Animated.parallel([
               Animated.timing(particle.opacity, {
-                toValue: 0.8,
-                duration: 1000,
+                toValue: 0.6,
+                duration: 1500,
                 useNativeDriver: true,
               }),
               Animated.timing(particle.scale, {
-                toValue: 0.5 + Math.random() * 0.5,
-                duration: 1000,
+                toValue: 0.3 + Math.random() * 0.7,
+                duration: 1500,
                 useNativeDriver: true,
               }),
               Animated.timing(particle.translateY, {
-                toValue: -100,
-                duration: 4000 + Math.random() * 2000,
+                toValue: -200,
+                duration: 5000 + Math.random() * 3000,
                 easing: Easing.out(Easing.quad),
                 useNativeDriver: true,
               }),
               Animated.timing(particle.translateX, {
                 toValue: Math.random() * screenWidth,
-                duration: 4000,
+                duration: 5000,
                 easing: Easing.inOut(Easing.sin),
                 useNativeDriver: true,
               }),
@@ -233,12 +243,12 @@ export default function OnboardingScreen() {
             Animated.parallel([
               Animated.timing(particle.opacity, {
                 toValue: 0,
-                duration: 1000,
+                duration: 1500,
                 useNativeDriver: true,
               }),
               Animated.timing(particle.scale, {
                 toValue: 0,
-                duration: 1000,
+                duration: 1500,
                 useNativeDriver: true,
               }),
             ]),
@@ -252,8 +262,54 @@ export default function OnboardingScreen() {
   const logoRevealAnimation = (callback: () => void) => {
     setCurrentPhase('logo-reveal');
     
+    // Explosive particle effect
+    particleAnimations.forEach((particle, index) => {
+      const angle = (index / 8) * Math.PI * 2;
+      const distance = 150;
+      
+      Animated.sequence([
+        Animated.delay(100),
+        Animated.parallel([
+          Animated.timing(particle.opacity, {
+            toValue: 1,
+            duration: 300,
+            useNativeDriver: true,
+          }),
+          Animated.spring(particle.scale, {
+            toValue: 1,
+            friction: 4,
+            tension: 100,
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.translateX, {
+            toValue: Math.cos(angle) * distance,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.translateY, {
+            toValue: Math.sin(angle) * distance,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+          Animated.timing(particle.rotate, {
+            toValue: 1,
+            duration: 800,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.timing(particle.opacity, {
+          toValue: 0,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    });
+    
     Animated.sequence([
-      // Goat icon emerges with glow
+      // Goat icon emerges with explosive effect
       Animated.parallel([
         Animated.timing(logoOpacity, {
           toValue: 1,
@@ -263,7 +319,7 @@ export default function OnboardingScreen() {
         }),
         Animated.spring(logoScale, {
           toValue: 1.2,
-          friction: 4,
+          friction: 3,
           tension: 40,
           useNativeDriver: true,
         }),
@@ -272,26 +328,8 @@ export default function OnboardingScreen() {
           duration: 1000,
           useNativeDriver: true,
         }),
-        // Animated streaks
-        Animated.stagger(100, [
-          Animated.timing(streak1, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(streak2, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(streak3, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ]),
       ]),
-      // Rotate and pulse
+      // Spin and pulse
       Animated.parallel([
         Animated.timing(logoRotate, {
           toValue: 1,
@@ -314,7 +352,7 @@ export default function OnboardingScreen() {
           }),
         ]),
       ]),
-      // RizzGoat text appears
+      // RizzGoat text appears with style
       Animated.parallel([
         Animated.timing(logoTextOpacity, {
           toValue: 1,
@@ -371,7 +409,7 @@ export default function OnboardingScreen() {
           useNativeDriver: true,
         }),
       ]),
-      // Animate icons
+      // Animate icons with bounce
       Animated.stagger(200, [
         Animated.spring(heartScale, {
           toValue: 1,
@@ -633,41 +671,29 @@ export default function OnboardingScreen() {
           {/* Logo Reveal Phase */}
           {(currentPhase === 'logo-reveal' || currentPhase === 'finale') && (
             <View style={styles.centerContent}>
-              {/* Glowing Streaks */}
-              <Animated.View
-                style={[
-                  styles.streak,
-                  styles.streak1,
-                  {
-                    opacity: streak1,
-                    transform: [
-                      {
-                        translateX: streak1.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [-200, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.streak,
-                  styles.streak2,
-                  {
-                    opacity: streak2,
-                    transform: [
-                      {
-                        translateX: streak2.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [200, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              />
+              {/* Explosive Particles */}
+              {particleAnimations.map((particle, index) => (
+                <Animated.View
+                  key={`particle-${index}`}
+                  style={[
+                    styles.explosiveParticle,
+                    {
+                      opacity: particle.opacity,
+                      transform: [
+                        { translateX: particle.translateX },
+                        { translateY: particle.translateY },
+                        { scale: particle.scale },
+                        {
+                          rotate: particle.rotate.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ['0deg', '360deg'],
+                          }),
+                        },
+                      ],
+                    },
+                  ]}
+                />
+              ))}
               
               {/* Goat Logo */}
               <Animated.View
@@ -853,11 +879,11 @@ export default function OnboardingScreen() {
               },
             ]}
           >
-            <Text style={styles.questionnaireTitle}>Let&apos;s personalize your experience</Text>
+            <Text style={styles.questionnaireTitle}>Let's personalize your experience</Text>
             
             {/* Sex Selection */}
             <View style={styles.questionSection}>
-              <Text style={styles.questionText}>What&apos;s your sex?</Text>
+              <Text style={styles.questionText}>What's your sex?</Text>
               <View style={styles.optionsContainer}>
                 {(['male', 'female', 'other'] as const).map((sex) => (
                   <TouchableOpacity
@@ -883,7 +909,7 @@ export default function OnboardingScreen() {
             
             {/* Age Selection */}
             <View style={styles.questionSection}>
-              <Text style={styles.questionText}>What&apos;s your age range?</Text>
+              <Text style={styles.questionText}>What's your age range?</Text>
               <View style={styles.optionsContainer}>
                 {(['18-24', '25-34', '35-44', '45+'] as const).map((age) => (
                   <TouchableOpacity
@@ -920,7 +946,7 @@ export default function OnboardingScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
                 >
-                  <Text style={styles.continueButtonText}>Let&apos;s Go!</Text>
+                  <Text style={styles.continueButtonText}>Let's Go!</Text>
                   <ArrowRight size={20} color="#FFFFFF" />
                 </LinearGradient>
               </TouchableOpacity>
@@ -938,6 +964,12 @@ export default function OnboardingScreen() {
                     transform: [
                       { translateY: goatIconAnimations[index].translateY },
                       { scale: goatIconAnimations[index].scale },
+                      {
+                        rotate: goatIconAnimations[index].rotate.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ['0deg', '360deg'],
+                        }),
+                      },
                     ],
                   },
                 ]}
@@ -975,25 +1007,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  streak: {
+  explosiveParticle: {
     position: "absolute",
-    width: 300,
-    height: 4,
+    width: 20,
+    height: 20,
     backgroundColor: "#E3222B",
+    borderRadius: 10,
     shadowColor: "#E3222B",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 20,
+    shadowRadius: 15,
   },
-  streak1: {
-    top: -100,
-    transform: [{ rotate: '45deg' }],
-  },
-  streak2: {
-    top: 100,
-    transform: [{ rotate: '-45deg' }],
-  },
-
   logoContainer: {
     width: 200,
     height: 200,
@@ -1122,14 +1146,14 @@ const styles = StyleSheet.create({
     position: "absolute",
   },
   emberDot: {
-    width: 6,
-    height: 6,
+    width: 8,
+    height: 8,
     backgroundColor: "#E3222B",
-    borderRadius: 3,
+    borderRadius: 4,
     shadowColor: "#E3222B",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
-    shadowRadius: 8,
+    shadowRadius: 10,
   },
   questionnaireContainer: {
     width: "100%",
