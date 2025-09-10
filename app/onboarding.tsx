@@ -38,6 +38,14 @@ export default function OnboardingScreen() {
   const logoTextScale = useRef(new Animated.Value(0.5)).current;
   const logoTextSlide = useRef(new Animated.Value(50)).current;
   
+  // Slapping animation values
+  const logoSlapX = useRef(new Animated.Value(-screenWidth)).current;
+  const logoSlapRotation = useRef(new Animated.Value(-45)).current;
+  const textSlapX = useRef(new Animated.Value(screenWidth)).current;
+  const textSlapRotation = useRef(new Animated.Value(45)).current;
+  const logoImpactScale = useRef(new Animated.Value(1)).current;
+  const textImpactScale = useRef(new Animated.Value(1)).current;
+  
   // Particle effects for logo reveal
   const particleAnimations = useRef(Array.from({ length: 8 }, () => ({
     opacity: new Animated.Value(0),
@@ -262,118 +270,158 @@ export default function OnboardingScreen() {
   const logoRevealAnimation = (callback: () => void) => {
     setCurrentPhase('logo-reveal');
     
-    // Explosive particle effect
-    particleAnimations.forEach((particle, index) => {
-      const angle = (index / 8) * Math.PI * 2;
-      const distance = 150;
-      
-      Animated.sequence([
-        Animated.delay(100),
-        Animated.parallel([
-          Animated.timing(particle.opacity, {
-            toValue: 1,
-            duration: 300,
-            useNativeDriver: true,
-          }),
-          Animated.spring(particle.scale, {
-            toValue: 1,
-            friction: 4,
-            tension: 100,
-            useNativeDriver: true,
-          }),
-          Animated.timing(particle.translateX, {
-            toValue: Math.cos(angle) * distance,
-            duration: 800,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(particle.translateY, {
-            toValue: Math.sin(angle) * distance,
-            duration: 800,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-          Animated.timing(particle.rotate, {
-            toValue: 1,
-            duration: 800,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(particle.opacity, {
+    Animated.sequence([
+      // PHASE 1: Icon slaps in from left with explosive impact
+      Animated.parallel([
+        // Icon slides in from left with rotation
+        Animated.timing(logoSlapX, {
           toValue: 0,
-          duration: 500,
+          duration: 600,
+          easing: Easing.out(Easing.back(1.7)),
           useNativeDriver: true,
         }),
-      ]).start();
-    });
-    
-    Animated.sequence([
-      // Goat icon emerges with explosive effect
-      Animated.parallel([
+        // Icon rotates as it slaps in
+        Animated.timing(logoSlapRotation, {
+          toValue: 0,
+          duration: 600,
+          easing: Easing.out(Easing.back(1.7)),
+          useNativeDriver: true,
+        }),
+        // Icon appears
         Animated.timing(logoOpacity, {
           toValue: 1,
-          duration: 800,
+          duration: 400,
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
+        // Icon scales up
         Animated.spring(logoScale, {
           toValue: 1.2,
           friction: 3,
           tension: 40,
           useNativeDriver: true,
         }),
+        // Glow effect
         Animated.timing(logoGlow, {
           toValue: 1,
-          duration: 1000,
+          duration: 800,
           useNativeDriver: true,
         }),
       ]),
-      // Spin and pulse
-      Animated.parallel([
-        Animated.timing(logoRotate, {
+      
+      // Impact effect on icon landing
+      Animated.sequence([
+        Animated.timing(logoImpactScale, {
+          toValue: 1.4,
+          duration: 150,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(logoImpactScale, {
           toValue: 1,
-          duration: 1000,
-          easing: Easing.out(Easing.back(2)),
+          duration: 200,
+          easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
-        Animated.sequence([
-          Animated.timing(logoScale, {
-            toValue: 1.5,
-            duration: 400,
-            easing: Easing.out(Easing.back(2)),
-            useNativeDriver: true,
-          }),
-          Animated.timing(logoScale, {
-            toValue: 1.2,
-            duration: 400,
-            easing: Easing.in(Easing.back(2)),
-            useNativeDriver: true,
-          }),
-        ]),
       ]),
-      // RizzGoat text appears with style
+      
+      // Explosive particle effect on impact
+      Animated.delay(100),
+      
+      // PHASE 2: RizzGoat text slaps in from right
       Animated.parallel([
+        // Text slides in from right with rotation
+        Animated.timing(textSlapX, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+        // Text rotates as it slaps in
+        Animated.timing(textSlapRotation, {
+          toValue: 0,
+          duration: 700,
+          easing: Easing.out(Easing.back(1.5)),
+          useNativeDriver: true,
+        }),
+        // Text appears
         Animated.timing(logoTextOpacity, {
           toValue: 1,
-          duration: 600,
+          duration: 500,
           useNativeDriver: true,
         }),
+        // Text scales up
         Animated.spring(logoTextScale, {
           toValue: 1,
           friction: 4,
           tension: 60,
           useNativeDriver: true,
         }),
-        Animated.timing(logoTextSlide, {
-          toValue: 0,
-          duration: 600,
+      ]),
+      
+      // Impact effect on text landing
+      Animated.sequence([
+        Animated.timing(textImpactScale, {
+          toValue: 1.3,
+          duration: 150,
           easing: Easing.out(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(textImpactScale, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.in(Easing.cubic),
           useNativeDriver: true,
         }),
       ]),
     ]).start(() => {
-      setTimeout(callback, 500);
+      // Explosive particle effect after both elements land
+      particleAnimations.forEach((particle, index) => {
+        const angle = (index / 8) * Math.PI * 2;
+        const distance = 150;
+        
+        Animated.sequence([
+          Animated.delay(index * 50),
+          Animated.parallel([
+            Animated.timing(particle.opacity, {
+              toValue: 1,
+              duration: 300,
+              useNativeDriver: true,
+            }),
+            Animated.spring(particle.scale, {
+              toValue: 1,
+              friction: 4,
+              tension: 100,
+              useNativeDriver: true,
+            }),
+            Animated.timing(particle.translateX, {
+              toValue: Math.cos(angle) * distance,
+              duration: 800,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(particle.translateY, {
+              toValue: Math.sin(angle) * distance,
+              duration: 800,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+            Animated.timing(particle.rotate, {
+              toValue: 1,
+              duration: 800,
+              easing: Easing.out(Easing.cubic),
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.timing(particle.opacity, {
+            toValue: 0,
+            duration: 500,
+            useNativeDriver: true,
+          }),
+        ]).start();
+      });
+      
+      setTimeout(callback, 800);
     });
   };
 
@@ -702,11 +750,12 @@ export default function OnboardingScreen() {
                   {
                     opacity: logoOpacity,
                     transform: [
-                      { scale: logoScale },
+                      { translateX: logoSlapX },
+                      { scale: Animated.multiply(logoScale, logoImpactScale) },
                       {
-                        rotate: logoRotate.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ['0deg', '360deg'],
+                        rotate: logoSlapRotation.interpolate({
+                          inputRange: [-45, 0],
+                          outputRange: ['-45deg', '0deg'],
                         }),
                       },
                     ],
@@ -723,7 +772,7 @@ export default function OnboardingScreen() {
                   ]}
                 />
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/l6m65ldv3proi19kao2wp' }}
                   style={styles.goatIcon}
                   resizeMode="contain"
                 />
@@ -735,9 +784,20 @@ export default function OnboardingScreen() {
                   styles.logoText,
                   {
                     opacity: logoTextOpacity,
+                    fontFamily: Platform.select({
+                      ios: 'Helvetica Neue',
+                      android: 'sans-serif-condensed',
+                      web: 'Arial Black, sans-serif',
+                    }),
                     transform: [
-                      { scale: logoTextScale },
-                      { translateY: logoTextSlide },
+                      { translateX: textSlapX },
+                      { scale: Animated.multiply(logoTextScale, textImpactScale) },
+                      {
+                        rotate: textSlapRotation.interpolate({
+                          inputRange: [0, 45],
+                          outputRange: ['0deg', '45deg'],
+                        }),
+                      },
                     ],
                   },
                 ]}
@@ -975,7 +1035,7 @@ export default function OnboardingScreen() {
                 ]}
               >
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/npigoj3nywrwc96avmtqi' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/l6m65ldv3proi19kao2wp' }}
                   style={styles.bottomGoatIcon}
                   resizeMode="contain"
                 />
