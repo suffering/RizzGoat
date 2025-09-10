@@ -352,7 +352,7 @@ export default function OnboardingScreen() {
         }),
         // Text scales up
         Animated.spring(logoTextScale, {
-          toValue: 1,
+          toValue: 1.2,
           friction: 4,
           tension: 60,
           useNativeDriver: true,
@@ -1093,7 +1093,7 @@ const styles = StyleSheet.create({
   },
   logoTextContainer: {
     position: "absolute",
-    bottom: -75,
+    bottom: -85,
     alignItems: "center",
     justifyContent: "center",
   },
