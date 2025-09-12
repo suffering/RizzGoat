@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   replyBubble: {
-    backgroundColor: "#007AFF",
+    backgroundColor: "#E3222B",
     borderRadius: 18,
     paddingHorizontal: 18,
     paddingVertical: 14,
@@ -1348,7 +1348,7 @@ const styles = StyleSheet.create({
     maxWidth: "90%",
     minHeight: 44,
     justifyContent: "center",
-    shadowColor: "#007AFF",
+    shadowColor: "#E3222B",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
