@@ -828,30 +828,7 @@ export default function OnboardingScreen() {
           {/* Logo Reveal Phase */}
           {(currentPhase === 'logo-reveal' || currentPhase === 'finale') && (
             <View style={styles.centerContent}>
-              {/* Explosive Particles */}
-              {particleAnimations.map((particle, index) => (
-                <Animated.View
-                  key={`particle-${index}`}
-                  style={[
-                    styles.explosiveParticle,
-                    {
-                      opacity: particle.opacity,
-                      transform: [
-                        { translateX: particle.translateX },
-                        { translateY: particle.translateY },
-                        { scale: particle.scale },
-                        {
-                          rotate: particle.rotate.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ['0deg', '360deg'],
-                          }),
-                        },
-                      ],
-                    },
-                  ]}
-                />
-              ))}
-              
+
               {/* Goat Logo */}
               <Animated.View
                 style={[
