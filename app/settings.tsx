@@ -8,6 +8,7 @@ import {
   Switch,
   Linking,
   Alert,
+  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -196,7 +197,15 @@ export default function SettingsScreen() {
                         colors={["#E3222B", "#FF7A59"]}
                         style={styles.iconContainer}
                       >
-                        <item.icon size={20} color="#FFFFFF" />
+                        {item.title === "Upgrade to Pro" ? (
+                          <Image
+                            source={require("../assets/images/icon.png")}
+                            style={styles.rizzIconSmall}
+                            resizeMode="contain"
+                          />
+                        ) : (
+                          <item.icon size={20} color="#FFFFFF" />
+                        )}
                       </LinearGradient>
                     ) : (
                       <View
@@ -326,5 +335,9 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: 12,
+  },
+  rizzIconSmall: {
+    width: 20,
+    height: 20,
   },
 });
