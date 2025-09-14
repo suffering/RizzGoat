@@ -57,6 +57,7 @@ export default function ScreenshotAdvisorScreen() {
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const pickImage = async (): Promise<void> => {
+    console.log('[ScreenshotAdvisor] pickImage start');
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -69,16 +70,21 @@ export default function ScreenshotAdvisorScreen() {
       const b64 = result.assets[0].base64 ?? null;
       setLastBase64(b64);
       if (b64) {
-        analyzeImage(b64, false);
+        console.log('[ScreenshotAdvisor] image selected, analyzing default Safe/Witty/Bold');
+        analyzeImage(b64, false, null);
       }
     }
   };
 
-  const analyzeImage = async (base64: string, amplifyBold: boolean) => {
+  const analyzeImage = async (
+    base64: string,
+    amplifyBold: boolean,
+    targetType: "Safe" | "Witty" | "Bold" | null,
+  ) => {
+    console.log('[ScreenshotAdvisor] analyzeImage', { amplifyBold, targetType });
     setAnalyzing(true);
     setReplies([]);
     
-    // Scan animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(scanAnimation, {
@@ -95,7 +101,7 @@ export default function ScreenshotAdvisorScreen() {
     ).start();
 
     try {
-      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold });
+      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold, targetType: targetType ?? undefined });
       
       const formattedReplies: Reply[] = [
         {
@@ -122,18 +128,21 @@ export default function ScreenshotAdvisorScreen() {
       ];
       
       setReplies(formattedReplies);
-      if (amplifyBold) {
+      if (targetType) {
+        const idx = formattedReplies.findIndex(r => r.type === targetType);
+        if (idx >= 0) setSelectedReply(idx);
+      } else if (amplifyBold) {
         const boldIndex = formattedReplies.findIndex(r => r.type === "Bold");
         if (boldIndex >= 0) setSelectedReply(boldIndex);
       }
       
-      // Fade in replies
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
         useNativeDriver: true,
       }).start();
     } catch (err) {
+      console.log('[ScreenshotAdvisor] analyzeImage error', err);
       Alert.alert("Error", "Couldn't analyze screenshot. Try cropping or using a clearer image.");
     } finally {
       setAnalyzing(false);
@@ -228,6 +237,7 @@ export default function ScreenshotAdvisorScreen() {
         >
           {!selectedImage ? (
             <TouchableOpacity
+              testID="upload-screenshot"
               onPress={pickImage}
               style={[styles.uploadArea, { backgroundColor: theme.card }]}
             >
@@ -250,6 +260,7 @@ export default function ScreenshotAdvisorScreen() {
                 <Image source={{ uri: selectedImage }} style={styles.screenshot} />
                 {analyzing && (
                   <Animated.View
+                    testID="scan-line"
                     style={[
                       styles.scanLine,
                       {
@@ -266,6 +277,7 @@ export default function ScreenshotAdvisorScreen() {
                   />
                 )}
                 <TouchableOpacity
+                  testID="change-image"
                   onPress={pickImage}
                   style={[styles.changeButton, { backgroundColor: theme.card }]}
                 >
@@ -293,15 +305,15 @@ export default function ScreenshotAdvisorScreen() {
                     <View style={styles.replyTabs}>
                       {replies.map((reply, index) => (
                         <TouchableOpacity
+                          testID={`reply-tab-${reply.type.toLowerCase()}`}
                           key={reply.type}
                           onPress={async () => {
                             setSelectedReply(index);
-                            if (reply.type === "Bold" && lastBase64 && !analyzing) {
+                            if (lastBase64 && !analyzing) {
+                              const isBold = reply.type === "Bold";
                               try {
-                                await analyzeImage(lastBase64, true);
-                              } catch (e) {
-                                // no-op, errors handled inside analyzeImage
-                              }
+                                await analyzeImage(lastBase64, isBold, reply.type);
+                              } catch (e) {}
                             }
                           }}
                           style={[
@@ -354,6 +366,7 @@ export default function ScreenshotAdvisorScreen() {
                     </View>
                     <View style={styles.replyActions}>
                       <TouchableOpacity
+                        testID="copy-reply"
                         onPress={() => handleCopy(replies[selectedReply].text)}
                         style={[styles.actionButton, { backgroundColor: theme.background }]}
                       >
@@ -363,6 +376,7 @@ export default function ScreenshotAdvisorScreen() {
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
+                        testID="save-reply"
                         onPress={() => handleSave(replies[selectedReply])}
                         style={[styles.actionButton, { backgroundColor: theme.background }]}
                       >

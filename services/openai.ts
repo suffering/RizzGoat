@@ -10,6 +10,8 @@ interface ScreenshotAnalysis {
   bold: { text: string; rationale: string };
 }
 
+type ReplyType = 'Safe' | 'Witty' | 'Bold';
+
 interface ChatParams {
   message: string;
 }
@@ -17,6 +19,7 @@ interface ChatParams {
 interface ScreenshotParams {
   base64Image: string;
   amplifyBold?: boolean;
+  targetType?: ReplyType;
 }
 
 // Use the backend API for all AI requests
@@ -98,12 +101,17 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
       ? " Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal."
       : "";
 
+    const focusNote = params.targetType
+      ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
+      : "";
+
     const messages = [
       {
         role: "system",
         content:
           "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale." +
-          boldNote,
+          boldNote +
+          focusNote,
       },
       {
         role: "user",
