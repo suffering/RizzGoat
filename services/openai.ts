@@ -74,16 +74,17 @@ async function callBackendAI(messages: any[], retries = 3): Promise<string> {
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
+    const variation = Math.random().toString(36).slice(2);
     const messages = [
       {
         role: "system",
-        content: "You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words.",
+        content: "You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.",
       },
       {
         role: "user",
         content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
           params.context ? `Context: ${params.context}` : ""
-        }. Output only the pickup line, nothing else.`,
+        } Variation token: ${variation}. Output only the pickup line, nothing else.`,
       },
     ];
 
@@ -97,6 +98,7 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
+    const variation = Math.random().toString(36).slice(2);
     const boldNote = params.amplifyBold
       ? " Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal."
       : "";
@@ -109,7 +111,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
       {
         role: "system",
         content:
-          "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale." +
+          "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result." +
           boldNote +
           focusNote,
       },
@@ -119,7 +121,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
           {
             type: "text",
             text:
-              "Analyze this dating conversation screenshot and provide 3 reply options with rationales. Format as JSON: {safe: {text: '', rationale: ''}, witty: {text: '', rationale: ''}, bold: {text: '', rationale: ''}}",
+              `Analyze this dating conversation screenshot and provide 3 reply options with rationales. Variation token: ${variation}. Format as JSON: {safe: {text: '', rationale: ''}, witty: {text: '', rationale: ''}, bold: {text: '', rationale: ''}}`,
           },
           {
             type: "image",
@@ -169,14 +171,15 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
 
 export async function getChatAdvice(params: ChatParams): Promise<string> {
   try {
+    const variation = Math.random().toString(36).slice(2);
     const messages = [
       {
         role: "system",
-        content: "You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building.",
+        content: "You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.",
       },
       {
         role: "user",
-        content: params.message,
+        content: `${params.message}\n\nVariation token: ${variation}`,
       },
     ];
 
