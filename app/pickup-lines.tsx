@@ -13,6 +13,10 @@ import {
   Alert,
   StatusBar,
   Dimensions,
+  PanResponder,
+  GestureResponderEvent,
+  PanResponderGestureState,
+  LayoutChangeEvent,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -41,17 +45,21 @@ export default function PickupLinesScreen() {
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
   
-  const [currentLine, setCurrentLine] = useState("Hey there! Mind if I steal a moment of your time?");
-  const [loading, setLoading] = useState(false);
-  const [spiceLevel, setSpiceLevel] = useState(1);
-  const [selectedTone, setSelectedTone] = useState("Playful");
-  const [context, setContext] = useState("");
+  const [currentLine, setCurrentLine] = useState<string>("Hey there! Mind if I steal a moment of your time?");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [spiceLevel, setSpiceLevel] = useState<number>(1);
+  const [selectedTone, setSelectedTone] = useState<string>("Playful");
+  const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   
   const shimmerAnim = useRef(new Animated.Value(0)).current;
-  const bubbleScale = useRef(new Animated.Value(0)).current;
+  const bubbleScale = useRef(new Animated.Value(1)).current;
   const confettiAnim = useRef(new Animated.Value(0)).current;
   const sliderAnim = useRef(new Animated.Value(0.5)).current;
+  const sliderTrackWidthRef = useRef<number>(0);
+  const sliderTrackXRef = useRef<number>(0);
+  const isFirstRender = useRef<boolean>(true);
+  const contextDebounceRef = useRef<NodeJS.Timeout | null>(null);
 
   const generateNewLine = useCallback(async () => {
     setLoading(true);
@@ -117,12 +125,33 @@ export default function PickupLinesScreen() {
   }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
 
   useEffect(() => {
-    // Only generate on first load, not when dependencies change
     if (!currentLine || currentLine === "Hey there! Mind if I steal a moment of your time?") {
       generateNewLine();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false;
+      return;
+    }
+    generateNewLine();
+  }, [spiceLevel, selectedTone]);
+
+  useEffect(() => {
+    if (contextDebounceRef.current) {
+      clearTimeout(contextDebounceRef.current);
+    }
+    contextDebounceRef.current = setTimeout(() => {
+      generateNewLine();
+    }, 600);
+    return () => {
+      if (contextDebounceRef.current) {
+        clearTimeout(contextDebounceRef.current);
+      }
+    };
+  }, [context]);
 
   useEffect(() => {
     Animated.timing(sliderAnim, {
@@ -132,7 +161,7 @@ export default function PickupLinesScreen() {
     }).start();
   }, [spiceLevel, sliderAnim]);
 
-  const handleCopy = async () => {
+  const handleCopy = async (): Promise<void> => {
     await Clipboard.setStringAsync(currentLine);
     if (Platform.OS !== "web") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -140,7 +169,7 @@ export default function PickupLinesScreen() {
     Alert.alert("Copied!", "Pickup line copied to clipboard");
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<void> => {
     addFavorite({
       id: Date.now().toString(),
       type: "pickup-line",
@@ -172,7 +201,7 @@ export default function PickupLinesScreen() {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = async (): Promise<void> => {
     try {
       await Share.share({
         message: `${currentLine}\n\n#RizzGoat`,
@@ -293,7 +322,7 @@ export default function PickupLinesScreen() {
           </Animated.View>
 
           {/* Spice Slider */}
-          <View style={styles.sliderSection}>
+          <View style={styles.sliderSection} testID="spice-slider-section">
             <LinearGradient
               colors={isDark ? ['rgba(255,255,255,0.05)', 'rgba(255,255,255,0.02)'] : ['rgba(0,0,0,0.02)', 'rgba(0,0,0,0.01)']}
               style={styles.sectionCard}
@@ -310,11 +339,44 @@ export default function PickupLinesScreen() {
                 </View>
               </View>
               
-              <View style={styles.sliderContainer}>
+              <View style={styles.sliderContainer} testID="spice-slider-container">
                 <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
                   Cute
                 </Text>
-                <View style={[styles.sliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                <View
+                  style={[styles.sliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                  onLayout={(e: LayoutChangeEvent) => {
+                    const { x, width } = e.nativeEvent.layout;
+                    sliderTrackXRef.current = x;
+                    sliderTrackWidthRef.current = width;
+                  }}
+                  {...useRef(
+                    PanResponder.create({
+                      onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
+                      onStartShouldSetPanResponder: () => true,
+                      onPanResponderGrant: (evt: GestureResponderEvent) => {
+                        const pageX = (evt.nativeEvent as any).pageX ?? 0;
+                        const localX = Math.max(0, Math.min((pageX - sliderTrackXRef.current), sliderTrackWidthRef.current));
+                        const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
+                        sliderAnim.setValue(ratio);
+                      },
+                      onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+                        const dx = gestureState.moveX - sliderTrackXRef.current;
+                        const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
+                        const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                        sliderAnim.setValue(ratio);
+                      },
+                      onPanResponderRelease: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+                        const dx = gestureState.moveX - sliderTrackXRef.current;
+                        const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
+                        const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                        let level = 0;
+                        if (ratio >= 0.66) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
+                        setSpiceLevel(level);
+                      },
+                    })
+                  ).current}
+                >
                   <Animated.View
                     style={[
                       styles.sliderFill,
@@ -337,6 +399,7 @@ export default function PickupLinesScreen() {
                         { backgroundColor: spiceLevel === level ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)') }
                       ]}
                       activeOpacity={0.7}
+                      testID={`spice-dot-${level}`}
                     >
                       <Flame
                         size={16}
@@ -367,6 +430,7 @@ export default function PickupLinesScreen() {
                     key={tone}
                     onPress={() => setSelectedTone(tone)}
                     style={styles.toneChipWrapper}
+                    testID={`tone-${tone}`}
                   >
                     {selectedTone === tone ? (
                       <LinearGradient
@@ -415,6 +479,7 @@ export default function PickupLinesScreen() {
                   value={context}
                   onChangeText={setContext}
                   multiline
+                  testID="context-input"
                 />
               </View>
             </LinearGradient>
@@ -427,6 +492,7 @@ export default function PickupLinesScreen() {
               style={styles.primaryButtonWrapper}
               disabled={loading}
               activeOpacity={0.8}
+              testID="generate-button"
             >
               <LinearGradient
                 colors={loading ? ['rgba(227, 34, 43, 0.6)', 'rgba(255, 122, 89, 0.6)'] : ['#E3222B', '#FF7A59']}
