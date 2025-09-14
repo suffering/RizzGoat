@@ -22,6 +22,45 @@ interface ScreenshotParams {
   targetType?: ReplyType;
 }
 
+function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
+  if (!obj || typeof obj !== 'object') return false;
+  const o = obj as Record<string, any>;
+  const groups = ['safe', 'witty', 'bold'] as const;
+  for (const key of groups) {
+    const g = o[key];
+    if (!g || typeof g !== 'object') return false;
+    if (typeof g.text !== 'string' || typeof g.rationale !== 'string') return false;
+  }
+  return true;
+}
+
+function extractJSON(text: string): ScreenshotAnalysis | null {
+  try {
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+      const parsed = JSON.parse(trimmed);
+      if (isScreenshotAnalysis(parsed)) return parsed;
+    }
+  } catch {}
+  try {
+    const first = text.indexOf('{');
+    const last = text.lastIndexOf('}');
+    if (first >= 0 && last > first) {
+      const slice = text.slice(first, last + 1);
+      const parsed = JSON.parse(slice);
+      if (isScreenshotAnalysis(parsed)) return parsed;
+    }
+  } catch {}
+  try {
+    const codeBlock = text.match(/```(?:json)?\n([\s\S]*?)```/i);
+    if (codeBlock && codeBlock[1]) {
+      const parsed = JSON.parse(codeBlock[1]);
+      if (isScreenshotAnalysis(parsed)) return parsed;
+    }
+  } catch {}
+  return null;
+}
+
 // Use the backend API for all AI requests
 async function callBackendAI(messages: any[], retries = 3): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
@@ -33,48 +72,39 @@ async function callBackendAI(messages: any[], retries = 3): Promise<string> {
         },
         body: JSON.stringify({ messages }),
       });
-      
       if (response.ok) {
         const data = await response.json();
         return data.completion || '';
       }
-      
-      // Handle rate limiting (429) and server errors (5xx)
       if (response.status === 429 || response.status >= 500) {
         if (attempt < retries) {
-          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000; // Exponential backoff with jitter
+          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
           console.log(`Rate limited or server error (${response.status}). Retrying in ${Math.round(delay)}ms...`);
           await new Promise(resolve => setTimeout(resolve, delay));
           continue;
         }
       }
-      
-      // For other errors, don't retry
       const errorData = await response.json().catch(() => ({}));
       throw new Error(`Backend API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
     } catch (error) {
       if (attempt === retries) {
         throw error;
       }
-      
-      // Only retry on network errors
-      if (error instanceof TypeError && error.message.includes('fetch')) {
+      if (error instanceof TypeError && (error as Error).message.includes('fetch')) {
         const delay = Math.pow(2, attempt) * 1000;
         console.log(`Network error. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
-      
       throw error;
     }
   }
-  
   throw new Error('Max retries exceeded');
 }
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
-    const variation = Math.random().toString(36).slice(2);
+    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const messages = [
       {
         role: "system",
@@ -87,7 +117,6 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
         } Variation token: ${variation}. Output only the pickup line, nothing else.`,
       },
     ];
-
     const result = await callBackendAI(messages);
     return result || "Hey there! Mind if I steal a moment of your time?";
   } catch (error) {
@@ -98,91 +127,74 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
-    const variation = Math.random().toString(36).slice(2);
+    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const boldNote = params.amplifyBold
       ? " Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal."
       : "";
-
     const focusNote = params.targetType
       ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
       : "";
+    const baseSystem =
+      "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result." +
+      boldNote +
+      focusNote;
 
-    const messages = [
-      {
-        role: "system",
-        content:
-          "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result." +
-          boldNote +
-          focusNote,
-      },
+    const messages: any[] = [
+      { role: "system", content: baseSystem },
       {
         role: "user",
         content: [
-          {
-            type: "text",
-            text:
-              `Analyze this dating conversation screenshot and provide 3 reply options with rationales. Variation token: ${variation}. Format as JSON: {safe: {text: '', rationale: ''}, witty: {text: '', rationale: ''}, bold: {text: '', rationale: ''}}`,
-          },
-          {
-            type: "image",
-            image: params.base64Image,
-          },
+          { type: "text", text: `Analyze this dating conversation screenshot and provide 3 reply options with rationales. Variation token: ${variation}. Return ONLY raw JSON with this exact shape and keys: {"safe": {"text": "", "rationale": ""}, "witty": {"text": "", "rationale": ""}, "bold": {"text": "", "rationale": ""}}` },
+          { type: "image", image: params.base64Image },
         ],
       },
     ];
 
-    const result = await callBackendAI(messages);
-    try {
-      return JSON.parse(result);
-    } catch {
-      return {
-        safe: {
-          text: "That's interesting! Tell me more about that.",
-          rationale: "Keeps conversation flowing without risk",
-        },
-        witty: {
-          text: "Well, this conversation just got interesting 😏",
-          rationale: "Playful and engaging",
-        },
-        bold: {
-          text: "I like where this is going. Coffee tomorrow?",
-          rationale: "Confident and moves things forward",
-        },
-      };
+    let result = await callBackendAI(messages);
+    let parsed = extractJSON(result);
+
+    if (!parsed) {
+      messages.push({ role: "assistant", content: "Please output only valid JSON without any markdown or commentary." });
+      messages.push({
+        role: "user",
+        content: [
+          { type: "text", text: "Repeat: Return only the JSON object, no backticks, no code block, no extra text." },
+          { type: "image", image: params.base64Image },
+        ],
+      });
+      result = await callBackendAI(messages);
+      parsed = extractJSON(result);
     }
+
+    if (parsed && isScreenshotAnalysis(parsed)) {
+      return parsed;
+    }
+
+    return {
+      safe: { text: "That's interesting! Tell me more about that.", rationale: "Keeps conversation flowing without risk" },
+      witty: { text: "Well, this conversation just got interesting 😏", rationale: "Playful and engaging" },
+      bold: { text: "I like where this is going. Coffee tomorrow?", rationale: "Confident and moves things forward" },
+    };
   } catch (error) {
     console.error("Error analyzing screenshot:", error);
     return {
-      safe: {
-        text: "That's interesting! Tell me more about that.",
-        rationale: "Keeps conversation flowing without risk",
-      },
-      witty: {
-        text: "Well, this conversation just got interesting 😏",
-        rationale: "Playful and engaging",
-      },
-      bold: {
-        text: "I like where this is going. Coffee tomorrow?",
-        rationale: "Confident and moves things forward",
-      },
+      safe: { text: "That's interesting! Tell me more about that.", rationale: "Keeps conversation flowing without risk" },
+      witty: { text: "Well, this conversation just got interesting 😏", rationale: "Playful and engaging" },
+      bold: { text: "I like where this is going. Coffee tomorrow?", rationale: "Confident and moves things forward" },
     };
   }
 }
 
 export async function getChatAdvice(params: ChatParams): Promise<string> {
   try {
-    const variation = Math.random().toString(36).slice(2);
+    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const messages = [
       {
         role: "system",
         content: "You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.",
       },
-      {
-        role: "user",
-        content: `${params.message}\n\nVariation token: ${variation}`,
-      },
+      { role: "user", content: `${params.message}\n\nVariation token: ${variation}` },
     ];
-
     const result = await callBackendAI(messages);
     return result || "I'm here to help! Could you provide more details about your situation?";
   } catch (error) {
