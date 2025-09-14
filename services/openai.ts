@@ -16,6 +16,7 @@ interface ChatParams {
 
 interface ScreenshotParams {
   base64Image: string;
+  amplifyBold?: boolean;
 }
 
 // Use the backend API for all AI requests
@@ -93,17 +94,24 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
+    const boldNote = params.amplifyBold
+      ? " Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal."
+      : "";
+
     const messages = [
       {
         role: "system",
-        content: "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale.",
+        content:
+          "You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale." +
+          boldNote,
       },
       {
         role: "user",
         content: [
           {
             type: "text",
-            text: "Analyze this dating conversation screenshot and provide 3 reply options with rationales. Format as JSON: {safe: {text: '', rationale: ''}, witty: {text: '', rationale: ''}, bold: {text: '', rationale: ''}}",
+            text:
+              "Analyze this dating conversation screenshot and provide 3 reply options with rationales. Format as JSON: {safe: {text: '', rationale: ''}, witty: {text: '', rationale: ''}, bold: {text: '', rationale: ''}}",
           },
           {
             type: "image",

@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useCallback } from "react";
 import {
   View,
   Text,
@@ -48,14 +48,15 @@ export default function ScreenshotAdvisorScreen() {
   const { addFavorite } = useAppState();
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
-  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzing, setAnalyzing] = useState<boolean>(false);
   const [replies, setReplies] = useState<Reply[]>([]);
   const [selectedReply, setSelectedReply] = useState<number>(0);
+  const [lastBase64, setLastBase64] = useState<string | null>(null);
   
   const scanAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
-  const pickImage = async () => {
+  const pickImage = async (): Promise<void> => {
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
@@ -65,11 +66,15 @@ export default function ScreenshotAdvisorScreen() {
 
     if (!result.canceled && result.assets[0]) {
       setSelectedImage(result.assets[0].uri);
-      analyzeImage(result.assets[0].base64!);
+      const b64 = result.assets[0].base64 ?? null;
+      setLastBase64(b64);
+      if (b64) {
+        analyzeImage(b64, false);
+      }
     }
   };
 
-  const analyzeImage = async (base64: string) => {
+  const analyzeImage = async (base64: string, amplifyBold: boolean) => {
     setAnalyzing(true);
     setReplies([]);
     
@@ -90,7 +95,7 @@ export default function ScreenshotAdvisorScreen() {
     ).start();
 
     try {
-      const analysisResult = await analyzeScreenshot({ base64Image: base64 });
+      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold });
       
       const formattedReplies: Reply[] = [
         {
@@ -117,6 +122,10 @@ export default function ScreenshotAdvisorScreen() {
       ];
       
       setReplies(formattedReplies);
+      if (amplifyBold) {
+        const boldIndex = formattedReplies.findIndex(r => r.type === "Bold");
+        if (boldIndex >= 0) setSelectedReply(boldIndex);
+      }
       
       // Fade in replies
       Animated.timing(fadeAnim, {
@@ -285,7 +294,16 @@ export default function ScreenshotAdvisorScreen() {
                       {replies.map((reply, index) => (
                         <TouchableOpacity
                           key={reply.type}
-                          onPress={() => setSelectedReply(index)}
+                          onPress={async () => {
+                            setSelectedReply(index);
+                            if (reply.type === "Bold" && lastBase64 && !analyzing) {
+                              try {
+                                await analyzeImage(lastBase64, true);
+                              } catch (e) {
+                                // no-op, errors handled inside analyzeImage
+                              }
+                            }
+                          }}
                           style={[
                             styles.replyTab,
                             {
