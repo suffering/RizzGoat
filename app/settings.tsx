@@ -71,7 +71,7 @@ export default function SettingsScreen() {
           icon: Crown,
           title: "Upgrade to Pro",
           subtitle: "Unlock advanced features",
-          action: () => router.push("/pro"),
+          action: () => router.push("/pro" as any),
           showArrow: true,
           highlight: true,
         },

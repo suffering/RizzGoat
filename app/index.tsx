@@ -33,7 +33,7 @@ interface FloatingIcon {
 export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
-  const { showOnboarding } = useAppState();
+  const { showOnboarding, isPro } = useAppState();
   
   const logoScale = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -44,6 +44,10 @@ export default function HomeScreen() {
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
   useEffect(() => {
+    if (!showOnboarding && !isPro) {
+      router.replace('/pro' as any);
+      return;
+    }
     if (showOnboarding) return;
     
     // Initialize floating icons
@@ -171,6 +175,10 @@ export default function HomeScreen() {
   const handleCardPress = async (route: string) => {
     if (Platform.OS !== "web") {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    if (!isPro) {
+      router.push('/pro' as any);
+      return;
     }
     router.push(route as any);
   };
