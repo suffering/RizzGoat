@@ -8,7 +8,6 @@ import {
   Animated,
   Alert,
   Platform,
-  Image,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -113,11 +112,7 @@ export default function ProScreen() {
           >
             <View style={styles.brandRow}>
               <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.brandBadge}>
-                <Image
-                  source={require("../assets/images/icon.png")}
-                  style={styles.rizzIconSmall}
-                  resizeMode="contain"
-                />
+                <CrownIcon size={18} color="#FFFFFF" />
               </LinearGradient>
               <Text style={styles.brandText}>RizzGoat Pro</Text>
             </View>
@@ -443,9 +438,5 @@ const styles = StyleSheet.create({
     color: "rgba(255, 255, 255, 0.8)",
     textAlign: "center",
     lineHeight: 18,
-  },
-  rizzIconSmall: {
-    width: 18,
-    height: 18,
   },
 });
