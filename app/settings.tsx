@@ -20,8 +20,7 @@ import {
   Bell,
   Shield,
   FileText,
-  ShoppingBag,
-
+  
   RotateCcw,
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -88,12 +87,6 @@ export default function SettingsScreen() {
       title: "Community",
       items: [
         {
-          icon: MessageSquare,
-          title: "Join Discord",
-          action: () => Linking.openURL("https://discord.gg/rizzgoat"),
-          showArrow: true,
-        },
-        {
           icon: Star,
           title: "Rate Us",
           action: () => Alert.alert("Rate Us", "Thank you for your support!"),
@@ -120,12 +113,6 @@ export default function SettingsScreen() {
           icon: MessageSquare,
           title: "Message Us",
           action: () => Alert.alert("Support", "support@rizzgoat.app"),
-          showArrow: true,
-        },
-        {
-          icon: ShoppingBag,
-          title: "Restore Purchases",
-          action: () => Alert.alert("Restore", "Purchases restored successfully"),
           showArrow: true,
         },
       ],
