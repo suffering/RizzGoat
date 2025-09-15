@@ -965,7 +965,7 @@ export default function OnboardingScreen() {
                 <Image
                   source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gi3hkmcdxg9zwdmf425p9' }}
                   style={styles.profileCardImage}
-                  resizeMode="cover"
+                  resizeMode="contain"
                 />
               </Animated.View>
               
@@ -1301,6 +1301,7 @@ const styles = StyleSheet.create({
     aspectRatio: 0.75,
     borderRadius: 20,
     overflow: "hidden",
+    backgroundColor: "#FFFFFF",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
