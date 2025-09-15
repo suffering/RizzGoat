@@ -965,7 +965,7 @@ export default function OnboardingScreen() {
                 <Image
                   source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gi3hkmcdxg9zwdmf425p9' }}
                   style={styles.profileCardImage}
-                  resizeMode="contain"
+                  resizeMode="cover"
                 />
               </Animated.View>
               
@@ -1271,8 +1271,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 15,
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 28,
+    paddingBottom: 28,
   },
   typingContainer: {
     height: 60,
