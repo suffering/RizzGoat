@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
+    gap: 24,
   },
   sliderLabel: {
     fontSize: 14,
@@ -823,6 +823,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     flexWrap: "wrap",
     gap: 12,
+    marginTop: 12,
   },
   toneChipWrapper: {
     shadowColor: "#000",
@@ -853,6 +854,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     borderWidth: 1,
     overflow: "hidden",
+    marginTop: 12,
   },
   contextInput: {
     padding: 20,
