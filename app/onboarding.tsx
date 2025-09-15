@@ -963,7 +963,7 @@ export default function OnboardingScreen() {
                 ]}
               >
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gi3hkmcdxg9zwdmf425p9' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/tq9iosu566juxurh44gqu' }}
                   style={styles.profileCardImage}
                   resizeMode="cover"
                 />
