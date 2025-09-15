@@ -173,7 +173,7 @@ export default function PickupLinesScreen() {
       const height = e?.endCoordinates?.height ?? 0;
       console.log('Keyboard show, height:', height);
       setKeyboardHeight(height);
-      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+      console.log('Keyboard shown - no auto scroll');
     };
     const onHide = () => {
       console.log('Keyboard hide');
@@ -520,7 +520,7 @@ export default function PickupLinesScreen() {
                   returnKeyType="done"
                   blurOnSubmit
                   onSubmitEditing={() => Keyboard.dismiss()}
-                  onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50)}
+                  onFocus={() => console.log('Context input focused') }
                   testID="context-input"
                   autoCorrect
                   autoCapitalize="sentences"
