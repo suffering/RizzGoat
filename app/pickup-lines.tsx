@@ -12,11 +12,12 @@ import {
   Share,
   Alert,
   StatusBar,
-  Dimensions,
   PanResponder,
   GestureResponderEvent,
   PanResponderGestureState,
   LayoutChangeEvent,
+  KeyboardAvoidingView,
+  Keyboard,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -59,7 +60,8 @@ export default function PickupLinesScreen() {
   const sliderTrackWidthRef = useRef<number>(0);
   const sliderTrackXRef = useRef<number>(0);
   const isFirstRender = useRef<boolean>(true);
-  const contextDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const contextDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const scrollRef = useRef<ScrollView | null>(null);
 
   const generateNewLine = useCallback(async () => {
     setLoading(true);
@@ -267,10 +269,15 @@ export default function PickupLinesScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
+        <KeyboardAvoidingView style={styles.kav} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} testID="kav">
+          <ScrollView
+            ref={scrollRef}
+            contentContainerStyle={styles.scrollContent}
+            showsVerticalScrollIndicator={false}
+            keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
+            keyboardShouldPersistTaps="handled"
+            contentInsetAdjustmentBehavior="always"
+          >
           {/* Message Bubble */}
           <Animated.View
             style={[
@@ -471,7 +478,7 @@ export default function PickupLinesScreen() {
               <View style={[styles.inputWrapper, { 
                 backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
                 borderColor: isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'
-              }]}>
+              }]} testID="context-input-wrapper">
                 <TextInput
                   style={[styles.contextInput, { color: theme.text }]}
                   placeholder="e.g., loves travel, dog person, works in tech..."
@@ -479,7 +486,13 @@ export default function PickupLinesScreen() {
                   value={context}
                   onChangeText={setContext}
                   multiline
+                  returnKeyType="done"
+                  blurOnSubmit
+                  onSubmitEditing={() => Keyboard.dismiss()}
+                  onFocus={() => setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50)}
                   testID="context-input"
+                  autoCorrect
+                  autoCapitalize="sentences"
                 />
               </View>
             </LinearGradient>
@@ -551,7 +564,8 @@ export default function PickupLinesScreen() {
               </TouchableOpacity>
             </View>
           </View>
-        </ScrollView>
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
@@ -566,7 +580,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     top: 0,
-    height: Dimensions.get("window").height,
+    bottom: 0,
   },
   floatingElement: {
     position: "absolute",
@@ -861,5 +875,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 12,
     fontStyle: "italic",
+  },
+  kav: {
+    flex: 1,
   },
 });
