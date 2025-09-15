@@ -566,7 +566,7 @@ export default function OnboardingScreen() {
       Animated.parallel([
         Animated.timing(profileCardOpacity, {
           toValue: 1,
-          duration: 600,
+          duration: 700,
           useNativeDriver: true,
         }),
         Animated.spring(profileCardScale, {
@@ -576,6 +576,8 @@ export default function OnboardingScreen() {
           useNativeDriver: true,
         }),
       ]),
+      // Brief pause to ensure picture lands before any text animations
+      Animated.delay(300),
       // Show first typing text
       Animated.timing(typingText1Opacity, {
         toValue: 1,
@@ -961,7 +963,7 @@ export default function OnboardingScreen() {
                 ]}
               >
                 <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/0etb23s9eomitxyi4zuyj' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/x35j6hvjjgl4tfpslliww' }}
                   style={styles.profileCardImage}
                   resizeMode="cover"
                 />
