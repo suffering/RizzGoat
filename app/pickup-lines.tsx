@@ -52,6 +52,7 @@ export default function PickupLinesScreen() {
   const [selectedTone, setSelectedTone] = useState<string>("Playful");
   const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
+  const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
   
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const bubbleScale = useRef(new Animated.Value(1)).current;
@@ -163,6 +164,30 @@ export default function PickupLinesScreen() {
     }).start();
   }, [spiceLevel, sliderAnim]);
 
+  useEffect(() => {
+    if (Platform.OS === 'web') return;
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+
+    const onShow = (e: any) => {
+      const height = e?.endCoordinates?.height ?? 0;
+      console.log('Keyboard show, height:', height);
+      setKeyboardHeight(height);
+      setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
+    };
+    const onHide = () => {
+      console.log('Keyboard hide');
+      setKeyboardHeight(0);
+    };
+
+    const subShow = Keyboard.addListener(showEvent as any, onShow);
+    const subHide = Keyboard.addListener(hideEvent as any, onHide);
+    return () => {
+      subShow.remove();
+      subHide.remove();
+    };
+  }, []);
+
   const handleCopy = async (): Promise<void> => {
     await Clipboard.setStringAsync(currentLine);
     if (Platform.OS !== "web") {
@@ -269,14 +294,20 @@ export default function PickupLinesScreen() {
           </TouchableOpacity>
         </View>
 
-        <KeyboardAvoidingView style={styles.kav} behavior={Platform.OS === 'ios' ? 'padding' : undefined} keyboardVerticalOffset={Platform.OS === 'ios' ? 64 : 0} testID="kav">
+        <KeyboardAvoidingView
+          style={styles.kav}
+          behavior={Platform.OS === 'android' ? 'height' : undefined}
+          keyboardVerticalOffset={0}
+          testID="kav"
+        >
           <ScrollView
             ref={scrollRef}
-            contentContainerStyle={styles.scrollContent}
+            contentContainerStyle={[styles.scrollContent, { paddingBottom: styles.scrollContent.padding + keyboardHeight + 24 }]}
             showsVerticalScrollIndicator={false}
             keyboardDismissMode={Platform.OS === 'ios' ? 'interactive' : 'on-drag'}
             keyboardShouldPersistTaps="handled"
             contentInsetAdjustmentBehavior="always"
+            automaticallyAdjustKeyboardInsets={Platform.OS === 'ios'}
           >
           {/* Message Bubble */}
           <Animated.View
@@ -493,6 +524,8 @@ export default function PickupLinesScreen() {
                   testID="context-input"
                   autoCorrect
                   autoCapitalize="sentences"
+                  selectionColor={theme.primary}
+                  underlineColorAndroid="transparent"
                 />
               </View>
             </LinearGradient>
