@@ -962,11 +962,27 @@ export default function OnboardingScreen() {
                   },
                 ]}
               >
-                <Image
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gi3hkmcdxg9zwdmf425p9' }}
-                  style={styles.profileCardImage}
-                  resizeMode="cover"
-                />
+                <View style={styles.profileCardContent}>
+                  <View style={styles.profileHeader}>
+                    <Text style={styles.profileName}>Samantha, 25</Text>
+                    <View style={styles.profileMetaRow}>
+                      <Text style={styles.profileMeta}>👩🏻‍⚕️ Nurse</Text>
+                      <Text style={styles.profileDot}>•</Text>
+                      <Text style={styles.profileMeta}>6 miles away</Text>
+                    </View>
+                  </View>
+
+                  <Image
+                    source={{ uri: 'https://images.unsplash.com/photo-1531123897727-8f129e1688ce?q=80&w=1200&auto=format&fit=crop' }}
+                    style={styles.profilePhoto}
+                    resizeMode="cover"
+                  />
+
+                  <View style={styles.profileAbout}>
+                    <Text style={styles.aboutTitle}>About Me</Text>
+                    <Text style={styles.aboutBody}>I’ll never say no to tacos 🌮 and road trips with good playlists.</Text>
+                  </View>
+                </View>
               </Animated.View>
               
               {/* Reply Bubbles */}
@@ -1310,9 +1326,55 @@ const styles = StyleSheet.create({
     elevation: 10,
     marginVertical: 20,
   },
-  profileCardImage: {
-    width: "100%",
-    height: "100%",
+  profileCardContent: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 18,
+    paddingTop: 18,
+    paddingBottom: 18,
+  },
+  profileHeader: {
+    marginBottom: 12,
+  },
+  profileName: {
+    fontSize: 28,
+    fontWeight: '800',
+    color: '#111111',
+  },
+  profileMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 6,
+  },
+  profileMeta: {
+    fontSize: 16,
+    color: '#333333',
+  },
+  profileDot: {
+    marginHorizontal: 2,
+    color: '#666666',
+  },
+  profilePhoto: {
+    width: '100%',
+    aspectRatio: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginVertical: 12,
+  },
+  profileAbout: {
+    marginTop: 12,
+  },
+  aboutTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#111111',
+    marginBottom: 6,
+  },
+  aboutBody: {
+    fontSize: 16,
+    color: '#222222',
+    lineHeight: 22,
   },
   repliesContainer: {
     width: "100%",
