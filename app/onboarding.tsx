@@ -1271,13 +1271,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 15,
-    paddingBottom: 40,
+    paddingVertical: 40,
   },
   typingContainer: {
     height: 60,
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 30,
+    marginBottom: 20,
   },
   typingText: {
     fontSize: 24,
@@ -1306,7 +1306,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 20,
     elevation: 10,
-    marginBottom: 30,
+    marginVertical: 20,
   },
   profileCardImage: {
     width: "100%",
