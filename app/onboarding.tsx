@@ -1271,7 +1271,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     paddingHorizontal: 15,
-    paddingVertical: 40,
+    paddingTop: 40,
+    paddingBottom: 20,
   },
   typingContainer: {
     height: 60,
