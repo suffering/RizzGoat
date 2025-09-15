@@ -962,14 +962,11 @@ export default function OnboardingScreen() {
                   },
                 ]}
               >
-                <View style={styles.profileCardInner}>
-                  <View style={styles.profileImageTopSpacer} />
-                  <Image
-                    source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/x35j6hvjjgl4tfpslliww' }}
-                    style={styles.profileCardImage}
-                    resizeMode="cover"
-                  />
-                </View>
+                <Image
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/x35j6hvjjgl4tfpslliww' }}
+                  style={styles.profileCardImage}
+                  resizeMode="cover"
+                />
               </Animated.View>
               
               {/* Reply Bubbles */}
@@ -1311,19 +1308,9 @@ const styles = StyleSheet.create({
     elevation: 10,
     marginBottom: 30,
   },
-  profileCardInner: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  profileImageTopSpacer: {
-    height: 16,
-    backgroundColor: '#FFFFFF',
-    width: '100%',
-  },
   profileCardImage: {
-    width: '100%',
-    height: undefined,
-    flex: 1,
+    width: "100%",
+    height: "100%",
   },
   repliesContainer: {
     width: "100%",
