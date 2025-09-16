@@ -467,7 +467,7 @@ export default function PickupLinesScreen() {
                           const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
                           const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
                           let level = 0;
-                          if (ratio >= 0.66) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
+                          if (ratio >= 0.67) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
                           setSpiceLevel(level);
                         },
                       })
@@ -916,7 +916,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -18,
+    marginLeft: -16,
     top: "50%",
     marginTop: -18,
   },
