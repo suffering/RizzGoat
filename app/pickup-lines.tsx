@@ -18,6 +18,7 @@ import {
   LayoutChangeEvent,
   KeyboardAvoidingView,
   Keyboard,
+  Easing,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -159,9 +160,14 @@ export default function PickupLinesScreen() {
   useEffect(() => {
     Animated.timing(sliderAnim, {
       toValue: spiceLevel / 2,
-      duration: 300,
+      duration: 240,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: false,
-    }).start();
+    }).start(({ finished }) => {
+      if (finished) {
+        sliderAnim.setValue(spiceLevel / 2);
+      }
+    });
   }, [spiceLevel, sliderAnim]);
 
   useEffect(() => {
@@ -405,7 +411,17 @@ export default function PickupLinesScreen() {
                   </TouchableOpacity>
                   
                   <TouchableOpacity
-                    onPress={() => setSpiceLevel(1)}
+                    onPress={() => {
+                      setSpiceLevel(1);
+                      Animated.timing(sliderAnim, {
+                        toValue: 0.5,
+                        duration: 220,
+                        easing: Easing.out(Easing.cubic),
+                        useNativeDriver: false,
+                      }).start(({ finished }) => {
+                        if (finished) sliderAnim.setValue(0.5);
+                      });
+                    }}
                     style={[
                       styles.fireIconButton,
                       styles.fireIconCenter,
@@ -451,24 +467,29 @@ export default function PickupLinesScreen() {
                         onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
                         onStartShouldSetPanResponder: () => true,
                         onPanResponderGrant: (evt: GestureResponderEvent) => {
-                          const pageX = (evt.nativeEvent as any).pageX ?? 0;
-                          const localX = Math.max(0, Math.min((pageX - sliderTrackXRef.current), sliderTrackWidthRef.current));
+                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
                           const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
                           sliderAnim.setValue(ratio);
                         },
-                        onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-                          const dx = gestureState.moveX - sliderTrackXRef.current;
-                          const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
-                          const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                        onPanResponderMove: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
+                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
+                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
                           sliderAnim.setValue(ratio);
                         },
-                        onPanResponderRelease: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-                          const dx = gestureState.moveX - sliderTrackXRef.current;
-                          const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
-                          const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                        onPanResponderRelease: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
+                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
+                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
                           let level = 0;
                           if (ratio >= 0.67) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
                           setSpiceLevel(level);
+                          Animated.timing(sliderAnim, {
+                            toValue: level / 2,
+                            duration: 180,
+                            easing: Easing.out(Easing.cubic),
+                            useNativeDriver: false,
+                          }).start(({ finished }) => {
+                            if (finished) sliderAnim.setValue(level / 2);
+                          });
                         },
                       })
                     ).current}
@@ -478,8 +499,8 @@ export default function PickupLinesScreen() {
                         styles.newSliderFill,
                         {
                           width: sliderAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ["0%", "100%"],
+                            inputRange: [0, 0.5, 1],
+                            outputRange: ["0%", "49%", "100%"],
                           }),
                         },
                       ]}
@@ -492,6 +513,7 @@ export default function PickupLinesScreen() {
                             inputRange: [0, 1],
                             outputRange: ["0%", "100%"],
                           }),
+                          transform: [{ translateX: -12 }],
                         },
                       ]}
                     />
@@ -916,7 +938,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -16,
+    marginLeft: -10,
     top: "50%",
     marginTop: -18,
   },
@@ -956,7 +978,7 @@ const styles = StyleSheet.create({
     elevation: 5,
     top: "50%",
     marginTop: -12,
-    marginLeft: -12,
+    // center via translateX rather than margin to avoid platform rounding
   },
   sliderLabelsContainer: {
     flexDirection: "row",
