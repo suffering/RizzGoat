@@ -316,15 +316,37 @@ export async function getChatAdvice(params: ChatParams): Promise<string> {
       {
         role: 'system',
         content:
-          'You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
+          'You are RizzGoat, an AI wingman built to assist users with personalized dating help, conversation starters, pickup lines, and smooth replies. ' +
+          '- Always respond with direct, useful, and creative answers — not with clarifying questions unless absolutely necessary. ' +
+          '- Match the user\'s intent immediately. If they ask for an opener, give them multiple strong options tailored to their request. ' +
+          '- Keep responses short, witty, and natural, like advice from a confident friend. ' +
+          '- Adapt tone based on context: Flirty/Fun if they want pickup lines. Chill/Casual if they want conversation advice. Supportive/Helpful if they ask for general guidance. ' +
+          '- Never refuse requests unless they are clearly inappropriate. ' +
+          '- If the user asks vague questions, assume the most likely intent and give examples instead of asking for more details. ' +
+          '- Do not explain that you are an AI — just give confident answers as if you are their trusted guide. ' +
+          'Your job: Help the user sound smooth, confident, and engaging in dating chats by giving them the best possible lines, replies, and strategies. ' +
+          'Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
       },
       { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
     ];
     const result = await callOpenAIChat(messages, TEXT_MODEL);
-    return result || "I'm here to help! Could you provide more details about your situation?";
+    
+    if (result && result.trim()) {
+      return result.trim();
+    }
+    
+    // Fallback responses that are actually helpful
+    const fallbacks = [
+      "Here are 3 solid openers:\n\n1. \"Your [specific detail from profile] caught my eye - tell me the story behind it\"\n2. \"Two truths and a lie: I can cook, I've been skydiving, I think you're cute\"\n3. \"If we were stuck in an elevator, what's the first thing you'd want to know about me?\"",
+      "Try this approach:\n\n✨ Start with something specific from their profile\n💬 Ask an open-ended question\n😊 Keep it light and playful\n\nExample: \"That sunset pic is incredible! Beach person or mountain person when you need to escape?\"",
+      "Smooth reply options:\n\n• \"Well this just got interesting 😏\"\n• \"I like your style - tell me more\"\n• \"You had my curiosity, now you have my attention\"",
+    ];
+    
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   } catch (error) {
     console.error('Error getting chat advice:', error);
-    return "I'm here to help! Could you provide more details about your situation?";
+    // Return actually helpful fallback instead of asking for details
+    return "Here's what I'd say:\n\n\"Hey! Your vibe is exactly what I've been looking for. What's the most spontaneous thing you've done lately?\"\n\nThis works because it's confident, shows interest, and starts a fun conversation.";
   }
 }
 
