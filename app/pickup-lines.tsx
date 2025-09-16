@@ -438,7 +438,11 @@ export default function PickupLinesScreen() {
                       onPress={() => setSpiceLevel(level)}
                       style={[
                         styles.sliderDot,
-                        { left: `${level * 50}%` },
+                        level === 0
+                          ? { left: 18 }
+                          : level === 1
+                          ? { left: '50%', marginLeft: -18 }
+                          : { right: 18 },
                         spiceLevel === level && styles.sliderDotActive,
                         { backgroundColor: spiceLevel === level ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)') }
                       ]}
@@ -794,6 +798,7 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     position: "relative",
     justifyContent: "center",
+    paddingHorizontal: 18,
   },
   sliderFill: {
     position: "absolute",
@@ -810,7 +815,6 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
-    transform: [{ translateX: -18 }],
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.2,

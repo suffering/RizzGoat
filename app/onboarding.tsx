@@ -908,7 +908,7 @@ export default function OnboardingScreen() {
                 </Animated.View>
               </View>
               <Animated.View style={[styles.purposeTextContainer, { opacity: purposeTextOpacity }]}>
-                <Text style={styles.purposeTitle}>Ai Powered Dating</Text>
+                <Text style={styles.purposeTitle}>AI Powered Dating</Text>
                 <Text style={styles.purposeSubtitle}>Level up your game with intelligent conversation</Text>
               </Animated.View>
             </Animated.View>
