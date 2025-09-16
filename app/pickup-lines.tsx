@@ -384,9 +384,12 @@ export default function PickupLinesScreen() {
               </View>
               
               <View style={styles.sliderContainer} testID="spice-slider-container">
-                <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
-                  Cute
-                </Text>
+                <View style={styles.sliderLabelContainer}>
+                  <Flame size={16} color={theme.textSecondary} />
+                  <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
+                    Cute
+                  </Text>
+                </View>
                 <View
                   style={[styles.sliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
                   onLayout={(e: LayoutChangeEvent) => {
@@ -456,9 +459,12 @@ export default function PickupLinesScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
-                  Spicy
-                </Text>
+                <View style={styles.sliderLabelContainer}>
+                  <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
+                    Spicy
+                  </Text>
+                  <Flame size={16} color={theme.textSecondary} />
+                </View>
               </View>
             </LinearGradient>
           </View>
@@ -786,7 +792,12 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 24,
+    gap: 12,
+  },
+  sliderLabelContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
   },
   sliderLabel: {
     fontSize: 14,
