@@ -59,7 +59,11 @@ export default function ProScreen() {
       }
       await startFreeTrial(3);
       Alert.alert("Trial Activated", "Enjoy 3 days of Pro features.");
-      router.replace("/");
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/");
+      }
     } catch (e) {
       Alert.alert("Error", "Could not start trial. Please try again.");
     }
@@ -72,7 +76,11 @@ export default function ProScreen() {
       }
       await subscribe(p);
       Alert.alert("Subscribed", "Your plan is now active.");
-      router.replace("/");
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace("/");
+      }
     } catch (e) {
       Alert.alert("Error", "Subscription failed. Please try again.");
     }
@@ -96,7 +104,11 @@ export default function ProScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => {
-            router.replace('/');
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
           }} style={styles.closeButton} testID="pro-close">
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
