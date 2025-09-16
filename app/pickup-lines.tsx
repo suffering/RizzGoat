@@ -383,15 +383,33 @@ export default function PickupLinesScreen() {
                 </View>
               </View>
               
-              <View style={styles.sliderContainer} testID="spice-slider-container">
-                <View style={styles.sliderLabelContainer}>
-                  <Flame size={16} color={theme.textSecondary} />
-                  <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
-                    Cute
-                  </Text>
+              <View style={styles.newSliderContainer} testID="spice-slider-container">
+                {/* Fire Icons Above Track */}
+                <View style={styles.fireIconsContainer}>
+                  {[0, 1, 2].map((level) => (
+                    <TouchableOpacity
+                      key={level}
+                      onPress={() => setSpiceLevel(level)}
+                      style={[
+                        styles.fireIconButton,
+                        level === 0 && styles.fireIconLeft,
+                        level === 1 && styles.fireIconCenter,
+                        level === 2 && styles.fireIconRight,
+                      ]}
+                      activeOpacity={0.7}
+                      testID={`spice-icon-${level}`}
+                    >
+                      <Flame
+                        size={20}
+                        color={spiceLevel === level ? "#E3222B" : theme.textSecondary}
+                      />
+                    </TouchableOpacity>
+                  ))}
                 </View>
+                
+                {/* Slider Track */}
                 <View
-                  style={[styles.sliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                  style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
                   onLayout={(e: LayoutChangeEvent) => {
                     const { x, width } = e.nativeEvent.layout;
                     sliderTrackXRef.current = x;
@@ -426,7 +444,7 @@ export default function PickupLinesScreen() {
                 >
                   <Animated.View
                     style={[
-                      styles.sliderFill,
+                      styles.newSliderFill,
                       {
                         width: sliderAnim.interpolate({
                           inputRange: [0, 1],
@@ -435,35 +453,24 @@ export default function PickupLinesScreen() {
                       },
                     ]}
                   />
-                  {[0, 1, 2].map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      onPress={() => setSpiceLevel(level)}
-                      style={[
-                        styles.sliderDot,
-                        level === 0
-                          ? { left: 18 }
-                          : level === 1
-                          ? { left: '50%', marginLeft: -18 }
-                          : { right: 18 },
-                        spiceLevel === level && styles.sliderDotActive,
-                        { backgroundColor: spiceLevel === level ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)') }
-                      ]}
-                      activeOpacity={0.7}
-                      testID={`spice-dot-${level}`}
-                    >
-                      <Flame
-                        size={16}
-                        color={spiceLevel === level ? "#FFFFFF" : theme.textSecondary}
-                      />
-                    </TouchableOpacity>
-                  ))}
+                  <Animated.View
+                    style={[
+                      styles.sliderThumb,
+                      {
+                        left: sliderAnim.interpolate({
+                          inputRange: [0, 1],
+                          outputRange: ["0%", "100%"],
+                        }),
+                      },
+                    ]}
+                  />
                 </View>
-                <View style={styles.sliderLabelContainer}>
-                  <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
-                    Spicy
-                  </Text>
-                  <Flame size={16} color={theme.textSecondary} />
+                
+                {/* Labels Below Track */}
+                <View style={styles.sliderLabelsContainer}>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Cute</Text>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Medium</Text>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Spicy</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -836,6 +843,72 @@ const styles = StyleSheet.create({
     shadowColor: "#E3222B",
     shadowOpacity: 0.4,
     shadowRadius: 8,
+  },
+  newSliderContainer: {
+    alignItems: "center",
+    gap: 16,
+  },
+  fireIconsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  fireIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fireIconLeft: {
+    alignSelf: "flex-start",
+  },
+  fireIconCenter: {
+    alignSelf: "center",
+  },
+  fireIconRight: {
+    alignSelf: "flex-end",
+  },
+  newSliderTrack: {
+    width: "100%",
+    height: 8,
+    borderRadius: 4,
+    position: "relative",
+    justifyContent: "center",
+  },
+  newSliderFill: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#E3222B",
+    borderRadius: 4,
+  },
+  sliderThumb: {
+    position: "absolute",
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#E3222B",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 4,
+    left: "50%",
+    marginLeft: -10,
+  },
+  sliderLabelsContainer: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    width: "100%",
+    paddingHorizontal: 20,
+  },
+  sliderLabelText: {
+    fontSize: 12,
+    fontWeight: "600",
+    textAlign: "center",
   },
   toneSection: {
     marginBottom: 24,
