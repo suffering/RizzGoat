@@ -212,7 +212,13 @@ export default function ScreenshotAdvisorScreen() {
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
           <TouchableOpacity 
-            onPress={() => router.back()} 
+            onPress={() => {
+              if ((router as any).canGoBack && (router as any).canGoBack()) {
+                router.back();
+              } else {
+                router.replace('/');
+              }
+            }} 
             style={[styles.backButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
           >
             <ArrowLeft size={20} color={theme.text} />

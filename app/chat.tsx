@@ -126,7 +126,13 @@ export default function ChatScreen() {
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => {
+            if ((router as any).canGoBack && (router as any).canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }} style={styles.backButton}>
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.text }]}>

@@ -66,7 +66,13 @@ export default function ReferralScreen() {
       
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
+          <TouchableOpacity onPress={() => {
+            if ((router as any).canGoBack && (router as any).canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }} style={styles.closeButton}>
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
