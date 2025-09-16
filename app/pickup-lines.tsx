@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
   sliderWithIcons: {
     width: "100%",
     position: "relative",
-    paddingHorizontal: 60,
+    paddingHorizontal: 40,
   },
   fireIconsContainer: {
     flexDirection: "row",
@@ -881,7 +881,7 @@ const styles = StyleSheet.create({
   },
   fireIconLeft: {
     position: "absolute",
-    left: -50,
+    left: -32,
     top: "50%",
     marginTop: -16,
   },
@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
   },
   fireIconRight: {
     position: "absolute",
-    right: -50,
+    right: -32,
     top: "50%",
     marginTop: -16,
   },
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 60,
+    paddingHorizontal: 40,
     marginTop: 12,
   },
   sliderLabelText: {
