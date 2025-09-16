@@ -384,86 +384,97 @@ export default function PickupLinesScreen() {
               </View>
               
               <View style={styles.newSliderContainer} testID="spice-slider-container">
-                {/* Fire Icons Above Track */}
-                <View style={styles.fireIconsContainer}>
-                  {[0, 1, 2].map((level) => (
-                    <TouchableOpacity
-                      key={level}
-                      onPress={() => setSpiceLevel(level)}
+                {/* Slider Track with Fire Icons */}
+                <View style={styles.sliderWithIcons}>
+                  {/* Fire Icons positioned outside the track */}
+                  <TouchableOpacity
+                    onPress={() => setSpiceLevel(0)}
+                    style={[
+                      styles.fireIconButton,
+                      styles.fireIconLeft,
+                    ]}
+                    activeOpacity={0.7}
+                    testID={`spice-icon-0`}
+                  >
+                    <Flame
+                      size={22}
+                      color={spiceLevel === 0 ? "#E3222B" : theme.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
+                    onPress={() => setSpiceLevel(2)}
+                    style={[
+                      styles.fireIconButton,
+                      styles.fireIconRight,
+                    ]}
+                    activeOpacity={0.7}
+                    testID={`spice-icon-2`}
+                  >
+                    <Flame
+                      size={22}
+                      color={spiceLevel === 2 ? "#E3222B" : theme.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  
+                  {/* Slider Track */}
+                  <View
+                    style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                    onLayout={(e: LayoutChangeEvent) => {
+                      const { x, width } = e.nativeEvent.layout;
+                      sliderTrackXRef.current = x;
+                      sliderTrackWidthRef.current = width;
+                    }}
+                    {...useRef(
+                      PanResponder.create({
+                        onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
+                        onStartShouldSetPanResponder: () => true,
+                        onPanResponderGrant: (evt: GestureResponderEvent) => {
+                          const pageX = (evt.nativeEvent as any).pageX ?? 0;
+                          const localX = Math.max(0, Math.min((pageX - sliderTrackXRef.current), sliderTrackWidthRef.current));
+                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
+                          sliderAnim.setValue(ratio);
+                        },
+                        onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+                          const dx = gestureState.moveX - sliderTrackXRef.current;
+                          const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
+                          const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                          sliderAnim.setValue(ratio);
+                        },
+                        onPanResponderRelease: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+                          const dx = gestureState.moveX - sliderTrackXRef.current;
+                          const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
+                          const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
+                          let level = 0;
+                          if (ratio >= 0.66) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
+                          setSpiceLevel(level);
+                        },
+                      })
+                    ).current}
+                  >
+                    <Animated.View
                       style={[
-                        styles.fireIconButton,
-                        level === 0 && styles.fireIconLeft,
-                        level === 1 && styles.fireIconCenter,
-                        level === 2 && styles.fireIconRight,
+                        styles.newSliderFill,
+                        {
+                          width: sliderAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0%", "100%"],
+                          }),
+                        },
                       ]}
-                      activeOpacity={0.7}
-                      testID={`spice-icon-${level}`}
-                    >
-                      <Flame
-                        size={20}
-                        color={spiceLevel === level ? "#E3222B" : theme.textSecondary}
-                      />
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                
-                {/* Slider Track */}
-                <View
-                  style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                  onLayout={(e: LayoutChangeEvent) => {
-                    const { x, width } = e.nativeEvent.layout;
-                    sliderTrackXRef.current = x;
-                    sliderTrackWidthRef.current = width;
-                  }}
-                  {...useRef(
-                    PanResponder.create({
-                      onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
-                      onStartShouldSetPanResponder: () => true,
-                      onPanResponderGrant: (evt: GestureResponderEvent) => {
-                        const pageX = (evt.nativeEvent as any).pageX ?? 0;
-                        const localX = Math.max(0, Math.min((pageX - sliderTrackXRef.current), sliderTrackWidthRef.current));
-                        const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
-                        sliderAnim.setValue(ratio);
-                      },
-                      onPanResponderMove: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-                        const dx = gestureState.moveX - sliderTrackXRef.current;
-                        const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
-                        const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
-                        sliderAnim.setValue(ratio);
-                      },
-                      onPanResponderRelease: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-                        const dx = gestureState.moveX - sliderTrackXRef.current;
-                        const clamped = Math.max(0, Math.min(dx, sliderTrackWidthRef.current));
-                        const ratio = sliderTrackWidthRef.current > 0 ? clamped / sliderTrackWidthRef.current : 0;
-                        let level = 0;
-                        if (ratio >= 0.66) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
-                        setSpiceLevel(level);
-                      },
-                    })
-                  ).current}
-                >
-                  <Animated.View
-                    style={[
-                      styles.newSliderFill,
-                      {
-                        width: sliderAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ["0%", "100%"],
-                        }),
-                      },
-                    ]}
-                  />
-                  <Animated.View
-                    style={[
-                      styles.sliderThumb,
-                      {
-                        left: sliderAnim.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: ["0%", "100%"],
-                        }),
-                      },
-                    ]}
-                  />
+                    />
+                    <Animated.View
+                      style={[
+                        styles.sliderThumb,
+                        {
+                          left: sliderAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0%", "100%"],
+                          }),
+                        },
+                      ]}
+                    />
+                  </View>
                 </View>
                 
                 {/* Labels Below Track */}
@@ -846,34 +857,44 @@ const styles = StyleSheet.create({
   },
   newSliderContainer: {
     alignItems: "center",
-    gap: 16,
+    gap: 12,
+  },
+  sliderWithIcons: {
+    width: "100%",
+    position: "relative",
+    paddingHorizontal: 50,
   },
   fireIconsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 20,
+    paddingHorizontal: 0,
+    marginBottom: 12,
   },
   fireIconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
   },
   fireIconLeft: {
-    alignSelf: "flex-start",
+    position: "absolute",
+    left: -40,
   },
   fireIconCenter: {
-    alignSelf: "center",
+    position: "absolute",
+    left: "50%",
+    marginLeft: -16,
   },
   fireIconRight: {
-    alignSelf: "flex-end",
+    position: "absolute",
+    right: -40,
   },
   newSliderTrack: {
     width: "100%",
-    height: 8,
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 5,
     position: "relative",
     justifyContent: "center",
   },
@@ -883,27 +904,30 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     backgroundColor: "#E3222B",
-    borderRadius: 4,
+    borderRadius: 5,
   },
   sliderThumb: {
     position: "absolute",
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#E3222B",
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "#FFFFFF",
+    borderWidth: 3,
+    borderColor: "#E3222B",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.25,
     shadowRadius: 4,
-    elevation: 4,
+    elevation: 5,
     left: "50%",
-    marginLeft: -10,
+    marginLeft: -12,
   },
   sliderLabelsContainer: {
     flexDirection: "row",
     justifyContent: "space-between",
     width: "100%",
-    paddingHorizontal: 20,
+    paddingHorizontal: 50,
+    marginTop: 8,
   },
   sliderLabelText: {
     fontSize: 12,
