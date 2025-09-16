@@ -32,7 +32,8 @@ function RootLayoutNav() {
       }} />
       <Stack.Screen name="pro" options={{ 
         presentation: "modal",
-        animation: "slide_from_bottom"
+        animation: "none",
+        gestureEnabled: false
       }} />
     </Stack>
   );
