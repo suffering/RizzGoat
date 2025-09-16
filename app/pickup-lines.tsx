@@ -384,28 +384,12 @@ export default function PickupLinesScreen() {
               </View>
               
               <View style={styles.sliderContainer} testID="spice-slider-container">
-                {/* Left Fire Icon Button */}
-                <TouchableOpacity
-                  onPress={() => setSpiceLevel(0)}
-                  style={[
-                    styles.sliderSideButton,
-                    { backgroundColor: spiceLevel === 0 ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') }
-                  ]}
-                  activeOpacity={0.7}
-                  testID="spice-cute-button"
-                >
-                  <Flame
-                    size={18}
-                    color={spiceLevel === 0 ? "#FFFFFF" : theme.textSecondary}
-                  />
-                </TouchableOpacity>
-                
                 <View style={styles.sliderLabelContainer}>
+                  <Flame size={16} color={theme.textSecondary} />
                   <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
                     Cute
                   </Text>
                 </View>
-                
                 <View
                   style={[styles.sliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
                   onLayout={(e: LayoutChangeEvent) => {
@@ -475,28 +459,12 @@ export default function PickupLinesScreen() {
                     </TouchableOpacity>
                   ))}
                 </View>
-                
                 <View style={styles.sliderLabelContainer}>
                   <Text style={[styles.sliderLabel, { color: theme.textSecondary }]}>
                     Spicy
                   </Text>
+                  <Flame size={16} color={theme.textSecondary} />
                 </View>
-                
-                {/* Right Fire Icon Button */}
-                <TouchableOpacity
-                  onPress={() => setSpiceLevel(2)}
-                  style={[
-                    styles.sliderSideButton,
-                    { backgroundColor: spiceLevel === 2 ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)') }
-                  ]}
-                  activeOpacity={0.7}
-                  testID="spice-spicy-button"
-                >
-                  <Flame
-                    size={18}
-                    color={spiceLevel === 2 ? "#FFFFFF" : theme.textSecondary}
-                  />
-                </TouchableOpacity>
               </View>
             </LinearGradient>
           </View>
@@ -824,25 +792,12 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
-  },
-  sliderSideButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    elevation: 3,
+    gap: 8,
   },
   sliderLabelContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
-    minWidth: 45,
+    gap: 6,
   },
   sliderLabel: {
     fontSize: 14,
