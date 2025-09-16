@@ -386,7 +386,7 @@ export default function PickupLinesScreen() {
               <View style={styles.newSliderContainer} testID="spice-slider-container">
                 {/* Slider Track with Fire Icons */}
                 <View style={styles.sliderWithIcons}>
-                  {/* Fire Icons positioned outside the track */}
+                  {/* Fire Icons positioned outside the track with gray background */}
                   <TouchableOpacity
                     onPress={() => setSpiceLevel(0)}
                     style={[
@@ -396,10 +396,12 @@ export default function PickupLinesScreen() {
                     activeOpacity={0.7}
                     testID={`spice-icon-0`}
                   >
-                    <Flame
-                      size={22}
-                      color={spiceLevel === 0 ? "#E3222B" : theme.textSecondary}
-                    />
+                    <View style={[styles.fireIconBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                      <Flame
+                        size={22}
+                        color={spiceLevel === 0 ? "#E3222B" : theme.textSecondary}
+                      />
+                    </View>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -411,10 +413,12 @@ export default function PickupLinesScreen() {
                     activeOpacity={0.7}
                     testID={`spice-icon-1`}
                   >
-                    <Flame
-                      size={22}
-                      color={spiceLevel === 1 ? "#E3222B" : theme.textSecondary}
-                    />
+                    <View style={[styles.fireIconBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                      <Flame
+                        size={22}
+                        color={spiceLevel === 1 ? "#E3222B" : theme.textSecondary}
+                      />
+                    </View>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
@@ -426,10 +430,12 @@ export default function PickupLinesScreen() {
                     activeOpacity={0.7}
                     testID={`spice-icon-2`}
                   >
-                    <Flame
-                      size={22}
-                      color={spiceLevel === 2 ? "#E3222B" : theme.textSecondary}
-                    />
+                    <View style={[styles.fireIconBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
+                      <Flame
+                        size={22}
+                        color={spiceLevel === 2 ? "#E3222B" : theme.textSecondary}
+                      />
+                    </View>
                   </TouchableOpacity>
                   
                   {/* Slider Track */}
@@ -888,30 +894,37 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   fireIconButton: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  fireIconBackground: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     justifyContent: "center",
     alignItems: "center",
   },
   fireIconLeft: {
     position: "absolute",
-    left: -20,
+    left: -28,
     top: "50%",
-    marginTop: -16,
+    marginTop: -18,
   },
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -16,
+    marginLeft: -18,
     top: "50%",
-    marginTop: -16,
+    marginTop: -18,
   },
   fireIconRight: {
     position: "absolute",
-    right: -20,
+    right: -28,
     top: "50%",
-    marginTop: -16,
+    marginTop: -18,
   },
   newSliderTrack: {
     width: "100%",
@@ -941,7 +954,8 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.25,
     shadowRadius: 4,
     elevation: 5,
-    left: "50%",
+    top: "50%",
+    marginTop: -12,
     marginLeft: -12,
   },
   sliderLabelsContainer: {
