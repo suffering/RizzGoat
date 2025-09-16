@@ -389,6 +389,8 @@ export default function PickupLinesScreen() {
                       styles.fireIconButton,
                       styles.fireIconLeft,
                     ]}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    pressRetentionOffset={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     activeOpacity={0.7}
                     testID={`spice-icon-0`}
                   >
@@ -416,6 +418,8 @@ export default function PickupLinesScreen() {
                       styles.fireIconButton,
                       styles.fireIconCenter,
                     ]}
+                    hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                    pressRetentionOffset={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     activeOpacity={0.7}
                     testID={`spice-icon-1`}
                   >
@@ -433,6 +437,8 @@ export default function PickupLinesScreen() {
                       styles.fireIconButton,
                       styles.fireIconRight,
                     ]}
+                    hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+                    pressRetentionOffset={{ top: 8, bottom: 8, left: 8, right: 8 }}
                     activeOpacity={0.7}
                     testID={`spice-icon-2`}
                   >
@@ -446,6 +452,7 @@ export default function PickupLinesScreen() {
                   
                   {/* Slider Track (non-interactive) */}
                   <View
+                    pointerEvents="none"
                     style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
                   >
                     <Animated.View
@@ -876,6 +883,7 @@ const styles = StyleSheet.create({
     left: -28,
     top: "50%",
     marginTop: -18,
+    zIndex: 2,
   },
   fireIconCenter: {
     position: "absolute",
@@ -883,12 +891,14 @@ const styles = StyleSheet.create({
     marginLeft: -4,
     top: "50%",
     marginTop: -18,
+    zIndex: 2,
   },
   fireIconRight: {
     position: "absolute",
     right: -28,
     top: "50%",
     marginTop: -18,
+    zIndex: 2,
   },
   newSliderTrack: {
     width: "100%",
