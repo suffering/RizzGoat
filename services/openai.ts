@@ -65,6 +65,7 @@ function extractJSON(text: string): ScreenshotAnalysis | null {
 async function callBackendAI(messages: any[], retries = 3): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
+      console.log(`Attempting API call (attempt ${attempt + 1}/${retries + 1})`);
       const response = await fetch('https://toolkit.rork.com/text/llm/', {
         method: 'POST',
         headers: {
@@ -72,10 +73,15 @@ async function callBackendAI(messages: any[], retries = 3): Promise<string> {
         },
         body: JSON.stringify({ messages }),
       });
+      
+      console.log(`API Response status: ${response.status}`);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('API call successful');
         return data.completion || '';
       }
+      
       if (response.status === 429 || response.status >= 500) {
         if (attempt < retries) {
           const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
@@ -84,26 +90,124 @@ async function callBackendAI(messages: any[], retries = 3): Promise<string> {
           continue;
         }
       }
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(`Backend API error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+      
+      const errorText = await response.text().catch(() => 'No error details');
+      console.error(`API Error Response: ${errorText}`);
+      throw new Error(`Backend API error: ${response.status} - ${errorText}`);
     } catch (error) {
+      console.error(`API call error (attempt ${attempt + 1}):`, error);
+      
       if (attempt === retries) {
+        console.error('Max retries exceeded, throwing error');
         throw error;
       }
-      if (error instanceof TypeError && (error as Error).message.includes('fetch')) {
+      
+      // Handle network errors
+      if (error instanceof TypeError && error.message.includes('Network request failed')) {
         const delay = Math.pow(2, attempt) * 1000;
-        console.log(`Network error. Retrying in ${delay}ms...`);
+        console.log(`Network error detected. Retrying in ${delay}ms...`);
         await new Promise(resolve => setTimeout(resolve, delay));
         continue;
       }
+      
+      // Handle fetch errors
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        const delay = Math.pow(2, attempt) * 1000;
+        console.log(`Fetch error detected. Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
       throw error;
     }
   }
   throw new Error('Max retries exceeded');
 }
 
+// Fallback pickup lines for different combinations
+const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
+  Playful: {
+    Cute: [
+      "Are you a magician? Because whenever I look at you, everyone else disappears.",
+      "Do you have a map? I keep getting lost in your eyes.",
+      "Is your name Google? Because you have everything I've been searching for.",
+    ],
+    Cheeky: [
+      "Are you a parking ticket? Because you've got 'fine' written all over you.",
+      "Do you believe in love at first sight, or should I walk by again?",
+      "If you were a vegetable, you'd be a cute-cumber.",
+    ],
+    Spicy: [
+      "Are you a campfire? Because you're hot and I want s'more.",
+      "Is it hot in here or is it just you?",
+      "Do you have a Band-Aid? I just scraped my knee falling for you.",
+    ],
+  },
+  Confident: {
+    Cute: [
+      "I'm not a photographer, but I can picture us together.",
+      "Your hand looks heavy. Can I hold it for you?",
+      "I was wondering if you had an extra heart. Mine was just stolen.",
+    ],
+    Cheeky: [
+      "I'm not usually this forward, but you've got me breaking all my rules.",
+      "They say nothing lasts forever. Want to be my nothing?",
+      "Are you my appendix? Because I have a funny feeling I should take you out.",
+    ],
+    Spicy: [
+      "I must be a snowflake, because I've fallen for you.",
+      "Are you a time traveler? Because I see you in my future.",
+      "If being sexy was a crime, you'd be guilty as charged.",
+    ],
+  },
+  Wholesome: {
+    Cute: [
+      "You must be made of copper and tellurium, because you're Cu-Te.",
+      "Are you a 45-degree angle? Because you're acute-y.",
+      "Do you like Star Wars? Because Yoda one for me.",
+    ],
+    Cheeky: [
+      "Are you a bank loan? Because you have my interest.",
+      "If you were a triangle, you'd be acute one.",
+      "Are you Australian? Because you meet all of my koala-fications.",
+    ],
+    Spicy: [
+      "Is your dad a boxer? Because you're a knockout.",
+      "Are you a camera? Because every time I look at you, I smile.",
+      "Do you have a sunburn, or are you always this hot?",
+    ],
+  },
+  Bold: {
+    Cute: [
+      "I'm going to give you a kiss. If you don't like it, you can return it.",
+      "Life without you is like a broken pencil... pointless.",
+      "Are you French? Because Eiffel for you.",
+    ],
+    Cheeky: [
+      "I'm not drunk, I'm just intoxicated by you.",
+      "Kiss me if I'm wrong, but dinosaurs still exist, right?",
+      "Feel my shirt. Know what it's made of? Boyfriend material.",
+    ],
+    Spicy: [
+      "Are you a fire alarm? Because you're really loud and annoying... just kidding, you're hot.",
+      "I'd say God bless you, but it looks like he already did.",
+      "Are you a loan? Because you've got my interest and the rates are rising.",
+    ],
+  },
+};
+
+function getRandomFallbackLine(tone: string, spiceLevel: string): string {
+  const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
+  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
+  if (spiceLines.length === 0) {
+    return "Hey there! Mind if I steal a moment of your time?";
+  }
+  return spiceLines[Math.floor(Math.random() * spiceLines.length)];
+}
+
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
+    console.log('Generating pickup line with params:', params);
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const messages = [
       {
@@ -117,11 +221,21 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
         } Variation token: ${variation}. Output only the pickup line, nothing else.`,
       },
     ];
+    
     const result = await callBackendAI(messages);
-    return result || "Hey there! Mind if I steal a moment of your time?";
+    
+    if (result && result.trim()) {
+      console.log('Successfully generated pickup line');
+      return result.trim();
+    }
+    
+    // If API returns empty, use fallback
+    console.log('API returned empty, using fallback');
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   } catch (error) {
     console.error("Error generating pickup line:", error);
-    return "Hey there! Mind if I steal a moment of your time?";
+    // Use fallback lines when API fails
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   }
 }
 
