@@ -792,12 +792,12 @@ const styles = StyleSheet.create({
   sliderContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   sliderLabelContainer: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 4,
+    gap: 6,
   },
   sliderLabel: {
     fontSize: 14,
