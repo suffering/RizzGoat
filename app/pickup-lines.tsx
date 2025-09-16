@@ -59,6 +59,46 @@ export default function PickupLinesScreen() {
   const bubbleScale = useRef(new Animated.Value(1)).current;
   const confettiAnim = useRef(new Animated.Value(0)).current;
   const sliderAnim = useRef(new Animated.Value(0.5)).current;
+  const startRatioRef = useRef<number>(0.5);
+  const panResponderRef = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: (evt: GestureResponderEvent) => {
+        sliderAnim.stopAnimation((val?: number) => {
+          const current = typeof val === 'number' ? val : startRatioRef.current;
+          startRatioRef.current = current;
+        });
+        const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
+        const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : startRatioRef.current;
+        sliderAnim.setValue(ratio);
+      },
+      onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        const width = sliderTrackWidthRef.current > 0 ? sliderTrackWidthRef.current : 1;
+        const dx = gestureState.dx ?? 0;
+        let ratio = startRatioRef.current + dx / width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        sliderAnim.setValue(ratio);
+      },
+      onPanResponderRelease: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
+        const width = sliderTrackWidthRef.current > 0 ? sliderTrackWidthRef.current : 1;
+        const dx = gestureState.dx ?? 0;
+        let ratio = startRatioRef.current + dx / width;
+        ratio = Math.max(0, Math.min(1, ratio));
+        let level = 0;
+        if (ratio >= 0.67) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
+        setSpiceLevel(level);
+        Animated.timing(sliderAnim, {
+          toValue: level / 2,
+          duration: 180,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver: false,
+        }).start(({ finished }) => {
+          if (finished) sliderAnim.setValue(level / 2);
+        });
+      },
+    })
+  );
   const sliderTrackWidthRef = useRef<number>(0);
   const sliderTrackXRef = useRef<number>(0);
   const isFirstRender = useRef<boolean>(true);
@@ -462,37 +502,7 @@ export default function PickupLinesScreen() {
                       sliderTrackXRef.current = x;
                       sliderTrackWidthRef.current = width;
                     }}
-                    {...useRef(
-                      PanResponder.create({
-                        onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
-                        onStartShouldSetPanResponder: () => true,
-                        onPanResponderGrant: (evt: GestureResponderEvent) => {
-                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
-                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
-                          sliderAnim.setValue(ratio);
-                        },
-                        onPanResponderMove: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
-                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
-                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
-                          sliderAnim.setValue(ratio);
-                        },
-                        onPanResponderRelease: (evt: GestureResponderEvent, _gestureState: PanResponderGestureState) => {
-                          const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
-                          const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : 0;
-                          let level = 0;
-                          if (ratio >= 0.67) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
-                          setSpiceLevel(level);
-                          Animated.timing(sliderAnim, {
-                            toValue: level / 2,
-                            duration: 180,
-                            easing: Easing.out(Easing.cubic),
-                            useNativeDriver: false,
-                          }).start(({ finished }) => {
-                            if (finished) sliderAnim.setValue(level / 2);
-                          });
-                        },
-                      })
-                    ).current}
+                    {...panResponderRef.current.panHandlers}
                   >
                     <Animated.View
                       style={[
@@ -516,6 +526,8 @@ export default function PickupLinesScreen() {
                           transform: [{ translateX: -12 }],
                         },
                       ]}
+                      {...panResponderRef.current.panHandlers}
+                      testID="spice-slider-thumb"
                     />
                   </View>
                 </View>
@@ -938,7 +950,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -10,
+    marginLeft: -4,
     top: "50%",
     marginTop: -18,
   },
