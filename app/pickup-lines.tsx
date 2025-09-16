@@ -403,6 +403,21 @@ export default function PickupLinesScreen() {
                   </TouchableOpacity>
                   
                   <TouchableOpacity
+                    onPress={() => setSpiceLevel(1)}
+                    style={[
+                      styles.fireIconButton,
+                      styles.fireIconCenter,
+                    ]}
+                    activeOpacity={0.7}
+                    testID={`spice-icon-1`}
+                  >
+                    <Flame
+                      size={22}
+                      color={spiceLevel === 1 ? "#E3222B" : theme.textSecondary}
+                    />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity
                     onPress={() => setSpiceLevel(2)}
                     style={[
                       styles.fireIconButton,
@@ -881,7 +896,7 @@ const styles = StyleSheet.create({
   },
   fireIconLeft: {
     position: "absolute",
-    left: -8,
+    left: -20,
     top: "50%",
     marginTop: -16,
   },
@@ -889,10 +904,12 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: "50%",
     marginLeft: -16,
+    top: "50%",
+    marginTop: -16,
   },
   fireIconRight: {
     position: "absolute",
-    right: -8,
+    right: -20,
     top: "50%",
     marginTop: -16,
   },
