@@ -12,9 +12,6 @@ import {
   Share,
   Alert,
   StatusBar,
-  PanResponder,
-  GestureResponderEvent,
-  PanResponderGestureState,
   LayoutChangeEvent,
   KeyboardAvoidingView,
   Keyboard,
@@ -59,48 +56,6 @@ export default function PickupLinesScreen() {
   const bubbleScale = useRef(new Animated.Value(1)).current;
   const confettiAnim = useRef(new Animated.Value(0)).current;
   const sliderAnim = useRef(new Animated.Value(0.5)).current;
-  const startRatioRef = useRef<number>(0.5);
-  const panResponderRef = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_evt: GestureResponderEvent, gestureState: PanResponderGestureState) => Math.abs(gestureState.dx) > 5,
-      onStartShouldSetPanResponder: () => true,
-      onPanResponderGrant: (evt: GestureResponderEvent) => {
-        sliderAnim.stopAnimation((val?: number) => {
-          const current = typeof val === 'number' ? val : startRatioRef.current;
-          startRatioRef.current = current;
-        });
-        const localX = Math.max(0, Math.min((evt.nativeEvent as any).locationX ?? 0, sliderTrackWidthRef.current));
-        const ratio = sliderTrackWidthRef.current > 0 ? localX / sliderTrackWidthRef.current : startRatioRef.current;
-        sliderAnim.setValue(ratio);
-      },
-      onPanResponderMove: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-        const width = sliderTrackWidthRef.current > 0 ? sliderTrackWidthRef.current : 1;
-        const dx = gestureState.dx ?? 0;
-        let ratio = startRatioRef.current + dx / width;
-        ratio = Math.max(0, Math.min(1, ratio));
-        sliderAnim.setValue(ratio);
-      },
-      onPanResponderRelease: (evt: GestureResponderEvent, gestureState: PanResponderGestureState) => {
-        const width = sliderTrackWidthRef.current > 0 ? sliderTrackWidthRef.current : 1;
-        const dx = gestureState.dx ?? 0;
-        let ratio = startRatioRef.current + dx / width;
-        ratio = Math.max(0, Math.min(1, ratio));
-        let level = 0;
-        if (ratio >= 0.67) level = 2; else if (ratio >= 0.33) level = 1; else level = 0;
-        setSpiceLevel(level);
-        Animated.timing(sliderAnim, {
-          toValue: level / 2,
-          duration: 180,
-          easing: Easing.out(Easing.cubic),
-          useNativeDriver: false,
-        }).start(({ finished }) => {
-          if (finished) sliderAnim.setValue(level / 2);
-        });
-      },
-    })
-  );
-  const sliderTrackWidthRef = useRef<number>(0);
-  const sliderTrackXRef = useRef<number>(0);
   const isFirstRender = useRef<boolean>(true);
   const contextDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const scrollRef = useRef<ScrollView | null>(null);
@@ -108,7 +63,6 @@ export default function PickupLinesScreen() {
   const generateNewLine = useCallback(async () => {
     setLoading(true);
     
-    // Shimmer animation
     Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerAnim, {
@@ -141,7 +95,6 @@ export default function PickupLinesScreen() {
       console.log('Generated line:', line);
       setCurrentLine(line);
       
-      // Bubble pop animation
       Animated.spring(bubbleScale, {
         toValue: 1,
         friction: 3,
@@ -257,7 +210,6 @@ export default function PickupLinesScreen() {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
     
-    // Confetti animation for first 3 saves
     if (favorites.length < 3) {
       Animated.sequence([
         Animated.timing(confettiAnim, {
@@ -288,14 +240,12 @@ export default function PickupLinesScreen() {
     <View style={styles.container}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} backgroundColor="transparent" translucent />
       
-      {/* Background Gradient */}
       <LinearGradient
         colors={isDark ? ["#0a0a0a", "#1a1a1a", "#000000"] : ["#f8f9fa", "#ffffff", "#f1f3f4"]}
         style={styles.gradient}
         locations={[0, 0.5, 1]}
       />
       
-      {/* Floating Background Elements */}
       <Animated.View 
         style={[
           styles.floatingElement,
@@ -494,15 +444,9 @@ export default function PickupLinesScreen() {
                     </View>
                   </TouchableOpacity>
                   
-                  {/* Slider Track */}
+                  {/* Slider Track (non-interactive) */}
                   <View
                     style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
-                    onLayout={(e: LayoutChangeEvent) => {
-                      const { x, width } = e.nativeEvent.layout;
-                      sliderTrackXRef.current = x;
-                      sliderTrackWidthRef.current = width;
-                    }}
-                    {...panResponderRef.current.panHandlers}
                   >
                     <Animated.View
                       style={[
@@ -514,20 +458,6 @@ export default function PickupLinesScreen() {
                           }),
                         },
                       ]}
-                    />
-                    <Animated.View
-                      style={[
-                        styles.sliderThumb,
-                        {
-                          left: sliderAnim.interpolate({
-                            inputRange: [0, 1],
-                            outputRange: ["0%", "100%"],
-                          }),
-                          transform: [{ translateX: -12 }],
-                        },
-                      ]}
-                      {...panResponderRef.current.panHandlers}
-                      testID="spice-slider-thumb"
                     />
                   </View>
                 </View>
@@ -990,7 +920,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     top: "50%",
     marginTop: -12,
-    // center via translateX rather than margin to avoid platform rounding
   },
   sliderLabelsContainer: {
     flexDirection: "row",
