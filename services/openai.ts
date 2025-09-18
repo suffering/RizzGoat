@@ -37,6 +37,8 @@ type AnyMessage = TextMessage | VisionMessage;
 const TEXT_MODEL = 'gpt-4o';
 const VISION_MODEL = 'gpt-4o';
 
+type Mode = 'Safe' | 'Witty' | 'Bold';
+
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
   if (!obj || typeof obj !== 'object') return false;
   const o = obj as Record<string, any>;
@@ -240,6 +242,63 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
   } catch (error) {
     console.error('Error generating pickup line:', error);
     return getRandomFallbackLine(params.tone, params.spiceLevel);
+  }
+}
+
+export async function generatePickupFromScreenshot(base64Image: string, mode: Mode): Promise<string> {
+  try {
+    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
+    const modeLine = mode === 'Safe' ? 'respectful, light, friendly' : mode === 'Witty' ? 'clever, playful, a little teasing' : 'confident, flirty, direct but respectful';
+    const messages: VisionMessage[] = [
+      {
+        role: 'system',
+        content: [
+          {
+            type: 'text',
+            text:
+              'You are an AI texting assistant. The user uploaded a screenshot of a chat. Analyze context and generate exactly ONE pickup line that fits naturally into the chat based on the requested mode. Keep it short, natural, and conversational as if typed by a real person. Avoid repeating phrasing across runs. Prefer higher creativity while staying coherent and relevant. Do not output anything except the line itself.',
+          },
+        ],
+      },
+      {
+        role: 'user',
+        content: [
+          {
+            type: 'text',
+            text: `Mode: ${mode} (${modeLine}). Variation token: ${variation}. Output only the pickup line, no quotes, no extra text. Max 18 words.`,
+          },
+          { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Image}` } },
+        ],
+      },
+    ];
+    const result = await callOpenAIChat(messages, VISION_MODEL);
+    if (result && result.trim()) return result.trim();
+    const fallbacks: Record<Mode, string[]> = {
+      Safe: [
+        'That made me smile—want to trade favorite moments from this week?',
+        'You seem fun—mind if I join the storyline here?',
+        'Low-key think we vibe—coffee soon?',
+      ],
+      Witty: [
+        'Plot twist: I ask you out and it works—how’s Thursday?',
+        'Hot take: we’d banter well. Care to test the theory?',
+        'If charm had a playlist, you just queued track one. Drinks?',
+      ],
+      Bold: [
+        'Let’s skip the small talk—when are you free for a drink?',
+        'I’m into this energy. Tonight or tomorrow?',
+        'You’re my type. Pick a time; I’ll pick the spot.',
+      ],
+    };
+    const list = fallbacks[mode];
+    return list[Math.floor(Math.random() * list.length)];
+  } catch (e) {
+    const generic = {
+      Safe: 'You seem easy to talk to—want to grab coffee sometime?',
+      Witty: 'I’ll bring the jokes if you bring the time—deal?',
+      Bold: 'I want to see you. When works?',
+    } as const;
+    return generic[mode];
   }
 }
 
