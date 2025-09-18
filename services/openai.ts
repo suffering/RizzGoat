@@ -82,6 +82,7 @@ async function callOpenAIChat(
   messages: AnyMessage[],
   model: string,
   retries = 3,
+  temperature: number = 0.8,
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
@@ -95,7 +96,7 @@ async function callOpenAIChat(
         body: JSON.stringify({
           model,
           messages,
-          temperature: 0.8,
+          temperature,
         }),
       });
 
@@ -132,80 +133,83 @@ async function callOpenAIChat(
   throw new Error('Max retries exceeded');
 }
 
-const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
+const FALLBACK_LINES: Record<string, Record<'Cute' | 'Medium' | 'Spicy', string[]>> = {
   Playful: {
     Cute: [
-      'Are you a magician? Because whenever I look at you, everyone else disappears.',
-      'Do you have a map? I keep getting lost in your eyes.',
-      "Is your name Google? Because you have everything I've been searching for.",
+      'You look like trouble—adorable, harmless trouble.',
+      'Can I borrow a smile? I swear I’ll return it brighter.',
+      'Plot twist: we match, we vibe, we laugh too much.',
     ],
-    Cheeky: [
-      "Are you a parking ticket? Because you've got 'fine' written all over you.",
-      'Do you believe in love at first sight, or should I walk by again?',
-      "If you were a vegetable, you'd be a cute-cumber.",
+    Medium: [
+      "If flirting was cardio, we’d be in great shape tonight.",
+      'You bring the banter, I’ll bring the chemistry—deal?',
+      'I vote we skip small talk and trade favorite daydreams.',
     ],
     Spicy: [
-      "Are you a campfire? Because you're hot and I want s'more.",
-      'Is it hot in here or is it just you?',
-      'Do you have a Band-Aid? I just scraped my knee falling for you.',
+      "I’m dangerously good at fun—want a demonstration?",
+      'Careful—I tease until you bite back. Your move.',
+      'I want the spark and the chaos—say when.',
     ],
   },
   Confident: {
     Cute: [
-      "I'm not a photographer, but I can picture us together.",
-      'Your hand looks heavy. Can I hold it for you?',
-      'I was wondering if you had an extra heart. Mine was just stolen.',
+      'You’re my type. Coffee first, stories after.',
+      'I make great plans—want to be in one?',
+      'I like our odds. Shall we test them?',
     ],
-    Cheeky: [
-      "I'm not usually this forward, but you've got me breaking all my rules.",
-      'They say nothing lasts forever. Want to be my nothing?',
-      'Are you my appendix? Because I have a funny feeling I should take you out.',
+    Medium: [
+      'You + me + good music. I’ll handle everything else.',
+      'Let’s be direct: when are you free?',
+      'I don’t chase—I choose. I’m choosing you.',
     ],
     Spicy: [
-      "I must be a snowflake, because I've fallen for you.",
-      'Are you a time traveler? Because I see you in my future.',
-      "If being sexy was a crime, you'd be guilty as charged.",
+      'Let’s ruin our sleep schedules for all the right reasons.',
+      'I kiss like I mean it—interested in evidence?',
+      'Dangerously tempting. Pick a time; I’ll bring heat.',
     ],
   },
   Wholesome: {
     Cute: [
-      "You must be made of copper and tellurium, because you're Cu-Te.",
-      'Are you a 45-degree angle? Because you\'re acute-y.',
-      'Do you like Star Wars? Because Yoda one for me.',
+      'You feel like comfort and a fresh start.',
+      'Your smile just upgraded my day.',
+      'You’re the kind of kind I’d like to know.',
     ],
-    Cheeky: [
-      'Are you a bank loan? Because you have my interest.',
-      'If you were a triangle, you\'d be acute one.',
-      'Are you Australian? Because you meet all of my koala-fications.',
+    Medium: [
+      'Let’s be each other’s favorite person to tell good news to.',
+      'I make great pancakes and even better company.',
+      'You seem safe and special—can I earn a little space in your day?',
     ],
     Spicy: [
-      "Is your dad a boxer? Because you're a knockout.",
-      'Are you a camera? Because every time I look at you, I smile.',
-      'Do you have a sunburn, or are you always this hot?',
+      'Publicly adorable, privately unstoppable—sound fun?',
+      'Let’s keep it sweet… until it isn’t.',
+      'Be my soft place and my wild side—same night.',
     ],
   },
   Bold: {
     Cute: [
-      "I'm going to give you a kiss. If you don't like it, you can return it.",
-      'Life without you is like a broken pencil... pointless.',
-      'Are you French? Because Eiffel for you.',
+      'I want to take you out. Pick a day.',
+      'I like your vibe—let’s make it a date.',
+      'I’ll bring confidence if you bring curiosity.',
     ],
-    Cheeky: [
-      "I'm not drunk, I'm just intoxicated by you.",
-      'Kiss me if I\'m wrong, but dinosaurs still exist, right?',
-      "Feel my shirt. Know what it's made of? Boyfriend material.",
+    Medium: [
+      'Let’s skip the preface: drinks, then trouble.',
+      'I plan boldly and flirt shamelessly—join me.',
+      'You look like my next great decision.',
     ],
     Spicy: [
-      'Are you a fire alarm? Because you\'re really loud and annoying... just kidding, you\'re hot.',
-      "I'd say God bless you, but it looks like he already did.",
-      "Are you a loan? Because you've got my interest and the rates are rising.",
+      'Text me a time; I’ll handle the rest and the spark.',
+      'I want the kind of kiss that changes plans.',
+      'Pick a playlist; I’ll match the energy—no brakes.',
     ],
   },
 };
 
 function getRandomFallbackLine(tone: string, spiceLevel: string): string {
   const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
-  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
+  const level = (['Cute', 'Medium', 'Spicy'] as const).includes(spiceLevel as any)
+    ? (spiceLevel as 'Cute' | 'Medium' | 'Spicy')
+    : 'Cute';
+  const spiceLines = toneLines[level] || toneLines.Cute || [];
   if (spiceLines.length === 0) {
     return 'Hey there! Mind if I steal a moment of your time?';
   }
@@ -220,17 +224,17 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
       {
         role: 'system',
         content:
-          'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
+          'You are an AI pickup line creator. Always output exactly ONE pickup line, no quotes or prefixes. Match the chosen Vibe and Spice Level.\n\nVibes:\n- Playful: lighthearted, cheeky, fun.\n- Confident: smooth, self-assured, charming.\n- Wholesome: sweet, kind, genuine.\n- Bold: daring, flirty, direct without disrespect.\n\nSpice Levels:\n- Cute: soft, safe, light flirtation.\n- Medium: flirty, teasing, suggestive, not explicit.\n- Spicy: bold, risqué, freaky, edgy, playful and consensual; creative and witty, never crude or explicit.\n\nRules: Keep it short and chat-ready (max 18 words). Do not repeat phrasing across runs. No negging, no offensive content. Use any variation token only to diversify output; never include it in the line.',
       },
       {
         role: 'user',
-        content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
-          params.context ? `Context: ${params.context}` : ''
-        } Variation token: ${variation}. Output only the pickup line, nothing else.`,
+        content: `Vibe: ${params.tone}. Spice: ${params.spiceLevel}. ${params.context ? `Context: ${params.context}. ` : ''}Variation token: ${variation}. Output ONLY the pickup line. Max 18 words.`,
       },
     ];
 
-    const result = await callOpenAIChat(messages, TEXT_MODEL);
+    const lvl = params.spiceLevel.toLowerCase();
+    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.7;
+    const result = await callOpenAIChat(messages, TEXT_MODEL, 3, temp);
 
     if (result && result.trim()) {
       console.log('Successfully generated pickup line');
@@ -271,7 +275,7 @@ export async function generatePickupFromScreenshot(base64Image: string, mode: Mo
         ],
       },
     ];
-    const result = await callOpenAIChat(messages, VISION_MODEL);
+    const result = await callOpenAIChat(messages, VISION_MODEL, 3, 0.8);
     if (result && result.trim()) return result.trim();
     const fallbacks: Record<Mode, string[]> = {
       Safe: [
@@ -330,7 +334,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
       },
     ];
 
-    let result = await callOpenAIChat(messages, VISION_MODEL);
+    let result = await callOpenAIChat(messages, VISION_MODEL, 3, 0.6);
     let parsed = extractJSON(result);
 
     if (!parsed) {
@@ -345,7 +349,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
           ],
         },
       ];
-      result = await callOpenAIChat(retryMessages, VISION_MODEL);
+      result = await callOpenAIChat(retryMessages, VISION_MODEL, 3, 0.5);
       parsed = extractJSON(result);
     }
 
@@ -388,13 +392,12 @@ export async function getChatAdvice(params: ChatParams): Promise<string> {
       },
       { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
     ];
-    const result = await callOpenAIChat(messages, TEXT_MODEL);
+    const result = await callOpenAIChat(messages, TEXT_MODEL, 3, 0.7);
     
     if (result && result.trim()) {
       return result.trim();
     }
     
-    // Fallback responses that are actually helpful
     const fallbacks = [
       "Here are 3 solid openers:\n\n1. \"Your [specific detail from profile] caught my eye - tell me the story behind it\"\n2. \"Two truths and a lie: I can cook, I've been skydiving, I think you're cute\"\n3. \"If we were stuck in an elevator, what's the first thing you'd want to know about me?\"",
       "Try this approach:\n\n✨ Start with something specific from their profile\n💬 Ask an open-ended question\n😊 Keep it light and playful\n\nExample: \"That sunset pic is incredible! Beach person or mountain person when you need to escape?\"",
@@ -404,7 +407,6 @@ export async function getChatAdvice(params: ChatParams): Promise<string> {
     return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   } catch (error) {
     console.error('Error getting chat advice:', error);
-    // Return actually helpful fallback instead of asking for details
     return "Here's what I'd say:\n\n\"Hey! Your vibe is exactly what I've been looking for. What's the most spontaneous thing you've done lately?\"\n\nThis works because it's confident, shows interest, and starts a fun conversation.";
   }
 }
