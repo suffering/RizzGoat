@@ -906,7 +906,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     position: "relative",
     justifyContent: "center",
-    marginHorizontal: -28,
   },
   newSliderFill: {
     position: "absolute",
