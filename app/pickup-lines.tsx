@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -18,
+    marginLeft: -6,
     top: "50%",
     marginTop: -18,
     zIndex: 2,
