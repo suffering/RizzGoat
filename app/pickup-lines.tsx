@@ -36,15 +36,15 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
-const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
-const SPICE_LEVELS = ["Cute", "Cheeky", "Spicy"];
+const TONE_PRESETS = ["Playful", "Witty", "Bold"];
+const SPICE_LEVELS = ["Cute", "Medium", "Spicy"];
 
 export default function PickupLinesScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
   
-  const [currentLine, setCurrentLine] = useState<string>("Hey there! Mind if I steal a moment of your time?");
+  const [currentLine, setCurrentLine] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
   const [selectedTone, setSelectedTone] = useState<string>("Playful");
@@ -122,9 +122,7 @@ export default function PickupLinesScreen() {
   }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
 
   useEffect(() => {
-    if (!currentLine || currentLine === "Hey there! Mind if I steal a moment of your time?") {
-      generateNewLine();
-    }
+    generateNewLine();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
