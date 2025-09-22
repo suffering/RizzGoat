@@ -145,17 +145,26 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
   const spiceRaw = (params.spiceLevel || 'Cute').toLowerCase();
   const spice = spiceRaw.includes('spicy') ? 'Spicy' : spiceRaw.includes('medium') || spiceRaw.includes('cheeky') ? 'Medium' : 'Cute';
 
+  const intensityHints: string[] = [];
+  if (vibe === 'Bold') {
+    intensityHints.push('For Bold, push confidently flirtatious, sexy subtext, and clear intent without being crude.');
+  }
+  if (spice === 'Spicy') {
+    intensityHints.push('For Spicy, turn the heat way up: highly suggestive, palpable sexual tension, consent-forward, no pornographic or explicit graphic terms.');
+  }
+
   const system = [
     'You write original, non-cliché pickup lines as a dating wingman.',
     'Follow these rules strictly:',
     '- Output exactly one pickup line (one sentence; at most two).',
     '- Use only fresh model-generated text. No templates, no stock phrases, no internet clichés.',
-    '- Match vibe precisely: Playful=cheeky/fun, Witty=clever/wordplay, Bold=confident/direct but respectful.',
-    '- If spice is provided, scale intensity: Cute=soft/safe; Medium=teasing/suggestive; Spicy=daring yet consent-aware (still tasteful).',
+    '- Match vibe precisely: Playful=cheeky/fun, Witty=clever/wordplay, Bold=confident/direct but respectful and overtly flirty.',
+    '- If spice is provided, scale intensity: Cute=soft/safe; Medium=teasing/suggestive; Spicy=very daring, thirsty energy, horny vibe, but still respectful and consent-aware (no explicit descriptions).',
     '- If context is provided, weave it in naturally.',
     '- No labels, no quotes around the line, no emojis unless they genuinely fit the vibe.',
     '- Never recycle prior wording; ensure fresh imagery each time.',
-  ].join(' ');
+    intensityHints.join(' '),
+  ].filter(Boolean).join(' ');
 
   const user = [
     `vibe: ${vibe}`,
@@ -185,7 +194,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
   try {
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const boldNote = params.amplifyBold
-      ? ' Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal.'
+      ? ' Make the Bold option way hotter: audacious, horny energy, high sexual tension, consent-forward, still tasteful (avoid explicit graphic language). Increase boldness by ~40% vs normal.'
       : '';
     const focusNote = params.targetType
       ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
