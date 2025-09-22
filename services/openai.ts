@@ -148,33 +148,55 @@ async function callOpenAIChat(
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
-    console.log('Generating pickup line with params:', params);
+    console.log('[PickupLine] Generating pickup line with params:', params);
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
+    const randomSeed = Math.floor(Math.random() * 10000);
+    
     const messages: TextMessage[] = [
       {
         role: 'system',
         content:
-          'You are an AI pickup line creator. Always output exactly ONE pickup line, no quotes or prefixes. Match the chosen Vibe and Spice Level.\n\nVibes:\n- Playful: lighthearted, cheeky, fun.\n- Confident: smooth, self-assured, charming.\n- Wholesome: sweet, kind, genuine.\n- Bold: daring, flirty, direct without disrespect.\n\nSpice Levels:\n- Cute: soft, safe, light flirtation.\n- Medium: flirty, teasing, suggestive, not explicit.\n- Spicy: bold, risqué, freaky, edgy, playful and consensual; creative and witty, never crude or explicit.\n\nRules: Keep it short and chat-ready (max 18 words). Do not repeat phrasing across runs. No negging, no offensive content. Use any variation token only to diversify output; never include it in the line.',
+          'You are a creative pickup line generator. Output exactly ONE pickup line, plain text only.\n\n' +
+          'Behavior:\n' +
+          '- Do not stream or emit partial text. Do not echo instructions. Do not add quotes or labels.\n' +
+          '- If you are not finished, output NOTHING.\n' +
+          '- When finished, output a single pickup line (1–2 sentences) that matches both the selected Vibe and Spice.\n' +
+          '- Never use clichés or common internet lines. Always be original and vary word choice each run.\n' +
+          '- If optional user context is provided, weave it in naturally.\n' +
+          '- For Spicy, be daring and freaky but witty and respectful.\n\n' +
+          'Vibes:\n' +
+          '- Playful: cheeky, light, and fun.\n' +
+          '- Confident: smooth, self-assured, charming.\n' +
+          '- Wholesome: sweet, warm, and genuine.\n' +
+          '- Bold: daring, flirty, direct.\n\n' +
+          'Spice Levels:\n' +
+          '- Cute: safe, soft, and lighthearted.\n' +
+          '- Medium: more suggestive, teasing, playful.\n' +
+          '- Spicy: very bold, freaky, edgy, and provocative — but still witty and respectful.\n\n' +
+          'Keep it short and chat-ready (1–2 sentences max). Each run must produce a different style and word choice — maximize variety with randomness and creativity.\n\n' +
+          'Output: one line only, no prefixes/suffixes, no markdown.',
       },
       {
         role: 'user',
-        content: `Vibe: ${params.tone}. Spice: ${params.spiceLevel}. ${params.context ? `Context: ${params.context}. ` : ''}Variation token: ${variation}. Output ONLY the pickup line. Max 18 words.`,
+        content: `Generate a ${params.tone} pickup line with ${params.spiceLevel} spice level.${params.context ? ` Context: ${params.context}.` : ''} Seed: ${randomSeed}. Variation: ${variation}. Output ONLY the pickup line.`,
       },
     ];
 
+    console.log('[PickupLine] Making API call to OpenAI...');
     const lvl = params.spiceLevel.toLowerCase();
-    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.7;
+    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.8;
     const result = await callOpenAIChat(messages, TEXT_MODEL, 5, temp);
 
     if (result && result.trim()) {
-      console.log('Successfully generated pickup line');
-      return result.trim();
+      const cleanResult = result.trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
+      console.log('[PickupLine] Successfully generated:', cleanResult);
+      return cleanResult;
     }
 
-    console.log('API returned empty, retrying with different approach');
+    console.log('[PickupLine] API returned empty, throwing error');
     throw new Error('Failed to generate pickup line from API');
   } catch (error) {
-    console.error('Error generating pickup line:', error);
+    console.error('[PickupLine] Error generating pickup line:', error);
     throw error;
   }
 }
