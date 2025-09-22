@@ -1,8 +1,8 @@
 import { OPENAI_API_KEY } from '@/config/secrets';
 
 interface PickupLineParams {
-  tone: string;
-  spiceLevel: string;
+  tone: 'Playful' | 'Witty' | 'Bold';
+  spiceLevel?: 'Cute' | 'Medium' | 'Spicy';
   context?: string;
 }
 
@@ -34,8 +34,8 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o';
-const VISION_MODEL = 'gpt-4o';
+const TEXT_MODEL = 'gpt-4o-mini';
+const VISION_MODEL = 'gpt-4o-mini';
 
 // Debug: Log the model names to ensure they're correct
 console.log('[OpenAI] TEXT_MODEL:', TEXT_MODEL);
@@ -135,6 +135,9 @@ async function callOpenAIChat(
 
       const errorText = await response.text().catch(() => 'No error details');
       console.error(`[OpenAI] Error: ${errorText}`);
+      if (response.status === 404 && /model/i.test(errorText)) {
+        throw new Error('Model not found or no access. Check model name and API key permissions.');
+      }
       throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
     } catch (err) {
       console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
@@ -157,34 +160,33 @@ export async function generatePickupLine(params: PickupLineParams): Promise<stri
         role: 'system',
         content:
           'You are a creative pickup line generator. Output exactly ONE pickup line, plain text only.\n\n' +
-          'Behavior:\n' +
+          'Behavior Rules:\n' +
           '- Do not stream or emit partial text. Do not echo instructions. Do not add quotes or labels.\n' +
           '- If you are not finished, output NOTHING.\n' +
-          '- When finished, output a single pickup line (1–2 sentences) that matches both the selected Vibe and Spice.\n' +
+          '- When finished, output a single pickup line (1–2 sentences).\n' +
           '- Never use clichés or common internet lines. Always be original and vary word choice each run.\n' +
           '- If optional user context is provided, weave it in naturally.\n' +
-          '- For Spicy, be daring and freaky but witty and respectful.\n\n' +
-          'Vibes:\n' +
-          '- Playful: cheeky, light, and fun.\n' +
-          '- Confident: smooth, self-assured, charming.\n' +
-          '- Wholesome: sweet, warm, and genuine.\n' +
-          '- Bold: daring, flirty, direct.\n\n' +
-          'Spice Levels:\n' +
-          '- Cute: safe, soft, and lighthearted.\n' +
-          '- Medium: more suggestive, teasing, playful.\n' +
-          '- Spicy: very bold, freaky, edgy, and provocative — but still witty and respectful.\n\n' +
-          'Keep it short and chat-ready (1–2 sentences max). Each run must produce a different style and word choice — maximize variety with randomness and creativity.\n\n' +
-          'Output: one line only, no prefixes/suffixes, no markdown.',
+          '- If Spice is Spicy, be daring/freaky but witty and respectful and clearly consensual.\n' +
+          '- Ban these clichés and any close variants: "Are you a magician", "Did it hurt", "map/eyes", "heaven/angel", "first sight", "campfire/smores", "Wi‑Fi connection", "library card", "smooth as butter", "pants/phone number", "mirror/pocket".\n\n' +
+          'Vibes (must match precisely):\n' +
+          '- Playful → cheeky, light, fun.\n' +
+          '- Witty → clever, wordplay, sharp timing.\n' +
+          '- Bold → confident, direct, flirty (never rude).\n\n' +
+          'Spice (optional):\n' +
+          '- Cute → soft/safe.\n' +
+          '- Medium → teasing/suggestive.\n' +
+          '- Spicy → daring/freaky yet respectful.\n\n' +
+          'One shot, one line. Output a single chat-ready sentence (max 2). No markdown, no emojis unless clearly fitting the vibe. Each request must produce new imagery and wording.',
       },
       {
         role: 'user',
-        content: `Generate a ${params.tone} pickup line with ${params.spiceLevel} spice level.${params.context ? ` Context: ${params.context}.` : ''} Seed: ${randomSeed}. Variation: ${variation}. Output ONLY the pickup line.`,
+        content: `Vibe: ${params.tone}.${params.spiceLevel ? ` Spice: ${params.spiceLevel}.` : ''}${params.context ? ` Context: ${params.context}.` : ''} Seed: ${randomSeed}. Variation: ${variation}. Output ONLY the pickup line.`,
       },
     ];
 
     console.log('[PickupLine] Making API call to OpenAI...');
-    const lvl = params.spiceLevel.toLowerCase();
-    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.8;
+    const lvl = (params.spiceLevel ?? 'Medium').toLowerCase();
+    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.85;
     const result = await callOpenAIChat(messages, TEXT_MODEL, 5, temp);
 
     if (result && result.trim()) {

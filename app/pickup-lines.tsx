@@ -36,8 +36,10 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
-const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
-const SPICE_LEVELS = ["Cute", "Medium", "Spicy"];
+const TONE_PRESETS = ["Playful", "Witty", "Bold"] as const;
+const SPICE_LEVELS = ["Cute", "Medium", "Spicy"] as const;
+type Tone = typeof TONE_PRESETS[number];
+type Spice = typeof SPICE_LEVELS[number];
 
 export default function PickupLinesScreen() {
   const router = useRouter();
@@ -47,7 +49,7 @@ export default function PickupLinesScreen() {
   const [currentLine, setCurrentLine] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
-  const [selectedTone, setSelectedTone] = useState<string>("Playful");
+  const [selectedTone, setSelectedTone] = useState<Tone>("Playful");
   const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
@@ -88,7 +90,7 @@ export default function PickupLinesScreen() {
       
       const line = await generatePickupLine({
         tone: selectedTone,
-        spiceLevel: SPICE_LEVELS[spiceLevel],
+        spiceLevel: SPICE_LEVELS[spiceLevel] as Spice,
         context,
       });
       
