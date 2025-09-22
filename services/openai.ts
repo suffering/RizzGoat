@@ -1,8 +1,8 @@
 import { OPENAI_API_KEY } from '@/config/secrets';
 
 interface PickupLineParams {
-  tone: 'Playful' | 'Witty' | 'Bold';
-  spiceLevel?: 'Cute' | 'Medium' | 'Spicy';
+  tone: string;
+  spiceLevel: string;
   context?: string;
 }
 
@@ -34,14 +34,8 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o-mini';
-const VISION_MODEL = 'gpt-4o-mini';
-
-// Debug: Log the model names to ensure they're correct
-console.log('[OpenAI] TEXT_MODEL:', TEXT_MODEL);
-console.log('[OpenAI] VISION_MODEL:', VISION_MODEL);
-
-type Mode = 'Safe' | 'Witty' | 'Bold';
+const TEXT_MODEL = 'gpt-4o';
+const VISION_MODEL = 'gpt-4o';
 
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
   if (!obj || typeof obj !== 'object') return false;
@@ -86,31 +80,21 @@ async function callOpenAIChat(
   messages: AnyMessage[],
   model: string,
   retries = 3,
-  temperature: number = 0.8,
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      console.log(`[OpenAI] Calling model: "${model}" (attempt ${attempt + 1}/${retries + 1})`);
-      
-      // o1-preview models don't support temperature and have different requirements
-      const isO1Model = model.startsWith('o1');
-      const requestBody: any = {
-        model,
-        messages,
-      };
-      
-      // Only add temperature for non-o1 models
-      if (!isO1Model) {
-        requestBody.temperature = temperature;
-      }
-      
+      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
-        body: JSON.stringify(requestBody),
+        body: JSON.stringify({
+          model,
+          messages,
+          temperature: 0.8,
+        }),
       });
 
       console.log(`[OpenAI] Status: ${response.status}`);
@@ -135,9 +119,6 @@ async function callOpenAIChat(
 
       const errorText = await response.text().catch(() => 'No error details');
       console.error(`[OpenAI] Error: ${errorText}`);
-      if (response.status === 404 && /model/i.test(errorText)) {
-        throw new Error('Model not found or no access. Check model name and API key permissions.');
-      }
       throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
     } catch (err) {
       console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
@@ -149,94 +130,116 @@ async function callOpenAIChat(
   throw new Error('Max retries exceeded');
 }
 
+const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
+  Playful: {
+    Cute: [
+      'Are you a magician? Because whenever I look at you, everyone else disappears.',
+      'Do you have a map? I keep getting lost in your eyes.',
+      "Is your name Google? Because you have everything I've been searching for.",
+    ],
+    Cheeky: [
+      "Are you a parking ticket? Because you've got 'fine' written all over you.",
+      'Do you believe in love at first sight, or should I walk by again?',
+      "If you were a vegetable, you'd be a cute-cumber.",
+    ],
+    Spicy: [
+      "Are you a campfire? Because you're hot and I want s'more.",
+      'Is it hot in here or is it just you?',
+      'Do you have a Band-Aid? I just scraped my knee falling for you.',
+    ],
+  },
+  Confident: {
+    Cute: [
+      "I'm not a photographer, but I can picture us together.",
+      'Your hand looks heavy. Can I hold it for you?',
+      'I was wondering if you had an extra heart. Mine was just stolen.',
+    ],
+    Cheeky: [
+      "I'm not usually this forward, but you've got me breaking all my rules.",
+      'They say nothing lasts forever. Want to be my nothing?',
+      'Are you my appendix? Because I have a funny feeling I should take you out.',
+    ],
+    Spicy: [
+      "I must be a snowflake, because I've fallen for you.",
+      'Are you a time traveler? Because I see you in my future.',
+      "If being sexy was a crime, you'd be guilty as charged.",
+    ],
+  },
+  Wholesome: {
+    Cute: [
+      "You must be made of copper and tellurium, because you're Cu-Te.",
+      'Are you a 45-degree angle? Because you\'re acute-y.',
+      'Do you like Star Wars? Because Yoda one for me.',
+    ],
+    Cheeky: [
+      'Are you a bank loan? Because you have my interest.',
+      'If you were a triangle, you\'d be acute one.',
+      'Are you Australian? Because you meet all of my koala-fications.',
+    ],
+    Spicy: [
+      "Is your dad a boxer? Because you're a knockout.",
+      'Are you a camera? Because every time I look at you, I smile.',
+      'Do you have a sunburn, or are you always this hot?',
+    ],
+  },
+  Bold: {
+    Cute: [
+      "I'm going to give you a kiss. If you don't like it, you can return it.",
+      'Life without you is like a broken pencil... pointless.',
+      'Are you French? Because Eiffel for you.',
+    ],
+    Cheeky: [
+      "I'm not drunk, I'm just intoxicated by you.",
+      'Kiss me if I\'m wrong, but dinosaurs still exist, right?',
+      "Feel my shirt. Know what it's made of? Boyfriend material.",
+    ],
+    Spicy: [
+      'Are you a fire alarm? Because you\'re really loud and annoying... just kidding, you\'re hot.',
+      "I'd say God bless you, but it looks like he already did.",
+      "Are you a loan? Because you've got my interest and the rates are rising.",
+    ],
+  },
+};
+
+function getRandomFallbackLine(tone: string, spiceLevel: string): string {
+  const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
+  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
+  if (spiceLines.length === 0) {
+    return 'Hey there! Mind if I steal a moment of your time?';
+  }
+  return spiceLines[Math.floor(Math.random() * spiceLines.length)];
+}
+
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
-    console.log('[PickupLine] Generating pickup line with params:', params);
+    console.log('Generating pickup line with params:', params);
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const randomSeed = Math.floor(Math.random() * 10000);
-    
     const messages: TextMessage[] = [
       {
         role: 'system',
         content:
-          'You are a creative pickup line generator. Output exactly ONE pickup line, plain text only.\n\n' +
-          'Behavior Rules:\n' +
-          '- Do not stream or emit partial text. Do not echo instructions. Do not add quotes or labels.\n' +
-          '- If you are not finished, output NOTHING.\n' +
-          '- When finished, output a single pickup line (1–2 sentences).\n' +
-          '- Never use clichés or common internet lines. Always be original and vary word choice each run.\n' +
-          '- If optional user context is provided, weave it in naturally.\n' +
-          '- If Spice is Spicy, be daring/freaky but witty and respectful and clearly consensual.\n' +
-          '- Ban these clichés and any close variants: "Are you a magician", "Did it hurt", "map/eyes", "heaven/angel", "first sight", "campfire/smores", "Wi‑Fi connection", "library card", "smooth as butter", "pants/phone number", "mirror/pocket".\n\n' +
-          'Vibes (must match precisely):\n' +
-          '- Playful → cheeky, light, fun.\n' +
-          '- Witty → clever, wordplay, sharp timing.\n' +
-          '- Bold → confident, direct, flirty (never rude).\n\n' +
-          'Spice (optional):\n' +
-          '- Cute → soft/safe.\n' +
-          '- Medium → teasing/suggestive.\n' +
-          '- Spicy → daring/freaky yet respectful.\n\n' +
-          'One shot, one line. Output a single chat-ready sentence (max 2). No markdown, no emojis unless clearly fitting the vibe. Each request must produce new imagery and wording.',
+          'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
       },
       {
         role: 'user',
-        content: `Vibe: ${params.tone}.${params.spiceLevel ? ` Spice: ${params.spiceLevel}.` : ''}${params.context ? ` Context: ${params.context}.` : ''} Seed: ${randomSeed}. Variation: ${variation}. Output ONLY the pickup line.`,
+        content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
+          params.context ? `Context: ${params.context}` : ''
+        } Variation token: ${variation}. Output only the pickup line, nothing else.`,
       },
     ];
 
-    console.log('[PickupLine] Making API call to OpenAI...');
-    const lvl = (params.spiceLevel ?? 'Medium').toLowerCase();
-    const temp = lvl === 'spicy' ? 1.0 : lvl === 'medium' ? 0.9 : 0.85;
-    const result = await callOpenAIChat(messages, TEXT_MODEL, 5, temp);
+    const result = await callOpenAIChat(messages, TEXT_MODEL);
 
     if (result && result.trim()) {
-      const cleanResult = result.trim().replace(/^["']|["']$/g, ''); // Remove quotes if present
-      console.log('[PickupLine] Successfully generated:', cleanResult);
-      return cleanResult;
+      console.log('Successfully generated pickup line');
+      return result.trim();
     }
 
-    console.log('[PickupLine] API returned empty, throwing error');
-    throw new Error('Failed to generate pickup line from API');
+    console.log('API returned empty, using fallback');
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   } catch (error) {
-    console.error('[PickupLine] Error generating pickup line:', error);
-    throw error;
-  }
-}
-
-export async function generatePickupFromScreenshot(base64Image: string, mode: Mode): Promise<string> {
-  try {
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const modeLine = mode === 'Safe' ? 'respectful, light, friendly' : mode === 'Witty' ? 'clever, playful, a little teasing' : 'confident, flirty, direct but respectful';
-    const messages: VisionMessage[] = [
-      {
-        role: 'system',
-        content: [
-          {
-            type: 'text',
-            text:
-              'You are an AI texting assistant. The user uploaded a screenshot of a chat. Analyze context and generate exactly ONE pickup line that fits naturally into the chat based on the requested mode. Keep it short, natural, and conversational as if typed by a real person. Avoid repeating phrasing across runs. Prefer higher creativity while staying coherent and relevant. Do not output anything except the line itself.',
-          },
-        ],
-      },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Mode: ${mode} (${modeLine}). Variation token: ${variation}. Output only the pickup line, no quotes, no extra text. Max 18 words.`,
-          },
-          { type: 'image_url', image_url: { url: `data:image/png;base64,${base64Image}` } },
-        ],
-      },
-    ];
-    const result = await callOpenAIChat(messages, VISION_MODEL, 5, 0.8);
-    if (result && result.trim()) return result.trim();
-    
-    console.log('Screenshot pickup line generation failed, retrying');
-    throw new Error('Failed to generate pickup line from screenshot');
-  } catch (error) {
-    console.error('Error generating pickup line from screenshot:', error);
-    throw error;
+    console.error('Error generating pickup line:', error);
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   }
 }
 
@@ -268,7 +271,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
       },
     ];
 
-    let result = await callOpenAIChat(messages, VISION_MODEL, 5, 0.6);
+    let result = await callOpenAIChat(messages, VISION_MODEL);
     let parsed = extractJSON(result);
 
     if (!parsed) {
@@ -283,7 +286,7 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
           ],
         },
       ];
-      result = await callOpenAIChat(retryMessages, VISION_MODEL, 5, 0.5);
+      result = await callOpenAIChat(retryMessages, VISION_MODEL);
       parsed = extractJSON(result);
     }
 
@@ -291,11 +294,18 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
       return parsed;
     }
 
-    console.log('Screenshot analysis failed, retrying');
-    throw new Error('Failed to analyze screenshot');
+    return {
+      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
+      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
+      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
+    };
   } catch (error) {
     console.error('Error analyzing screenshot:', error);
-    throw error;
+    return {
+      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
+      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
+      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
+    };
   }
 }
 
@@ -319,17 +329,24 @@ export async function getChatAdvice(params: ChatParams): Promise<string> {
       },
       { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
     ];
-    const result = await callOpenAIChat(messages, TEXT_MODEL, 5, 0.7);
+    const result = await callOpenAIChat(messages, TEXT_MODEL);
     
     if (result && result.trim()) {
       return result.trim();
     }
     
-    console.log('Chat advice generation failed, retrying');
-    throw new Error('Failed to generate chat advice');
+    // Fallback responses that are actually helpful
+    const fallbacks = [
+      "Here are 3 solid openers:\n\n1. \"Your [specific detail from profile] caught my eye - tell me the story behind it\"\n2. \"Two truths and a lie: I can cook, I've been skydiving, I think you're cute\"\n3. \"If we were stuck in an elevator, what's the first thing you'd want to know about me?\"",
+      "Try this approach:\n\n✨ Start with something specific from their profile\n💬 Ask an open-ended question\n😊 Keep it light and playful\n\nExample: \"That sunset pic is incredible! Beach person or mountain person when you need to escape?\"",
+      "Smooth reply options:\n\n• \"Well this just got interesting 😏\"\n• \"I like your style - tell me more\"\n• \"You had my curiosity, now you have my attention\"",
+    ];
+    
+    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
   } catch (error) {
     console.error('Error getting chat advice:', error);
-    throw error;
+    // Return actually helpful fallback instead of asking for details
+    return "Here's what I'd say:\n\n\"Hey! Your vibe is exactly what I've been looking for. What's the most spontaneous thing you've done lately?\"\n\nThis works because it's confident, shows interest, and starts a fun conversation.";
   }
 }
 

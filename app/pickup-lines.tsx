@@ -36,20 +36,18 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
-const TONE_PRESETS = ["Playful", "Witty", "Bold"] as const;
-const SPICE_LEVELS = ["Cute", "Medium", "Spicy"] as const;
-type Tone = typeof TONE_PRESETS[number];
-type Spice = typeof SPICE_LEVELS[number];
+const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
+const SPICE_LEVELS = ["Cute", "Cheeky", "Spicy"];
 
 export default function PickupLinesScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
   
-  const [currentLine, setCurrentLine] = useState<string>("");
+  const [currentLine, setCurrentLine] = useState<string>("Hey there! Mind if I steal a moment of your time?");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
-  const [selectedTone, setSelectedTone] = useState<Tone>("Playful");
+  const [selectedTone, setSelectedTone] = useState<string>("Playful");
   const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
@@ -90,7 +88,7 @@ export default function PickupLinesScreen() {
       
       const line = await generatePickupLine({
         tone: selectedTone,
-        spiceLevel: SPICE_LEVELS[spiceLevel] as Spice,
+        spiceLevel: SPICE_LEVELS[spiceLevel],
         context,
       });
       
@@ -117,8 +115,6 @@ export default function PickupLinesScreen() {
         setError('Failed to generate pickup line. Please try again.');
         Alert.alert("Error", "Failed to generate pickup line. Please try again.");
       }
-      
-
     } finally {
       setLoading(false);
       shimmerAnim.stopAnimation();
@@ -126,7 +122,7 @@ export default function PickupLinesScreen() {
   }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
 
   useEffect(() => {
-    if (!currentLine) {
+    if (!currentLine || currentLine === "Hey there! Mind if I steal a moment of your time?") {
       generateNewLine();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -353,12 +349,12 @@ export default function PickupLinesScreen() {
                   <View style={styles.quoteIcon}>
                     <Text style={styles.quoteText}>“</Text>
                   </View>
-                  {!!currentLine && <Text style={styles.lineText} testID="pickup-line-text">{currentLine}</Text>}
+                  <Text style={styles.lineText}>{currentLine}</Text>
                   <View style={styles.quoteIconEnd}>
                     <Text style={styles.quoteText}>”</Text>
                   </View>
                   {error && (
-                    <Text style={styles.errorText} testID="pickup-line-error">{error}</Text>
+                    <Text style={styles.errorText}>{error}</Text>
                   )}
                 </View>
               )}
@@ -422,8 +418,8 @@ export default function PickupLinesScreen() {
                       styles.fireIconButton,
                       styles.fireIconCenter,
                     ]}
-                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
-                    pressRetentionOffset={{ top: 15, bottom: 15, left: 15, right: 15 }}
+                    hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
+                    pressRetentionOffset={{ top: 10, bottom: 10, left: 10, right: 10 }}
                     activeOpacity={0.7}
                     testID={`spice-icon-1`}
                   >
@@ -884,24 +880,24 @@ const styles = StyleSheet.create({
   },
   fireIconLeft: {
     position: "absolute",
-    left: -18,
-    top: 5,
-    marginTop: 0,
+    left: -28,
+    top: "50%",
+    marginTop: -18,
     zIndex: 2,
   },
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -18,
-    top: 5,
-    marginTop: 0,
+    marginLeft: -4,
+    top: "50%",
+    marginTop: -18,
     zIndex: 2,
   },
   fireIconRight: {
     position: "absolute",
-    right: -18,
-    top: 5,
-    marginTop: 0,
+    right: -28,
+    top: "50%",
+    marginTop: -18,
     zIndex: 2,
   },
   newSliderTrack: {
@@ -910,7 +906,6 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     position: "relative",
     justifyContent: "center",
-    marginTop: 18,
   },
   newSliderFill: {
     position: "absolute",
@@ -941,7 +936,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     width: "100%",
     paddingHorizontal: 16,
-    marginTop: 20,
+    marginTop: 12,
   },
   sliderLabelText: {
     fontSize: 12,

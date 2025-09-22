@@ -32,10 +32,12 @@ import { useAppState } from "@/providers/AppStateProvider";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
-import { generatePickupFromScreenshot } from "@/services/openai";
+import { analyzeScreenshot } from "@/services/openai";
 
-interface ReplyTab {
+interface Reply {
   type: "Safe" | "Witty" | "Bold";
+  text: string;
+  rationale: string;
   icon: any;
   color: string;
 }
@@ -47,7 +49,7 @@ export default function ScreenshotAdvisorScreen() {
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
-  const [pickupLine, setPickupLine] = useState<string>('');
+  const [replies, setReplies] = useState<Reply[]>([]);
   const [selectedReply, setSelectedReply] = useState<number>(0);
   const [lastBase64, setLastBase64] = useState<string | null>(null);
   
@@ -68,19 +70,20 @@ export default function ScreenshotAdvisorScreen() {
       const b64 = result.assets[0].base64 ?? null;
       setLastBase64(b64);
       if (b64) {
-        console.log('[ScreenshotAdvisor] image selected, generating line for Safe mode');
-        analyzeImage(b64, "Safe");
+        console.log('[ScreenshotAdvisor] image selected, analyzing default Safe/Witty/Bold');
+        analyzeImage(b64, false, null);
       }
     }
   };
 
   const analyzeImage = async (
     base64: string,
-    mode: "Safe" | "Witty" | "Bold",
+    amplifyBold: boolean,
+    targetType: "Safe" | "Witty" | "Bold" | null,
   ) => {
-    console.log('[ScreenshotAdvisor] generatePickupFromScreenshot', { mode });
+    console.log('[ScreenshotAdvisor] analyzeImage', { amplifyBold, targetType });
     setAnalyzing(true);
-    setPickupLine('');
+    setReplies([]);
     
     Animated.loop(
       Animated.sequence([
@@ -98,10 +101,41 @@ export default function ScreenshotAdvisorScreen() {
     ).start();
 
     try {
-      const line = await generatePickupFromScreenshot(base64, mode);
-      setPickupLine(line);
-      const targetIndex = mode === 'Safe' ? 0 : mode === 'Witty' ? 1 : 2;
-      setSelectedReply(targetIndex);
+      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold, targetType: targetType ?? undefined });
+      
+      const formattedReplies: Reply[] = [
+        {
+          type: "Safe",
+          text: analysisResult.safe.text,
+          rationale: analysisResult.safe.rationale,
+          icon: Shield,
+          color: "#10B981",
+        },
+        {
+          type: "Witty",
+          text: analysisResult.witty.text,
+          rationale: analysisResult.witty.rationale,
+          icon: Zap,
+          color: "#F59E0B",
+        },
+        {
+          type: "Bold",
+          text: analysisResult.bold.text,
+          rationale: analysisResult.bold.rationale,
+          icon: Flame,
+          color: "#EF4444",
+        },
+      ];
+      
+      setReplies(formattedReplies);
+      if (targetType) {
+        const idx = formattedReplies.findIndex(r => r.type === targetType);
+        if (idx >= 0) setSelectedReply(idx);
+      } else if (amplifyBold) {
+        const boldIndex = formattedReplies.findIndex(r => r.type === "Bold");
+        if (boldIndex >= 0) setSelectedReply(boldIndex);
+      }
+      
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 500,
@@ -124,13 +158,14 @@ export default function ScreenshotAdvisorScreen() {
     Alert.alert("Copied!", "Reply copied to clipboard");
   };
 
-  const handleSave = async (mode: "Safe" | "Witty" | "Bold") => {
+  const handleSave = async (reply: Reply) => {
     addFavorite({
       id: Date.now().toString(),
       type: "reply",
-      content: pickupLine,
+      content: reply.text,
       metadata: {
-        type: mode,
+        type: reply.type,
+        rationale: reply.rationale,
       },
     });
     
@@ -267,27 +302,24 @@ export default function ScreenshotAdvisorScreen() {
                 </View>
               )}
 
-              {!!pickupLine && (
+              {replies.length > 0 && (
                 <Animated.View style={{ opacity: fadeAnim }}>
                   <View style={styles.repliesHeader}>
                     <Text style={[styles.repliesTitle, { color: theme.text }]}>
                       Suggested Replies
                     </Text>
                     <View style={styles.replyTabs}>
-                      {[
-                        { type: 'Safe', icon: Shield, color: '#10B981' },
-                        { type: 'Witty', icon: Zap, color: '#F59E0B' },
-                        { type: 'Bold', icon: Flame, color: '#EF4444' },
-                      ].map((reply, index) => (
+                      {replies.map((reply, index) => (
                         <TouchableOpacity
                           testID={`reply-tab-${reply.type.toLowerCase()}`}
                           key={reply.type}
                           onPress={async () => {
                             setSelectedReply(index);
                             if (lastBase64 && !analyzing) {
+                              const isBold = reply.type === "Bold";
                               try {
-                                await analyzeImage(lastBase64, reply.type as 'Safe' | 'Witty' | 'Bold');
-                              } catch {}
+                                await analyzeImage(lastBase64, isBold, reply.type);
+                              } catch (e) {}
                             }
                           }}
                           style={[
@@ -323,22 +355,25 @@ export default function ScreenshotAdvisorScreen() {
                       styles.replyCard,
                       {
                         backgroundColor: theme.card,
-                        borderColor: selectedReply === 0 ? '#10B981' : selectedReply === 1 ? '#F59E0B' : '#EF4444',
+                        borderColor: replies[selectedReply].color,
                       },
                     ]}
                   >
                     <Text style={[styles.replyText, { color: theme.text }]}>
-                      {pickupLine}
+                      {replies[selectedReply].text}
                     </Text>
                     <View style={styles.rationaleContainer}>
                       <Text style={[styles.rationaleLabel, { color: theme.textSecondary }]}>
-                        Tip: Tap a mode to regenerate a fresh line.
+                        Why this works:
+                      </Text>
+                      <Text style={[styles.rationaleText, { color: theme.textSecondary }]}>
+                        {replies[selectedReply].rationale}
                       </Text>
                     </View>
                     <View style={styles.replyActions}>
                       <TouchableOpacity
                         testID="copy-reply"
-                        onPress={() => handleCopy(pickupLine)}
+                        onPress={() => handleCopy(replies[selectedReply].text)}
                         style={[styles.actionButton, { backgroundColor: theme.background }]}
                       >
                         <Copy size={18} color={theme.text} />
@@ -348,7 +383,7 @@ export default function ScreenshotAdvisorScreen() {
                       </TouchableOpacity>
                       <TouchableOpacity
                         testID="save-reply"
-                        onPress={() => handleSave((['Safe','Witty','Bold'][selectedReply] as 'Safe'|'Witty'|'Bold'))}
+                        onPress={() => handleSave(replies[selectedReply])}
                         style={[styles.actionButton, { backgroundColor: theme.background }]}
                       >
                         <Save size={18} color={theme.text} />
