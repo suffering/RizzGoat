@@ -44,7 +44,7 @@ export default function PickupLinesScreen() {
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
   
-  const [currentLine, setCurrentLine] = useState<string>("Hey there! Mind if I steal a moment of your time?");
+  const [currentLine, setCurrentLine] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
   const [selectedTone, setSelectedTone] = useState<string>("Playful");
@@ -115,6 +115,11 @@ export default function PickupLinesScreen() {
         setError('Failed to generate pickup line. Please try again.');
         Alert.alert("Error", "Failed to generate pickup line. Please try again.");
       }
+      
+      // Set a generic message when API fails completely
+      if (!currentLine) {
+        setCurrentLine('Unable to generate pickup line. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
       shimmerAnim.stopAnimation();
@@ -122,7 +127,7 @@ export default function PickupLinesScreen() {
   }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
 
   useEffect(() => {
-    if (!currentLine || currentLine === "Hey there! Mind if I steal a moment of your time?") {
+    if (!currentLine) {
       generateNewLine();
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
