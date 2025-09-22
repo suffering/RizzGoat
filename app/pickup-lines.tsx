@@ -461,7 +461,7 @@ export default function PickupLinesScreen() {
                         {
                           width: sliderAnim.interpolate({
                             inputRange: [0, 0.5, 1],
-                            outputRange: ["0%", "49%", "100%"],
+                            outputRange: ["0%", "50%", "100%"],
                           }),
                         },
                       ]}
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -4,
+    marginLeft: -18,
     top: "50%",
     marginTop: -18,
     zIndex: 2,
