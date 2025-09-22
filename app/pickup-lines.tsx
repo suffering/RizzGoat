@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -51,6 +51,7 @@ export default function PickupLinesScreen() {
   const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
+  const [trackWidth, setTrackWidth] = useState<number>(0);
   
   const shimmerAnim = useRef(new Animated.Value(0)).current;
   const bubbleScale = useRef(new Animated.Value(1)).current;
@@ -454,18 +455,35 @@ export default function PickupLinesScreen() {
                   <View
                     pointerEvents="none"
                     style={[styles.newSliderTrack, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}
+                    onLayout={(e) => {
+                      const w = e.nativeEvent.layout.width ?? 0;
+                      if (w && w !== trackWidth) setTrackWidth(w);
+                    }}
                   >
-                    <Animated.View
-                      style={[
-                        styles.newSliderFill,
-                        {
-                          width: sliderAnim.interpolate({
-                            inputRange: [0, 0.5, 1],
-                            outputRange: ["0%", "50%", "100%"],
-                          }),
-                        },
-                      ]}
-                    />
+                    {spiceLevel === 1 ? (
+                      <View
+                        testID="center-spice-highlight"
+                        style={[
+                          styles.centerHighlight,
+                          {
+                            width: Math.max(28, Math.round(trackWidth * 0.28)),
+                            left: Math.max(0, Math.round((trackWidth - Math.max(28, Math.round(trackWidth * 0.28))) / 2)),
+                          },
+                        ]}
+                      />
+                    ) : (
+                      <Animated.View
+                        style={[
+                          styles.newSliderFill,
+                          {
+                            width: sliderAnim.interpolate({
+                              inputRange: [0, 0.5, 1],
+                              outputRange: ["0%", "0%", "100%"],
+                            }),
+                          },
+                        ]}
+                      />
+                    )}
                   </View>
                 </View>
                 
@@ -910,6 +928,13 @@ const styles = StyleSheet.create({
   newSliderFill: {
     position: "absolute",
     left: 0,
+    top: 0,
+    bottom: 0,
+    backgroundColor: "#E3222B",
+    borderRadius: 5,
+  },
+  centerHighlight: {
+    position: "absolute",
     top: 0,
     bottom: 0,
     backgroundColor: "#E3222B",
