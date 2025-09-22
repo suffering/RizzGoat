@@ -34,7 +34,7 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o';
+const TEXT_MODEL = 'o1-preview';
 const VISION_MODEL = 'gpt-4o';
 
 // Debug: Log the model names to ensure they're correct
@@ -91,17 +91,26 @@ async function callOpenAIChat(
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
       console.log(`[OpenAI] Calling model: "${model}" (attempt ${attempt + 1}/${retries + 1})`);
+      
+      // o1-preview models don't support temperature and have different requirements
+      const isO1Model = model.startsWith('o1');
+      const requestBody: any = {
+        model,
+        messages,
+      };
+      
+      // Only add temperature for non-o1 models
+      if (!isO1Model) {
+        requestBody.temperature = temperature;
+      }
+      
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log(`[OpenAI] Status: ${response.status}`);
