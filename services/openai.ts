@@ -34,7 +34,7 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'o1-preview';
+const TEXT_MODEL = 'gpt-4o';
 const VISION_MODEL = 'gpt-4o';
 
 // Debug: Log the model names to ensure they're correct
