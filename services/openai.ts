@@ -34,8 +34,8 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o-mini';
-const VISION_MODEL = 'gpt-4o-mini';
+const TEXT_MODEL = 'gpt-4o';
+const VISION_MODEL = 'gpt-4o';
 
 // Debug: Log the model names to ensure they're correct
 console.log('[OpenAI] TEXT_MODEL:', TEXT_MODEL);
