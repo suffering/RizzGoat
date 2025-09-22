@@ -116,10 +116,7 @@ export default function PickupLinesScreen() {
         Alert.alert("Error", "Failed to generate pickup line. Please try again.");
       }
       
-      // Set a generic message when API fails completely
-      if (!currentLine) {
-        setCurrentLine('Unable to generate pickup line. Please check your connection and try again.');
-      }
+
     } finally {
       setLoading(false);
       shimmerAnim.stopAnimation();
@@ -354,12 +351,12 @@ export default function PickupLinesScreen() {
                   <View style={styles.quoteIcon}>
                     <Text style={styles.quoteText}>“</Text>
                   </View>
-                  <Text style={styles.lineText}>{currentLine}</Text>
+                  {!!currentLine && <Text style={styles.lineText} testID="pickup-line-text">{currentLine}</Text>}
                   <View style={styles.quoteIconEnd}>
                     <Text style={styles.quoteText}>”</Text>
                   </View>
                   {error && (
-                    <Text style={styles.errorText}>{error}</Text>
+                    <Text style={styles.errorText} testID="pickup-line-error">{error}</Text>
                   )}
                 </View>
               )}
