@@ -426,7 +426,8 @@ export default function PickupLinesScreen() {
                     <View style={[styles.fireIconBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
                       <Flame
                         size={22}
-                        color={spiceLevel === 1 ? "#E3222B" : theme.textSecondary}
+                        color="#E3222B"
+                        fill="#E3222B"
                       />
                     </View>
                   </TouchableOpacity>
