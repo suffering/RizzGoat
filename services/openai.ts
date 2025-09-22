@@ -34,8 +34,12 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o';
-const VISION_MODEL = 'gpt-4o';
+const TEXT_MODEL = 'gpt-4o-mini';
+const VISION_MODEL = 'gpt-4o-mini';
+
+// Debug: Log the model names to ensure they're correct
+console.log('[OpenAI] TEXT_MODEL:', TEXT_MODEL);
+console.log('[OpenAI] VISION_MODEL:', VISION_MODEL);
 
 type Mode = 'Safe' | 'Witty' | 'Bold';
 
@@ -86,7 +90,7 @@ async function callOpenAIChat(
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
+      console.log(`[OpenAI] Calling model: "${model}" (attempt ${attempt + 1}/${retries + 1})`);
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {

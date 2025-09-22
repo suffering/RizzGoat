@@ -418,8 +418,8 @@ export default function PickupLinesScreen() {
                       styles.fireIconButton,
                       styles.fireIconCenter,
                     ]}
-                    hitSlop={{ top: 14, bottom: 14, left: 16, right: 16 }}
-                    pressRetentionOffset={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    hitSlop={{ top: 20, bottom: 20, left: 20, right: 20 }}
+                    pressRetentionOffset={{ top: 15, bottom: 15, left: 15, right: 15 }}
                     activeOpacity={0.7}
                     testID={`spice-icon-1`}
                   >
@@ -888,7 +888,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -4,
+    marginLeft: -18,
     top: "50%",
     marginTop: -18,
     zIndex: 2,
