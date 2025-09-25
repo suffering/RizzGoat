@@ -1,4 +1,4 @@
-import { OPENAI_API_KEY } from '@/config/secrets';
+import { OPENAI_PROXY_URL } from '../config/secrets';
 
 interface PickupLineParams {
   tone: string;
@@ -83,12 +83,11 @@ async function callOpenAIChat(
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      console.log(`[Proxy] Calling ${OPENAI_PROXY_URL}/chat (attempt ${attempt + 1}/${retries + 1})`);
+      const response = await fetch(`${OPENAI_PROXY_URL}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model,
@@ -97,7 +96,7 @@ async function callOpenAIChat(
         }),
       });
 
-      console.log(`[OpenAI] Status: ${response.status}`);
+      console.log(`[Proxy] Status: ${response.status}`);
 
       if (response.ok) {
         const data = (await response.json()) as any;
@@ -111,17 +110,17 @@ async function callOpenAIChat(
       if (response.status === 429 || response.status >= 500) {
         if (attempt < retries) {
           const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-          console.log(`[OpenAI] Retry in ${Math.round(delay)}ms`);
+          console.log(`[Proxy] Retry in ${Math.round(delay)}ms`);
           await new Promise((r) => setTimeout(r, delay));
           continue;
         }
       }
 
       const errorText = await response.text().catch(() => 'No error details');
-      console.error(`[OpenAI] Error: ${errorText}`);
-      throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
+      console.error(`[Proxy] Error: ${errorText}`);
+      throw new Error(`Proxy error: ${response.status} - ${errorText}`);
     } catch (err) {
-      console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
+      console.error(`[Proxy] Call failed (attempt ${attempt + 1})`, err);
       if (attempt === retries) throw err;
       const delay = Math.pow(2, attempt) * 1000;
       await new Promise((r) => setTimeout(r, delay));
@@ -303,4 +302,14 @@ export async function analyzeScreenshotLegacy(base64Image: string): Promise<Scre
 
 export async function getChatAdviceLegacy(message: string): Promise<string> {
   return getChatAdvice({ message });
+}
+
+export async function chat(messages: { role: string; content: string }[]) {
+  const res = await fetch(`${OPENAI_PROXY_URL}/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages }),
+  });
+  if (!res.ok) throw new Error(`Proxy error ${res.status}: ${await res.text()}`);
+  return res.json();
 }
