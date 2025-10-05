@@ -211,36 +211,29 @@ function getRandomFallbackLine(tone: string, spiceLevel: string): string {
 }
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
-  try {
-    console.log('Generating pickup line with params:', params);
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const messages: TextMessage[] = [
-      {
-        role: 'system',
-        content:
-          'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
-      },
-      {
-        role: 'user',
-        content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
-          params.context ? `Context: ${params.context}` : ''
-        } Variation token: ${variation}. Output only the pickup line, nothing else.`,
-      },
-    ];
+  console.log('Generating pickup line with params:', params);
+  const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
+  const messages: TextMessage[] = [
+    {
+      role: 'system',
+      content:
+        'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
+    },
+    {
+      role: 'user',
+      content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
+        params.context ? `Context: ${params.context}` : ''
+      } Variation token: ${variation}. Output only the pickup line, nothing else.`,
+    },
+  ];
 
-    const result = await callOpenAIChat(messages, TEXT_MODEL);
-
-    if (result && result.trim()) {
-      console.log('Successfully generated pickup line');
-      return result.trim();
-    }
-
-    console.log('API returned empty, using fallback');
-    return getRandomFallbackLine(params.tone, params.spiceLevel);
-  } catch (error) {
-    console.error('Error generating pickup line:', error);
-    return getRandomFallbackLine(params.tone, params.spiceLevel);
+  const result = await callOpenAIChat(messages, TEXT_MODEL);
+  const cleaned = (result ?? '').trim();
+  if (!cleaned) {
+    throw new Error('Empty response from model');
   }
+  console.log('Successfully generated pickup line');
+  return cleaned;
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
