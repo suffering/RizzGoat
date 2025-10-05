@@ -17,6 +17,7 @@ import { useRouter } from "expo-router";
 import { Menu, Camera, MessageCircle, Sparkles, Zap, Heart } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
+import { ensureOpenAIProxyUrl } from "@/config/secrets";
 import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
 
@@ -44,6 +45,28 @@ export default function HomeScreen() {
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
   useEffect(() => {
+    const checkBackend = async () => {
+      try {
+        const base = ensureOpenAIProxyUrl();
+        console.log('[Health Check] Testing backend at:', base);
+        if (!base) {
+          console.error('[Health Check] No base URL configured');
+          return;
+        }
+        const response = await fetch(`${base}/`, { method: 'GET' });
+        console.log('[Health Check] Status:', response.status);
+        if (response.ok) {
+          const data = await response.json();
+          console.log('[Health Check] Response:', data);
+        } else {
+          console.error('[Health Check] Backend returned error:', response.status);
+        }
+      } catch (error) {
+        console.error('[Health Check] Backend not accessible:', error);
+      }
+    };
+    checkBackend();
+    
     if (!showOnboarding && !isPro) {
       router.replace('/pro' as any);
       return;

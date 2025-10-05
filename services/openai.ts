@@ -87,9 +87,12 @@ async function callOpenAIChat(
       if (!base) throw new Error('AI features are unavailable: missing proxy URL');
       
       const url = `${base}/chat`;
+      console.log(`[Proxy] ========================================`);
       console.log(`[Proxy] Calling ${url} (attempt ${attempt + 1}/${retries + 1})`);
       console.log(`[Proxy] Base URL: ${base}`);
       console.log(`[Proxy] Full URL: ${url}`);
+      console.log(`[Proxy] Messages count: ${messages.length}`);
+      console.log(`[Proxy] Model: ${model}`);
       
       const response = await fetch(url, {
         method: 'POST',

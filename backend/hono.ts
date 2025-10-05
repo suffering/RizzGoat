@@ -36,12 +36,17 @@ app.use(
 
 // Simple health check endpoint
 app.get("/", (c) => {
-  return c.json({ status: "ok", message: "API is running" });
+  console.log('[Backend] Health check called');
+  return c.json({ status: "ok", message: "API is running", timestamp: new Date().toISOString() });
 });
 
 // OpenAI proxy endpoint
 app.post("/chat", async (c) => {
+  console.log('[OpenAI Proxy] ========================================');
   console.log('[OpenAI Proxy] Received request to /chat');
+  console.log('[OpenAI Proxy] Method:', c.req.method);
+  console.log('[OpenAI Proxy] Path:', c.req.path);
+  console.log('[OpenAI Proxy] URL:', c.req.url);
   try {
     const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_V2;
     
