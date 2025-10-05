@@ -39,6 +39,50 @@ app.get("/", (c) => {
   return c.json({ status: "ok", message: "API is running" });
 });
 
+// OpenAI proxy endpoint
+app.post("/chat", async (c) => {
+  try {
+    const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_V2;
+    
+    if (!apiKey) {
+      console.error('[OpenAI Proxy] Missing API key');
+      return c.json({ error: 'OpenAI API key not configured' }, 500);
+    }
+
+    const body = await c.req.json();
+    const { model = 'gpt-4o', messages, temperature = 0.8 } = body;
+
+    console.log('[OpenAI Proxy] Forwarding request to OpenAI', { model, messageCount: messages?.length });
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model,
+        messages,
+        temperature,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[OpenAI Proxy] OpenAI API error:', response.status, errorText);
+      const statusCode = response.status as 400 | 401 | 403 | 404 | 429 | 500 | 502 | 503;
+      return c.json({ error: `OpenAI API error: ${response.status}` }, statusCode);
+    }
+
+    const data = await response.json();
+    console.log('[OpenAI Proxy] Success');
+    return c.json(data);
+  } catch (error) {
+    console.error('[OpenAI Proxy] Error:', error);
+    return c.json({ error: 'Internal server error' }, 500);
+  }
+});
+
 // Env check endpoint (whitelisted, non-secret). Mounted at /api/env-check
 app.get("/env-check", (c) => {
   const pick = (k: string) => (typeof process.env[k] === "string" ? process.env[k] : undefined);
