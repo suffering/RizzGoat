@@ -36,15 +36,15 @@ import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
-const TONE_PRESETS = ["Playful", "Witty", "Bold"];
-const SPICE_LEVELS = ["Cute", "Medium", "Spicy"];
+const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
+const SPICE_LEVELS = ["Cute", "Cheeky", "Spicy"];
 
 export default function PickupLinesScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
   
-  const [currentLine, setCurrentLine] = useState<string>("");
+  const [currentLine, setCurrentLine] = useState<string>("Hey there! Mind if I steal a moment of your time?");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
   const [selectedTone, setSelectedTone] = useState<string>("Playful");
@@ -122,7 +122,9 @@ export default function PickupLinesScreen() {
   }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
 
   useEffect(() => {
-    generateNewLine();
+    if (!currentLine || currentLine === "Hey there! Mind if I steal a moment of your time?") {
+      generateNewLine();
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -421,13 +423,10 @@ export default function PickupLinesScreen() {
                     activeOpacity={0.7}
                     testID={`spice-icon-1`}
                   >
-                    <View style={[
-                      styles.fireIconBackground,
-                      { backgroundColor: spiceLevel === 1 ? '#E3222B' : (isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)') }
-                    ]}>
+                    <View style={[styles.fireIconBackground, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)' }]}>
                       <Flame
                         size={22}
-                        color={spiceLevel === 1 ? "#FFFFFF" : theme.textSecondary}
+                        color={spiceLevel === 1 ? "#E3222B" : theme.textSecondary}
                       />
                     </View>
                   </TouchableOpacity>
@@ -462,7 +461,7 @@ export default function PickupLinesScreen() {
                         {
                           width: sliderAnim.interpolate({
                             inputRange: [0, 0.5, 1],
-                            outputRange: ["0%", "50%", "100%"],
+                            outputRange: ["0%", "49%", "100%"],
                           }),
                         },
                       ]}
@@ -889,7 +888,7 @@ const styles = StyleSheet.create({
   fireIconCenter: {
     position: "absolute",
     left: "50%",
-    marginLeft: -6,
+    marginLeft: -4,
     top: "50%",
     marginTop: -18,
     zIndex: 2,

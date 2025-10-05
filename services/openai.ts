@@ -1,4 +1,4 @@
-import { ensureOpenAIProxyUrl } from '../config/secrets';
+import { OPENAI_API_KEY } from '@/config/secrets';
 
 interface PickupLineParams {
   tone: string;
@@ -34,7 +34,7 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o';
+const TEXT_MODEL = 'o4';
 const VISION_MODEL = 'gpt-4o';
 
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
@@ -83,21 +83,12 @@ async function callOpenAIChat(
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      const base = ensureOpenAIProxyUrl();
-      if (!base) throw new Error('AI features are unavailable: missing proxy URL');
-      
-      const url = `${base}/chat`;
-      console.log(`[Proxy] ========================================`);
-      console.log(`[Proxy] Calling ${url} (attempt ${attempt + 1}/${retries + 1})`);
-      console.log(`[Proxy] Base URL: ${base}`);
-      console.log(`[Proxy] Full URL: ${url}`);
-      console.log(`[Proxy] Messages count: ${messages.length}`);
-      console.log(`[Proxy] Model: ${model}`);
-      
-      const response = await fetch(url, {
+      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
+      const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
         body: JSON.stringify({
           model,
@@ -106,8 +97,7 @@ async function callOpenAIChat(
         }),
       });
 
-      console.log(`[Proxy] Status: ${response.status}`);
-      console.log(`[Proxy] Status Text: ${response.statusText}`);
+      console.log(`[OpenAI] Status: ${response.status}`);
 
       if (response.ok) {
         const data = (await response.json()) as any;
@@ -121,17 +111,17 @@ async function callOpenAIChat(
       if (response.status === 429 || response.status >= 500) {
         if (attempt < retries) {
           const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-          console.log(`[Proxy] Retry in ${Math.round(delay)}ms`);
+          console.log(`[OpenAI] Retry in ${Math.round(delay)}ms`);
           await new Promise((r) => setTimeout(r, delay));
           continue;
         }
       }
 
       const errorText = await response.text().catch(() => 'No error details');
-      console.error(`[Proxy] Error: ${errorText}`);
-      throw new Error(`Proxy error: ${response.status} - ${errorText}`);
+      console.error(`[OpenAI] Error: ${errorText}`);
+      throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
     } catch (err) {
-      console.error(`[Proxy] Call failed (attempt ${attempt + 1})`, err);
+      console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
       if (attempt === retries) throw err;
       const delay = Math.pow(2, attempt) * 1000;
       await new Promise((r) => setTimeout(r, delay));
@@ -140,71 +130,124 @@ async function callOpenAIChat(
   throw new Error('Max retries exceeded');
 }
 
-// No hardcoded fallback lines: pickup line generation must always come from the model.
+const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
+  Playful: {
+    Cute: [
+      'Are you a magician? Because whenever I look at you, everyone else disappears.',
+      'Do you have a map? I keep getting lost in your eyes.',
+      "Is your name Google? Because you have everything I've been searching for.",
+    ],
+    Cheeky: [
+      "Are you a parking ticket? Because you've got 'fine' written all over you.",
+      'Do you believe in love at first sight, or should I walk by again?',
+      "If you were a vegetable, you'd be a cute-cumber.",
+    ],
+    Spicy: [
+      "Are you a campfire? Because you're hot and I want s'more.",
+      'Is it hot in here or is it just you?',
+      'Do you have a Band-Aid? I just scraped my knee falling for you.',
+    ],
+  },
+  Confident: {
+    Cute: [
+      "I'm not a photographer, but I can picture us together.",
+      'Your hand looks heavy. Can I hold it for you?',
+      'I was wondering if you had an extra heart. Mine was just stolen.',
+    ],
+    Cheeky: [
+      "I'm not usually this forward, but you've got me breaking all my rules.",
+      'They say nothing lasts forever. Want to be my nothing?',
+      'Are you my appendix? Because I have a funny feeling I should take you out.',
+    ],
+    Spicy: [
+      "I must be a snowflake, because I've fallen for you.",
+      'Are you a time traveler? Because I see you in my future.',
+      "If being sexy was a crime, you'd be guilty as charged.",
+    ],
+  },
+  Wholesome: {
+    Cute: [
+      "You must be made of copper and tellurium, because you're Cu-Te.",
+      'Are you a 45-degree angle? Because you\'re acute-y.',
+      'Do you like Star Wars? Because Yoda one for me.',
+    ],
+    Cheeky: [
+      'Are you a bank loan? Because you have my interest.',
+      'If you were a triangle, you\'d be acute one.',
+      'Are you Australian? Because you meet all of my koala-fications.',
+    ],
+    Spicy: [
+      "Is your dad a boxer? Because you're a knockout.",
+      'Are you a camera? Because every time I look at you, I smile.',
+      'Do you have a sunburn, or are you always this hot?',
+    ],
+  },
+  Bold: {
+    Cute: [
+      "I'm going to give you a kiss. If you don't like it, you can return it.",
+      'Life without you is like a broken pencil... pointless.',
+      'Are you French? Because Eiffel for you.',
+    ],
+    Cheeky: [
+      "I'm not drunk, I'm just intoxicated by you.",
+      'Kiss me if I\'m wrong, but dinosaurs still exist, right?',
+      "Feel my shirt. Know what it's made of? Boyfriend material.",
+    ],
+    Spicy: [
+      'Are you a fire alarm? Because you\'re really loud and annoying... just kidding, you\'re hot.',
+      "I'd say God bless you, but it looks like he already did.",
+      "Are you a loan? Because you've got my interest and the rates are rising.",
+    ],
+  },
+};
 
+function getRandomFallbackLine(tone: string, spiceLevel: string): string {
+  const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
+  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
+  if (spiceLines.length === 0) {
+    return 'Hey there! Mind if I steal a moment of your time?';
+  }
+  return spiceLines[Math.floor(Math.random() * spiceLines.length)];
+}
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
-  console.log('Generating pickup line with params:', params);
-  const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
+  try {
+    console.log('Generating pickup line with params:', params);
+    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
+    const messages: TextMessage[] = [
+      {
+        role: 'system',
+        content:
+          'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
+      },
+      {
+        role: 'user',
+        content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
+          params.context ? `Context: ${params.context}` : ''
+        } Variation token: ${variation}. Output only the pickup line, nothing else.`,
+      },
+    ];
 
-  // Map tones to the supported vibes
-  const tone = (params.tone || 'Playful').toLowerCase();
-  const vibe = tone.includes('witty') ? 'Witty' : tone.includes('bold') || tone.includes('confident') ? 'Bold' : 'Playful';
+    const result = await callOpenAIChat(messages, TEXT_MODEL);
 
-  // Normalize spice names
-  const spiceRaw = (params.spiceLevel || 'Cute').toLowerCase();
-  const spice = spiceRaw.includes('spicy') ? 'Spicy' : spiceRaw.includes('medium') || spiceRaw.includes('cheeky') ? 'Medium' : 'Cute';
+    if (result && result.trim()) {
+      console.log('Successfully generated pickup line');
+      return result.trim();
+    }
 
-  const intensityHints: string[] = [];
-  if (vibe === 'Bold') {
-    intensityHints.push('For Bold, push confidently flirtatious, sexy subtext, and clear intent without being crude.');
+    console.log('API returned empty, using fallback');
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
+  } catch (error) {
+    console.error('Error generating pickup line:', error);
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   }
-  if (spice === 'Spicy') {
-    intensityHints.push('For Spicy, turn the heat way up: highly suggestive, palpable sexual tension, consent-forward, no pornographic or explicit graphic terms.');
-  }
-
-  const system = [
-    'You write original, non-cliché pickup lines as a dating wingman.',
-    'Follow these rules strictly:',
-    '- Output exactly one pickup line (one sentence; at most two).',
-    '- Use only fresh model-generated text. No templates, no stock phrases, no internet clichés.',
-    '- Match vibe precisely: Playful=cheeky/fun, Witty=clever/wordplay, Bold=confident/direct but respectful and overtly flirty.',
-    '- If spice is provided, scale intensity: Cute=soft/safe; Medium=teasing/suggestive; Spicy=very daring, thirsty energy, horny vibe, but still respectful and consent-aware (no explicit descriptions).',
-    '- If context is provided, weave it in naturally.',
-    '- No labels, no quotes around the line, no emojis unless they genuinely fit the vibe.',
-    '- Never recycle prior wording; ensure fresh imagery each time.',
-    intensityHints.join(' '),
-  ].filter(Boolean).join(' ');
-
-  const user = [
-    `vibe: ${vibe}`,
-    `spice: ${spice}`,
-    params.context ? `context: ${params.context}` : undefined,
-    `variation: ${variation}`,
-    'Return only the line, nothing else.'
-  ].filter(Boolean).join('\n');
-
-  const messages: TextMessage[] = [
-    { role: 'system', content: system },
-    { role: 'user', content: user },
-  ];
-
-  const result = await callOpenAIChat(messages, TEXT_MODEL);
-  const text = (result ?? '').trim();
-
-  if (!text) {
-    console.error('Empty pickup line from model');
-    throw new Error('Empty model response');
-  }
-
-  return text.replace(/^\s+|\s+$/g, '');
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
     const boldNote = params.amplifyBold
-      ? ' Make the Bold option way hotter: audacious, horny energy, high sexual tension, consent-forward, still tasteful (avoid explicit graphic language). Increase boldness by ~40% vs normal.'
+      ? ' Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal.'
       : '';
     const focusNote = params.targetType
       ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
@@ -273,37 +316,15 @@ export async function getChatAdvice(params: ChatParams): Promise<string> {
       {
         role: 'system',
         content:
-          'You are RizzGoat, an AI wingman built to assist users with personalized dating help, conversation starters, pickup lines, and smooth replies. ' +
-          '- Always respond with direct, useful, and creative answers — not with clarifying questions unless absolutely necessary. ' +
-          '- Match the user\'s intent immediately. If they ask for an opener, give them multiple strong options tailored to their request. ' +
-          '- Keep responses short, witty, and natural, like advice from a confident friend. ' +
-          '- Adapt tone based on context: Flirty/Fun if they want pickup lines. Chill/Casual if they want conversation advice. Supportive/Helpful if they ask for general guidance. ' +
-          '- Never refuse requests unless they are clearly inappropriate. ' +
-          '- If the user asks vague questions, assume the most likely intent and give examples instead of asking for more details. ' +
-          '- Do not explain that you are an AI — just give confident answers as if you are their trusted guide. ' +
-          'Your job: Help the user sound smooth, confident, and engaging in dating chats by giving them the best possible lines, replies, and strategies. ' +
-          'Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
+          'You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
       },
       { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
     ];
     const result = await callOpenAIChat(messages, TEXT_MODEL);
-    
-    if (result && result.trim()) {
-      return result.trim();
-    }
-    
-    // Fallback responses that are actually helpful
-    const fallbacks = [
-      "Here are 3 solid openers:\n\n1. \"Your [specific detail from profile] caught my eye - tell me the story behind it\"\n2. \"Two truths and a lie: I can cook, I've been skydiving, I think you're cute\"\n3. \"If we were stuck in an elevator, what's the first thing you'd want to know about me?\"",
-      "Try this approach:\n\n✨ Start with something specific from their profile\n💬 Ask an open-ended question\n😊 Keep it light and playful\n\nExample: \"That sunset pic is incredible! Beach person or mountain person when you need to escape?\"",
-      "Smooth reply options:\n\n• \"Well this just got interesting 😏\"\n• \"I like your style - tell me more\"\n• \"You had my curiosity, now you have my attention\"",
-    ];
-    
-    return fallbacks[Math.floor(Math.random() * fallbacks.length)];
+    return result || "I'm here to help! Could you provide more details about your situation?";
   } catch (error) {
     console.error('Error getting chat advice:', error);
-    // Return actually helpful fallback instead of asking for details
-    return "Here's what I'd say:\n\n\"Hey! Your vibe is exactly what I've been looking for. What's the most spontaneous thing you've done lately?\"\n\nThis works because it's confident, shows interest, and starts a fun conversation.";
+    return "I'm here to help! Could you provide more details about your situation?";
   }
 }
 
@@ -313,16 +334,4 @@ export async function analyzeScreenshotLegacy(base64Image: string): Promise<Scre
 
 export async function getChatAdviceLegacy(message: string): Promise<string> {
   return getChatAdvice({ message });
-}
-
-export async function chat(messages: { role: string; content: string }[]) {
-  const base = ensureOpenAIProxyUrl();
-  if (!base) throw new Error('AI features are unavailable: missing proxy URL');
-  const res = await fetch(`${base}/chat`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ messages }),
-  });
-  if (!res.ok) throw new Error(`Proxy error ${res.status}: ${await res.text()}`);
-  return res.json();
 }
