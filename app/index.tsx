@@ -44,29 +44,6 @@ export default function HomeScreen() {
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
   useEffect(() => {
-    const checkBackend = async () => {
-      try {
-        const base = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
-        if (!base) {
-          console.warn('[Health Check] No base URL configured - backend features may not work');
-          return;
-        }
-        const healthUrl = `${base}/api/`;
-        console.log('[Health Check] Testing backend at:', healthUrl);
-        const response = await fetch(healthUrl, { method: 'GET' });
-        console.log('[Health Check] Status:', response.status);
-        if (response.ok) {
-          const data = await response.json();
-          console.log('[Health Check] Backend is healthy:', data);
-        } else {
-          console.warn('[Health Check] Backend returned error:', response.status, '- AI features may not work');
-        }
-      } catch (error) {
-        console.warn('[Health Check] Backend not accessible:', error, '- AI features may not work');
-      }
-    };
-    checkBackend();
-    
     if (!showOnboarding && !isPro) {
       router.replace('/pro' as any);
       return;
