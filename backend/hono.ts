@@ -41,6 +41,7 @@ app.get("/", (c) => {
 
 // OpenAI proxy endpoint
 app.post("/chat", async (c) => {
+  console.log('[OpenAI Proxy] Received request to /chat');
   try {
     const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_V2;
     
@@ -81,6 +82,20 @@ app.post("/chat", async (c) => {
     console.error('[OpenAI Proxy] Error:', error);
     return c.json({ error: 'Internal server error' }, 500);
   }
+});
+
+// Debug endpoint to list all routes
+app.get("/routes", (c) => {
+  return c.json({ 
+    message: "Available routes",
+    routes: [
+      "GET /api/",
+      "POST /api/chat",
+      "GET /api/env-check",
+      "GET /api/routes",
+      "* /api/trpc/*"
+    ]
+  });
 });
 
 // Env check endpoint (whitelisted, non-secret). Mounted at /api/env-check

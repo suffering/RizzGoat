@@ -1,4 +1,4 @@
-import { OPENAI_PROXY_URL, ensureOpenAIProxyUrl } from '../config/secrets';
+import { ensureOpenAIProxyUrl } from '../config/secrets';
 
 interface PickupLineParams {
   tone: string;
@@ -83,10 +83,15 @@ async function callOpenAIChat(
 ): Promise<string> {
   for (let attempt = 0; attempt <= retries; attempt++) {
     try {
-      console.log(`[Proxy] Calling ${OPENAI_PROXY_URL}/chat (attempt ${attempt + 1}/${retries + 1})`);
       const base = ensureOpenAIProxyUrl();
       if (!base) throw new Error('AI features are unavailable: missing proxy URL');
-      const response = await fetch(`${base}/chat`, {
+      
+      const url = `${base}/chat`;
+      console.log(`[Proxy] Calling ${url} (attempt ${attempt + 1}/${retries + 1})`);
+      console.log(`[Proxy] Base URL: ${base}`);
+      console.log(`[Proxy] Full URL: ${url}`);
+      
+      const response = await fetch(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -99,6 +104,7 @@ async function callOpenAIChat(
       });
 
       console.log(`[Proxy] Status: ${response.status}`);
+      console.log(`[Proxy] Status Text: ${response.statusText}`);
 
       if (response.ok) {
         const data = (await response.json()) as any;
