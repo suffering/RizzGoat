@@ -34,7 +34,7 @@ type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionCon
 
 type AnyMessage = TextMessage | VisionMessage;
 
-const TEXT_MODEL = 'gpt-4o-mini';
+const TEXT_MODEL = 'o5-mini';
 const VISION_MODEL = 'gpt-4o-mini';
 
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
