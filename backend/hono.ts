@@ -44,13 +44,19 @@ app.get("/", (c) => {
   return c.json({ status: "ok", message: "API is running", timestamp: new Date().toISOString() });
 });
 
-// OpenAI proxy endpoint
-app.post("/chat", async (c) => {
+// OpenAI proxy endpoint - catch all methods for debugging
+app.all("/chat", async (c) => {
   console.log('[OpenAI Proxy] ========================================');
   console.log('[OpenAI Proxy] Received request to /chat');
   console.log('[OpenAI Proxy] Method:', c.req.method);
   console.log('[OpenAI Proxy] Path:', c.req.path);
   console.log('[OpenAI Proxy] URL:', c.req.url);
+  console.log('[OpenAI Proxy] Headers:', Object.fromEntries(c.req.raw.headers.entries()));
+  
+  if (c.req.method !== 'POST') {
+    console.log('[OpenAI Proxy] Non-POST request received');
+    return c.json({ error: 'Method not allowed', method: c.req.method }, 405);
+  }
   try {
     const apiKey = process.env.OPENAI_API_KEY || process.env.OPENAI_API_KEY_V2;
     
@@ -131,6 +137,27 @@ app.get("/env-check", (c) => {
     },
   } as const;
   return c.json({ status: "ok", env: snapshot });
+});
+
+// Catch-all debug route to see what's being requested (MUST BE LAST)
+app.all("*", (c) => {
+  console.log('[Backend] Catch-all route hit');
+  console.log('[Backend] Method:', c.req.method);
+  console.log('[Backend] Path:', c.req.path);
+  console.log('[Backend] URL:', c.req.url);
+  return c.json({ 
+    error: "Route not found",
+    method: c.req.method,
+    path: c.req.path,
+    url: c.req.url,
+    availableRoutes: [
+      "GET /api/",
+      "POST /api/chat",
+      "GET /api/env-check",
+      "GET /api/routes",
+      "* /api/trpc/*"
+    ]
+  }, 404);
 });
 
 console.log('[Backend] Exporting Hono app');
