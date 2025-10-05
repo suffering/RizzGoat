@@ -36,13 +36,7 @@ app.use(
   })
 );
 
-// Simple health check endpoint
-app.get("/", (c) => {
-  console.log('[Backend] Health check called');
-  console.log('[Backend] Request path:', c.req.path);
-  console.log('[Backend] Request URL:', c.req.url);
-  return c.json({ status: "ok", message: "API is running", timestamp: new Date().toISOString() });
-});
+
 
 // OpenAI proxy endpoint - catch all methods for debugging
 app.all("/chat", async (c) => {
@@ -99,66 +93,11 @@ app.all("/chat", async (c) => {
   }
 });
 
-// Debug endpoint to list all routes
-app.get("/routes", (c) => {
-  return c.json({ 
-    message: "Available routes",
-    routes: [
-      "GET /api/",
-      "POST /api/chat",
-      "GET /api/env-check",
-      "GET /api/routes",
-      "* /api/trpc/*"
-    ]
-  });
-});
 
-// Env check endpoint (whitelisted, non-secret). Mounted at /api/env-check
-app.get("/env-check", (c) => {
-  const pick = (k: string) => (typeof process.env[k] === "string" ? process.env[k] : undefined);
-  const snapshot = {
-    has: {
-      SUPABASE_URL: Boolean(pick("SUPABASE_URL")),
-      SUPABASE_URL_V2: Boolean(pick("SUPABASE_URL_V2")),
-      SUPABASE_ANON_KEY: Boolean(pick("SUPABASE_ANON_KEY")),
-      SUPABASE_ANON_KEY_V2: Boolean(pick("SUPABASE_ANON_KEY_V2")),
-      OPENAI_API_KEY: Boolean(pick("OPENAI_API_KEY")),
-      OPENAI_API_KEY_V2: Boolean(pick("OPENAI_API_KEY_V2")),
-      EXPO_PUBLIC_SUPABASE_URL: Boolean(pick("EXPO_PUBLIC_SUPABASE_URL")),
-      EXPO_PUBLIC_SUPABASE_URL_V2: Boolean(pick("EXPO_PUBLIC_SUPABASE_URL_V2")),
-      EXPO_PUBLIC_SUPABASE_ANON_KEY: Boolean(pick("EXPO_PUBLIC_SUPABASE_ANON_KEY")),
-      EXPO_PUBLIC_SUPABASE_ANON_KEY_V2: Boolean(pick("EXPO_PUBLIC_SUPABASE_ANON_KEY_V2")),
-    },
-    values: {
-      SUPABASE_URL: pick("SUPABASE_URL") ? "set" : "unset",
-      SUPABASE_URL_V2: pick("SUPABASE_URL_V2") ? "set" : "unset",
-      EXPO_PUBLIC_SUPABASE_URL: pick("EXPO_PUBLIC_SUPABASE_URL") ? "set" : "unset",
-      EXPO_PUBLIC_SUPABASE_URL_V2: pick("EXPO_PUBLIC_SUPABASE_URL_V2") ? "set" : "unset",
-    },
-  } as const;
-  return c.json({ status: "ok", env: snapshot });
-});
 
-// Catch-all debug route to see what's being requested (MUST BE LAST)
-app.all("*", (c) => {
-  console.log('[Backend] Catch-all route hit');
-  console.log('[Backend] Method:', c.req.method);
-  console.log('[Backend] Path:', c.req.path);
-  console.log('[Backend] URL:', c.req.url);
-  return c.json({ 
-    error: "Route not found",
-    method: c.req.method,
-    path: c.req.path,
-    url: c.req.url,
-    availableRoutes: [
-      "GET /api/",
-      "POST /api/chat",
-      "GET /api/env-check",
-      "GET /api/routes",
-      "* /api/trpc/*"
-    ]
-  }, 404);
-});
+
+
+
 
 console.log('[Backend] Exporting Hono app');
 
