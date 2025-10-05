@@ -17,7 +17,6 @@ import { useRouter } from "expo-router";
 import { Menu, Camera, MessageCircle, Sparkles, Zap, Heart } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
-import { ensureOpenAIProxyUrl } from "@/config/secrets";
 import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
 
@@ -47,13 +46,14 @@ export default function HomeScreen() {
   useEffect(() => {
     const checkBackend = async () => {
       try {
-        const base = ensureOpenAIProxyUrl();
-        console.log('[Health Check] Testing backend at:', base);
+        const base = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
         if (!base) {
           console.error('[Health Check] No base URL configured');
           return;
         }
-        const response = await fetch(`${base}/`, { method: 'GET' });
+        const healthUrl = `${base}/api/`;
+        console.log('[Health Check] Testing backend at:', healthUrl);
+        const response = await fetch(healthUrl, { method: 'GET' });
         console.log('[Health Check] Status:', response.status);
         if (response.ok) {
           const data = await response.json();
