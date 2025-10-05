@@ -27,7 +27,7 @@ const darkTheme: Theme = {
 
 export const [ThemeProvider, useTheme] = createContextHook(() => {
   const theme = useMemo(() => darkTheme, []);
-  const isDark = true; // Always dark mode
+  const isDark = true;
 
   return useMemo(() => ({ theme, isDark }), [theme, isDark]);
 });
