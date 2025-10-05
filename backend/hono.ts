@@ -21,6 +21,8 @@ warnShadow("EXPO_PUBLIC_SUPABASE_ANON_KEY", "EXPO_PUBLIC_SUPABASE_ANON_KEY_V2");
 // app will be mounted at /api
 const app = new Hono();
 
+console.log('[Backend] Hono app initialized');
+
 // Enable CORS for all routes
 app.use("*", cors());
 
@@ -37,6 +39,8 @@ app.use(
 // Simple health check endpoint
 app.get("/", (c) => {
   console.log('[Backend] Health check called');
+  console.log('[Backend] Request path:', c.req.path);
+  console.log('[Backend] Request URL:', c.req.url);
   return c.json({ status: "ok", message: "API is running", timestamp: new Date().toISOString() });
 });
 
@@ -128,5 +132,7 @@ app.get("/env-check", (c) => {
   } as const;
   return c.json({ status: "ok", env: snapshot });
 });
+
+console.log('[Backend] Exporting Hono app');
 
 export default app;

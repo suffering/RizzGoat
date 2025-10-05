@@ -48,7 +48,7 @@ export default function HomeScreen() {
       try {
         const base = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
         if (!base) {
-          console.error('[Health Check] No base URL configured');
+          console.warn('[Health Check] No base URL configured - backend features may not work');
           return;
         }
         const healthUrl = `${base}/api/`;
@@ -57,12 +57,12 @@ export default function HomeScreen() {
         console.log('[Health Check] Status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('[Health Check] Response:', data);
+          console.log('[Health Check] Backend is healthy:', data);
         } else {
-          console.error('[Health Check] Backend returned error:', response.status);
+          console.warn('[Health Check] Backend returned error:', response.status, '- AI features may not work');
         }
       } catch (error) {
-        console.error('[Health Check] Backend not accessible:', error);
+        console.warn('[Health Check] Backend not accessible:', error, '- AI features may not work');
       }
     };
     checkBackend();
