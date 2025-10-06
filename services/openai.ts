@@ -37,6 +37,17 @@ type AnyMessage = TextMessage | VisionMessage;
 const TEXT_MODEL = 'gpt-4o-mini';
 const VISION_MODEL = 'gpt-4o-mini';
 
+const CLICHE_BAN: string[] = [
+  'are you a magician? because whenever i look at you, everyone else disappears',
+  'do you have a map? i keep getting lost in your eyes',
+  "is your name google? because you have everything i've been searching for",
+  "did it hurt when you fell from heaven",
+  "are you a parking ticket? because you've got 'fine' written all over you",
+  'is it hot in here or is it just you',
+  "are you a camera? because every time i look at you, i smile",
+  'are you from tennessee? because you are the only ten i see',
+];
+
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
   if (!obj || typeof obj !== 'object') return false;
   const o = obj as Record<string, any>;
@@ -93,7 +104,10 @@ async function callOpenAIChat(
         body: JSON.stringify({
           model,
           messages,
-          temperature: 0.8,
+          temperature: 0.9,
+          presence_penalty: 0.6,
+          frequency_penalty: 0.5,
+          top_p: 0.9,
         }),
       });
 
@@ -213,27 +227,50 @@ function getRandomFallbackLine(tone: string, spiceLevel: string): string {
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   console.log('Generating pickup line with params:', params);
   const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-  const messages: TextMessage[] = [
-    {
-      role: 'system',
-      content:
-        'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, and PG-13. Never use crude language, negging, or disrespectful content. Keep responses under 20 words. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
-    },
-    {
-      role: 'user',
-      content: `Generate a ${params.tone.toLowerCase()} pickup line that is ${params.spiceLevel.toLowerCase()}. ${
-        params.context ? `Context: ${params.context}` : ''
-      } Variation token: ${variation}. Output only the pickup line, nothing else.`,
-    },
-  ];
 
-  const result = await callOpenAIChat(messages, TEXT_MODEL);
-  const cleaned = (result ?? '').trim();
-  if (!cleaned) {
-    throw new Error('Empty response from model');
+  const baseSystem =
+    'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, specific, and PG-13. Avoid clichés and overused lines. Never use crude language, negging, pickup-artist tropes, or disrespect. Keep responses under 20 words. Output only the pickup line, nothing else. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.';
+
+  const vibeGuide = `Tone: ${params.tone}. Spice: ${params.spiceLevel}. Definitions: Cute = sweet, wholesome; Cheeky = playful, flirty; Spicy = bold but still respectful.`;
+
+  const contextText = params.context ? `Context: ${params.context}` : 'Context: none';
+
+  let lastError: unknown = null;
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const messages: TextMessage[] = [
+        { role: 'system', content: baseSystem },
+        {
+          role: 'user',
+          content: `${vibeGuide}. ${contextText}. Avoid clichés like: ${CLICHE_BAN.slice(0, 4).join(' | ')}. Variation token: ${variation}-${attempt}.`,
+        },
+      ];
+
+      const result = await callOpenAIChat(messages, TEXT_MODEL);
+      const cleaned = (result ?? '').trim().replace(/^"|"$/g, '');
+
+      if (!cleaned) throw new Error('Empty response from model');
+
+      const normalized = cleaned.toLowerCase();
+      const isCliche = CLICHE_BAN.some((c) => normalized.includes(c));
+      const tooLong = cleaned.split(/\s+/).length > 20;
+
+      if (isCliche || tooLong) {
+        console.log('[Pickup] Rejected candidate (cliche/tooLong). Retrying...');
+        continue;
+      }
+
+      console.log('Successfully generated pickup line');
+      return cleaned;
+    } catch (e) {
+      lastError = e;
+      console.warn('[Pickup] Attempt failed', e);
+      await new Promise((r) => setTimeout(r, 250 + Math.random() * 400));
+    }
   }
-  console.log('Successfully generated pickup line');
-  return cleaned;
+
+  console.error('[Pickup] Falling back after retries', lastError);
+  return getRandomFallbackLine(params.tone, params.spiceLevel);
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
