@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AppStateProvider } from "@/providers/AppStateProvider";
 import { SafeAreaProvider } from "react-native-safe-area-context";
+import { trpc, trpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -47,16 +48,18 @@ export default function RootLayout() {
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <SafeAreaProvider>
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <ThemeProvider>
-            <AppStateProvider>
-              <RootLayoutNav />
-            </AppStateProvider>
-          </ThemeProvider>
-        </GestureHandlerRootView>
-      </SafeAreaProvider>
-    </QueryClientProvider>
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <SafeAreaProvider>
+          <GestureHandlerRootView style={{ flex: 1 }}>
+            <ThemeProvider>
+              <AppStateProvider>
+                <RootLayoutNav />
+              </AppStateProvider>
+            </ThemeProvider>
+          </GestureHandlerRootView>
+        </SafeAreaProvider>
+      </QueryClientProvider>
+    </trpc.Provider>
   );
 }
