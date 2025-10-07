@@ -21,4 +21,6 @@ app.get("/", (c) => {
   return c.json({ status: "ok", message: "API is running" });
 });
 
+app.get("/health", (c) => c.json({ status: "ok" }));
+
 export default app;

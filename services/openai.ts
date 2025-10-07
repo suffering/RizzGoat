@@ -1,367 +1,92 @@
-import { OPENAI_API_KEY } from '@/config/secrets';
+// Client-side AI service proxying to backend API
+import { Platform } from 'react-native';
 
-interface PickupLineParams {
+export const API_URL = process.env.EXPO_PUBLIC_API_URL as string;
+
+export interface PickupLineParams {
   tone: string;
-  spiceLevel: string;
-  context?: string;
+  context: string;
+  length?: 'short' | 'medium' | 'long';
 }
 
-interface ScreenshotAnalysis {
-  safe: { text: string; rationale: string };
-  witty: { text: string; rationale: string };
-  bold: { text: string; rationale: string };
-}
-
-type ReplyType = 'Safe' | 'Witty' | 'Bold';
-
-interface ChatParams {
-  message: string;
-}
-
-interface ScreenshotParams {
-  base64Image: string;
-  amplifyBold?: boolean;
-  targetType?: ReplyType;
-}
-
-type TextMessage = { role: 'system' | 'user' | 'assistant'; content: string };
-
-type VisionContent =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string } };
-
-type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionContent[] };
-
-type AnyMessage = TextMessage | VisionMessage;
-
-const TEXT_MODEL = 'gpt-4o-mini';
-const VISION_MODEL = 'gpt-4o-mini';
-
-const CLICHE_BAN: string[] = [
-  'are you a magician? because whenever i look at you, everyone else disappears',
-  'do you have a map? i keep getting lost in your eyes',
-  "is your name google? because you have everything i've been searching for",
-  "did it hurt when you fell from heaven",
-  "are you a parking ticket? because you've got 'fine' written all over you",
-  'is it hot in here or is it just you',
-  "are you a camera? because every time i look at you, i smile",
-  'are you from tennessee? because you are the only ten i see',
-];
-
-function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
-  if (!obj || typeof obj !== 'object') return false;
-  const o = obj as Record<string, any>;
-  const groups = ['safe', 'witty', 'bold'] as const;
-  for (const key of groups) {
-    const g = o[key];
-    if (!g || typeof g !== 'object') return false;
-    if (typeof g.text !== 'string' || typeof g.rationale !== 'string') return false;
+export async function createPickupLine(token: string, params: PickupLineParams) {
+  if (!API_URL) {
+    throw new Error('Missing EXPO_PUBLIC_API_URL');
   }
-  return true;
+  const res = await fetch(`${API_URL}/ai/pickup-line`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body: JSON.stringify(params),
+  });
+  if (!res.ok) throw new Error(`AI ${res.status}`);
+  return res.json();
 }
 
-function extractJSON(text: string): ScreenshotAnalysis | null {
+// Backward-compatible wrapper for existing UI expecting generatePickupLine({ tone, spiceLevel, context }) => string
+export async function generatePickupLine(params: { tone: string; spiceLevel: string; context?: string }): Promise<string> {
   try {
-    const trimmed = text.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      const parsed = JSON.parse(trimmed);
-      if (isScreenshotAnalysis(parsed)) return parsed;
+    const lengthMap: Record<string, PickupLineParams['length']> = {
+      Cute: 'short',
+      Cheeky: 'medium',
+      Spicy: 'long',
+    };
+    const length = lengthMap[params.spiceLevel] ?? 'medium';
+    const result = await createPickupLine('', {
+      tone: params.tone,
+      context: params.context ?? '',
+      length,
+    });
+    const text: unknown = (result as any)?.text ?? (result as any)?.line ?? (result as any)?.data ?? '';
+    if (typeof text === 'string' && text.trim().length > 0) {
+      return text.trim();
     }
-  } catch {}
-  try {
-    const first = text.indexOf('{');
-    const last = text.lastIndexOf('}');
-    if (first >= 0 && last > first) {
-      const slice = text.slice(first, last + 1);
-      const parsed = JSON.parse(slice);
-      if (isScreenshotAnalysis(parsed)) return parsed;
-    }
-  } catch {}
-  try {
-    const codeBlock = text.match(/```(?:json)?\n([\s\S]*?)```/i);
-    if (codeBlock && codeBlock[1]) {
-      const parsed = JSON.parse(codeBlock[1]);
-      if (isScreenshotAnalysis(parsed)) return parsed;
-    }
-  } catch {}
-  return null;
-}
-
-async function callOpenAIChat(
-  messages: AnyMessage[],
-  model: string,
-  retries = 3,
-): Promise<string> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.9,
-          presence_penalty: 0.6,
-          frequency_penalty: 0.5,
-          top_p: 0.9,
-        }),
-      });
-
-      console.log(`[OpenAI] Status: ${response.status}`);
-
-      if (response.ok) {
-        const data = (await response.json()) as any;
-        const content = data?.choices?.[0]?.message?.content as string | undefined;
-        if (typeof content === 'string') return content;
-        const toolText = data?.choices?.[0]?.message?.tool_calls?.[0]?.text as string | undefined;
-        if (typeof toolText === 'string') return toolText;
-        return '';
-      }
-
-      if (response.status === 429 || response.status >= 500) {
-        if (attempt < retries) {
-          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-          console.log(`[OpenAI] Retry in ${Math.round(delay)}ms`);
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
-        }
-      }
-
-      const errorText = await response.text().catch(() => 'No error details');
-      console.error(`[OpenAI] Error: ${errorText}`);
-      throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
-    } catch (err) {
-      console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
-      if (attempt === retries) throw err;
-      const delay = Math.pow(2, attempt) * 1000;
-      await new Promise((r) => setTimeout(r, delay));
-    }
-  }
-  throw new Error('Max retries exceeded');
-}
-
-const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
-  Playful: {
-    Cute: [
-      'Are you a magician? Because whenever I look at you, everyone else disappears.',
-      'Do you have a map? I keep getting lost in your eyes.',
-      "Is your name Google? Because you have everything I've been searching for.",
-    ],
-    Cheeky: [
-      "Are you a parking ticket? Because you've got 'fine' written all over you.",
-      'Do you believe in love at first sight, or should I walk by again?',
-      "If you were a vegetable, you'd be a cute-cumber.",
-    ],
-    Spicy: [
-      "Are you a campfire? Because you're hot and I want s'more.",
-      'Is it hot in here or is it just you?',
-      'Do you have a Band-Aid? I just scraped my knee falling for you.',
-    ],
-  },
-  Confident: {
-    Cute: [
-      "I'm not a photographer, but I can picture us together.",
-      'Your hand looks heavy. Can I hold it for you?',
-      'I was wondering if you had an extra heart. Mine was just stolen.',
-    ],
-    Cheeky: [
-      "I'm not usually this forward, but you've got me breaking all my rules.",
-      'They say nothing lasts forever. Want to be my nothing?',
-      'Are you my appendix? Because I have a funny feeling I should take you out.',
-    ],
-    Spicy: [
-      "I must be a snowflake, because I've fallen for you.",
-      'Are you a time traveler? Because I see you in my future.',
-      "If being sexy was a crime, you'd be guilty as charged.",
-    ],
-  },
-  Wholesome: {
-    Cute: [
-      "You must be made of copper and tellurium, because you're Cu-Te.",
-      'Are you a 45-degree angle? Because you\'re acute-y.',
-      'Do you like Star Wars? Because Yoda one for me.',
-    ],
-    Cheeky: [
-      'Are you a bank loan? Because you have my interest.',
-      'If you were a triangle, you\'d be acute one.',
-      'Are you Australian? Because you meet all of my koala-fications.',
-    ],
-    Spicy: [
-      "Is your dad a boxer? Because you're a knockout.",
-      'Are you a camera? Because every time I look at you, I smile.',
-      'Do you have a sunburn, or are you always this hot?',
-    ],
-  },
-  Bold: {
-    Cute: [
-      "I'm going to give you a kiss. If you don't like it, you can return it.",
-      'Life without you is like a broken pencil... pointless.',
-      'Are you French? Because Eiffel for you.',
-    ],
-    Cheeky: [
-      "I'm not drunk, I'm just intoxicated by you.",
-      'Kiss me if I\'m wrong, but dinosaurs still exist, right?',
-      "Feel my shirt. Know what it's made of? Boyfriend material.",
-    ],
-    Spicy: [
-      'Are you a fire alarm? Because you\'re really loud and annoying... just kidding, you\'re hot.',
-      "I'd say God bless you, but it looks like he already did.",
-      "Are you a loan? Because you've got my interest and the rates are rising.",
-    ],
-  },
-};
-
-function getRandomFallbackLine(tone: string, spiceLevel: string): string {
-  const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
-  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
-  if (spiceLines.length === 0) {
+    return 'Hey there! Mind if I steal a moment of your time?';
+  } catch (e) {
+    console.log('generatePickupLine error', e);
     return 'Hey there! Mind if I steal a moment of your time?';
   }
-  return spiceLines[Math.floor(Math.random() * spiceLines.length)];
 }
 
-export async function generatePickupLine(params: PickupLineParams): Promise<string> {
-  console.log('Generating pickup line with params:', params);
-  const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-
-  const baseSystem =
-    'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, specific, and PG-13. Avoid clichés and overused lines. Never use crude language, negging, pickup-artist tropes, or disrespect. Keep responses under 20 words. Output only the pickup line, nothing else. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.';
-
-  const vibeGuide = `Tone: ${params.tone}. Spice: ${params.spiceLevel}. Definitions: Cute = sweet, wholesome; Cheeky = playful, flirty; Spicy = bold but still respectful.`;
-
-  const contextText = params.context ? `Context: ${params.context}` : 'Context: none';
-
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const messages: TextMessage[] = [
-        { role: 'system', content: baseSystem },
-        {
-          role: 'user',
-          content: `${vibeGuide}. ${contextText}. Avoid clichés like: ${CLICHE_BAN.slice(0, 4).join(' | ')}. Variation token: ${variation}-${attempt}.`,
-        },
-      ];
-
-      const result = await callOpenAIChat(messages, TEXT_MODEL);
-      const cleaned = (result ?? '').trim().replace(/^"|"$/g, '');
-
-      if (!cleaned) throw new Error('Empty response from model');
-
-      const normalized = cleaned.toLowerCase();
-      const isCliche = CLICHE_BAN.some((c) => normalized.includes(c));
-      const tooLong = cleaned.split(/\s+/).length > 20;
-
-      if (isCliche || tooLong) {
-        console.log('[Pickup] Rejected candidate (cliche/tooLong). Retrying...');
-        continue;
-      }
-
-      console.log('Successfully generated pickup line');
-      return cleaned;
-    } catch (e) {
-      lastError = e;
-      console.warn('[Pickup] Attempt failed', e);
-      await new Promise((r) => setTimeout(r, 250 + Math.random() * 400));
-    }
-  }
-
-  console.error('[Pickup] Falling back after retries', lastError);
-  return getRandomFallbackLine(params.tone, params.spiceLevel);
-}
-
-export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
+// Chat advice proxy to backend
+export async function getChatAdvice(params: { message: string }): Promise<string> {
   try {
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const boldNote = params.amplifyBold
-      ? ' Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal.'
-      : '';
-    const focusNote = params.targetType
-      ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
-      : '';
-    const baseSystem =
-      'You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.' +
-      boldNote +
-      focusNote;
-
-    const messages: VisionMessage[] = [
-      { role: 'system', content: [{ type: 'text', text: baseSystem }] },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Analyze this dating conversation screenshot and provide 3 reply options with rationales. Variation token: ${variation}. Return ONLY raw JSON with this exact shape and keys: {"safe": {"text": "", "rationale": ""}, "witty": {"text": "", "rationale": ""}, "bold": {"text": "", "rationale": ""}}`,
-          },
-          { type: 'image_url', image_url: { url: `data:image/png;base64,${params.base64Image}` } },
-        ],
-      },
-    ];
-
-    let result = await callOpenAIChat(messages, VISION_MODEL);
-    let parsed = extractJSON(result);
-
-    if (!parsed) {
-      const retryMessages: VisionMessage[] = [
-        ...messages,
-        { role: 'assistant', content: [{ type: 'text', text: 'Please output only valid JSON without any markdown or commentary.' }] },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Repeat: Return only the JSON object, no backticks, no code block, no extra text.' },
-            { type: 'image_url', image_url: { url: `data:image/png;base64,${params.base64Image}` } },
-          ],
-        },
-      ];
-      result = await callOpenAIChat(retryMessages, VISION_MODEL);
-      parsed = extractJSON(result);
-    }
-
-    if (parsed && isScreenshotAnalysis(parsed)) {
-      return parsed;
-    }
-
-    return {
-      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
-      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
-      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
-    };
-  } catch (error) {
-    console.error('Error analyzing screenshot:', error);
-    return {
-      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
-      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
-      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
-    };
-  }
-}
-
-export async function getChatAdvice(params: ChatParams): Promise<string> {
-  try {
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const messages: TextMessage[] = [
-      {
-        role: 'system',
-        content:
-          'You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
-      },
-      { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
-    ];
-    const result = await callOpenAIChat(messages, TEXT_MODEL);
-    return result || "I'm here to help! Could you provide more details about your situation?";
-  } catch (error) {
-    console.error('Error getting chat advice:', error);
+    if (!API_URL) throw new Error('Missing EXPO_PUBLIC_API_URL');
+    const res = await fetch(`${API_URL}/ai/chat-advice`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: params.message }),
+    });
+    if (!res.ok) throw new Error(`AI ${res.status}`);
+    const data: any = await res.json();
+    const text: unknown = data?.text ?? data?.advice ?? data?.message ?? '';
+    if (typeof text === 'string' && text.trim()) return text.trim();
+    return "I'm here to help! Could you provide more details about your situation?";
+  } catch (err) {
+    console.log('getChatAdvice error', err);
     return "I'm here to help! Could you provide more details about your situation?";
   }
 }
 
-export async function analyzeScreenshotLegacy(base64Image: string): Promise<ScreenshotAnalysis> {
-  return analyzeScreenshot({ base64Image });
-}
-
-export async function getChatAdviceLegacy(message: string): Promise<string> {
-  return getChatAdvice({ message });
+// Screenshot analysis proxy (keeps API surface; returns a safe default if backend missing)
+export async function analyzeScreenshot(params: { base64Image: string }): Promise<{ safe: { text: string; rationale: string }; witty: { text: string; rationale: string }; bold: { text: string; rationale: string } }> {
+  try {
+    if (!API_URL) throw new Error('Missing EXPO_PUBLIC_API_URL');
+    const res = await fetch(`${API_URL}/ai/analyze-screenshot`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: params.base64Image }),
+    });
+    if (!res.ok) throw new Error(`AI ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.log('analyzeScreenshot error', err);
+    return {
+      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
+      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
+      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
+    };
+  }
 }
