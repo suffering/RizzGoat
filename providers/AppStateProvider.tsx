@@ -19,7 +19,6 @@ interface UserProfile {
 type Plan = 'weekly' | 'monthly' | 'annual' | null;
 
 export const [AppStateProvider, useAppState] = createContextHook(() => {
-  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [referralCount, setReferralCount] = useState<number>(0);
 
@@ -71,8 +70,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
     } catch (error) {
       console.log("Error loading app state:", error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -166,7 +163,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   };
 
   return {
-    isLoading,
     favorites,
     addFavorite,
     removeFavorite,

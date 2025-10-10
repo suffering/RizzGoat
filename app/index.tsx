@@ -33,7 +33,7 @@ interface FloatingIcon {
 export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
-  const { showOnboarding, isPro, isLoading } = useAppState();
+  const { showOnboarding, isPro } = useAppState();
   
   const logoScale = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -44,8 +44,6 @@ export default function HomeScreen() {
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
   useEffect(() => {
-    if (isLoading) return;
-    
     if (!showOnboarding && !isPro) {
       router.replace('/pro' as any);
       return;
@@ -168,16 +166,8 @@ export default function HomeScreen() {
         }),
       ])
     ).start();
-  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding, isLoading]);
+  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding]);
   
-  if (isLoading) {
-    return (
-      <View style={[styles.container, { backgroundColor: '#000000', justifyContent: 'center', alignItems: 'center' }]}>
-        <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
-      </View>
-    );
-  }
-
   if (showOnboarding) {
     return <OnboardingScreen />;
   }
