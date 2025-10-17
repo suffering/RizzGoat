@@ -3,6 +3,21 @@ import { publicProcedure } from "@/backend/trpc/create-context";
 
 const VISION_MODEL = "gpt-4o-mini" as const;
 
+function getOpenAIKey(): string {
+  if (process.env.OPENAI_API_KEY) {
+    return process.env.OPENAI_API_KEY;
+  }
+  try {
+    const secrets = require('@/config/secrets');
+    if (secrets.OPENAI_API_KEY) {
+      return secrets.OPENAI_API_KEY;
+    }
+  } catch (e) {
+    console.error('[getOpenAIKey] Could not load secrets file:', e);
+  }
+  throw new Error("OPENAI_API_KEY not found in environment or secrets file");
+}
+
 const schema = z.object({
   base64Image: z.string(),
   amplifyBold: z.boolean().optional(),
@@ -35,8 +50,7 @@ function extractJSON(text: string): ScreenshotAnalysis | null {
 }
 
 export default publicProcedure.input(schema).mutation(async ({ input }) => {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) throw new Error("Server misconfigured: missing OPENAI_API_KEY");
+  const apiKey = getOpenAIKey();
 
   const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
   const boldNote = input.amplifyBold

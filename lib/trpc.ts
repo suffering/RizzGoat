@@ -12,9 +12,7 @@ const getBaseUrl = () => {
   if (Platform.OS === "web" && typeof window !== "undefined") {
     return window.location.origin;
   }
-  throw new Error(
-    "No base url found, please set EXPO_PUBLIC_RORK_API_BASE_URL"
-  );
+  return "http://localhost:8081";
 };
 
 export const trpcClient = trpc.createClient({
@@ -22,6 +20,26 @@ export const trpcClient = trpc.createClient({
     httpLink({
       url: `${getBaseUrl()}/api/trpc`,
       transformer: superjson,
+      fetch(url, options) {
+        console.log('[tRPC] Request:', url);
+        return fetch(url, {
+          ...options,
+          headers: {
+            ...options?.headers,
+            'Content-Type': 'application/json',
+          },
+        }).then(res => {
+          console.log('[tRPC] Response status:', res.status);
+          console.log('[tRPC] Response headers:', res.headers);
+          if (!res.ok) {
+            return res.text().then(text => {
+              console.error('[tRPC] Error response body:', text);
+              throw new Error(`HTTP ${res.status}: ${text}`);
+            });
+          }
+          return res;
+        });
+      },
     }),
   ],
 });

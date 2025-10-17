@@ -3,6 +3,21 @@ import { publicProcedure } from "@/backend/trpc/create-context";
 
 const TEXT_MODEL = "gpt-4o-mini" as const;
 
+function getOpenAIKey(): string {
+  if (process.env.OPENAI_API_KEY) {
+    return process.env.OPENAI_API_KEY;
+  }
+  try {
+    const secrets = require('@/config/secrets');
+    if (secrets.OPENAI_API_KEY) {
+      return secrets.OPENAI_API_KEY;
+    }
+  } catch (e) {
+    console.error('[getOpenAIKey] Could not load secrets file:', e);
+  }
+  throw new Error("OPENAI_API_KEY not found in environment or secrets file");
+}
+
 export default publicProcedure
   .input(
     z.object({
@@ -12,10 +27,7 @@ export default publicProcedure
     })
   )
   .mutation(async ({ input }) => {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) {
-      throw new Error("Server misconfigured: missing OPENAI_API_KEY");
-    }
+    const apiKey = getOpenAIKey();
 
     const CLICHE_BAN = [
       'are you a magician? because whenever i look at you, everyone else disappears',

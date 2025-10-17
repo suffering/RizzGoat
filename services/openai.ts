@@ -201,11 +201,19 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
 
 export async function getChatAdvice(params: ChatParams): Promise<string> {
   try {
+    console.log('[getChatAdvice] Making request:', params);
     const res = await trpcClient.ai.chatAdvice.mutate(params);
+    console.log('[getChatAdvice] Response:', res);
     return res ?? "I'm here to help! Could you provide more details about your situation?";
   } catch (error) {
-    console.error('Error getting chat advice:', error);
-    return "I'm here to help! Could you provide more details about your situation?";
+    console.error('[getChatAdvice] Error:', error);
+    if (error && typeof error === 'object' && 'message' in error) {
+      console.error('[getChatAdvice] Error message:', error.message);
+    }
+    if (error && typeof error === 'object' && 'data' in error) {
+      console.error('[getChatAdvice] Error data:', (error as any).data);
+    }
+    throw error;
   }
 }
 
