@@ -1,4 +1,4 @@
-import { OPENAI_API_KEY } from '@/config/secrets';
+import { trpcClient } from "@/lib/trpc";
 
 interface PickupLineParams {
   tone: string;
@@ -88,60 +88,11 @@ function extractJSON(text: string): ScreenshotAnalysis | null {
 }
 
 async function callOpenAIChat(
-  messages: AnyMessage[],
-  model: string,
-  retries = 3,
+  _messages: AnyMessage[],
+  _model: string,
+  _retries = 3,
 ): Promise<string> {
-  for (let attempt = 0; attempt <= retries; attempt++) {
-    try {
-      console.log(`[OpenAI] Calling ${model} (attempt ${attempt + 1}/${retries + 1})`);
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${OPENAI_API_KEY}`,
-        },
-        body: JSON.stringify({
-          model,
-          messages,
-          temperature: 0.9,
-          presence_penalty: 0.6,
-          frequency_penalty: 0.5,
-          top_p: 0.9,
-        }),
-      });
-
-      console.log(`[OpenAI] Status: ${response.status}`);
-
-      if (response.ok) {
-        const data = (await response.json()) as any;
-        const content = data?.choices?.[0]?.message?.content as string | undefined;
-        if (typeof content === 'string') return content;
-        const toolText = data?.choices?.[0]?.message?.tool_calls?.[0]?.text as string | undefined;
-        if (typeof toolText === 'string') return toolText;
-        return '';
-      }
-
-      if (response.status === 429 || response.status >= 500) {
-        if (attempt < retries) {
-          const delay = Math.pow(2, attempt) * 1000 + Math.random() * 1000;
-          console.log(`[OpenAI] Retry in ${Math.round(delay)}ms`);
-          await new Promise((r) => setTimeout(r, delay));
-          continue;
-        }
-      }
-
-      const errorText = await response.text().catch(() => 'No error details');
-      console.error(`[OpenAI] Error: ${errorText}`);
-      throw new Error(`OpenAI error: ${response.status} - ${errorText}`);
-    } catch (err) {
-      console.error(`[OpenAI] Call failed (attempt ${attempt + 1})`, err);
-      if (attempt === retries) throw err;
-      const delay = Math.pow(2, attempt) * 1000;
-      await new Promise((r) => setTimeout(r, delay));
-    }
-  }
-  throw new Error('Max retries exceeded');
+  throw new Error("Client no longer calls OpenAI directly. Use backend procedures.");
 }
 
 const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
@@ -225,110 +176,19 @@ function getRandomFallbackLine(tone: string, spiceLevel: string): string {
 }
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
-  console.log('Generating pickup line with params:', params);
-  const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-
-  const baseSystem =
-    'You are a witty, respectful dating assistant. Generate pickup lines that are clever, tasteful, specific, and PG-13. Avoid clichés and overused lines. Never use crude language, negging, pickup-artist tropes, or disrespect. Keep responses under 20 words. Output only the pickup line, nothing else. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.';
-
-  const vibeGuide = `Tone: ${params.tone}. Spice: ${params.spiceLevel}. Definitions: Cute = sweet, wholesome; Cheeky = playful, flirty; Spicy = bold but still respectful.`;
-
-  const contextText = params.context ? `Context: ${params.context}` : 'Context: none';
-
-  let lastError: unknown = null;
-  for (let attempt = 0; attempt < 3; attempt++) {
-    try {
-      const messages: TextMessage[] = [
-        { role: 'system', content: baseSystem },
-        {
-          role: 'user',
-          content: `${vibeGuide}. ${contextText}. Avoid clichés like: ${CLICHE_BAN.slice(0, 4).join(' | ')}. Variation token: ${variation}-${attempt}.`,
-        },
-      ];
-
-      const result = await callOpenAIChat(messages, TEXT_MODEL);
-      const cleaned = (result ?? '').trim().replace(/^"|"$/g, '');
-
-      if (!cleaned) throw new Error('Empty response from model');
-
-      const normalized = cleaned.toLowerCase();
-      const isCliche = CLICHE_BAN.some((c) => normalized.includes(c));
-      const tooLong = cleaned.split(/\s+/).length > 20;
-
-      if (isCliche || tooLong) {
-        console.log('[Pickup] Rejected candidate (cliche/tooLong). Retrying...');
-        continue;
-      }
-
-      console.log('Successfully generated pickup line');
-      return cleaned;
-    } catch (e) {
-      lastError = e;
-      console.warn('[Pickup] Attempt failed', e);
-      await new Promise((r) => setTimeout(r, 250 + Math.random() * 400));
-    }
+  try {
+    const res = await trpcClient.ai.generatePickup.mutate(params);
+    return res ?? getRandomFallbackLine(params.tone, params.spiceLevel);
+  } catch (e) {
+    console.error("[Pickup] Backend error", e);
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   }
-
-  console.error('[Pickup] Falling back after retries', lastError);
-  return getRandomFallbackLine(params.tone, params.spiceLevel);
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const boldNote = params.amplifyBold
-      ? ' Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal.'
-      : '';
-    const focusNote = params.targetType
-      ? ` Focus especially on the ${params.targetType} option: optimize it for the user's intent and ensure it is the strongest suggestion.`
-      : '';
-    const baseSystem =
-      'You are a dating conversation analyst. Analyze the screenshot and provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.' +
-      boldNote +
-      focusNote;
-
-    const messages: VisionMessage[] = [
-      { role: 'system', content: [{ type: 'text', text: baseSystem }] },
-      {
-        role: 'user',
-        content: [
-          {
-            type: 'text',
-            text: `Analyze this dating conversation screenshot and provide 3 reply options with rationales. Variation token: ${variation}. Return ONLY raw JSON with this exact shape and keys: {"safe": {"text": "", "rationale": ""}, "witty": {"text": "", "rationale": ""}, "bold": {"text": "", "rationale": ""}}`,
-          },
-          { type: 'image_url', image_url: { url: `data:image/png;base64,${params.base64Image}` } },
-        ],
-      },
-    ];
-
-    let result = await callOpenAIChat(messages, VISION_MODEL);
-    let parsed = extractJSON(result);
-
-    if (!parsed) {
-      const retryMessages: VisionMessage[] = [
-        ...messages,
-        { role: 'assistant', content: [{ type: 'text', text: 'Please output only valid JSON without any markdown or commentary.' }] },
-        {
-          role: 'user',
-          content: [
-            { type: 'text', text: 'Repeat: Return only the JSON object, no backticks, no code block, no extra text.' },
-            { type: 'image_url', image_url: { url: `data:image/png;base64,${params.base64Image}` } },
-          ],
-        },
-      ];
-      result = await callOpenAIChat(retryMessages, VISION_MODEL);
-      parsed = extractJSON(result);
-    }
-
-    if (parsed && isScreenshotAnalysis(parsed)) {
-      return parsed;
-    }
-
-    return {
-      safe: { text: "That's interesting! Tell me more about that.", rationale: 'Keeps conversation flowing without risk' },
-      witty: { text: 'Well, this conversation just got interesting 😏', rationale: 'Playful and engaging' },
-      bold: { text: 'I like where this is going. Coffee tomorrow?', rationale: 'Confident and moves things forward' },
-    };
+    const res = await trpcClient.ai.analyzeScreenshot.mutate(params);
+    return res as ScreenshotAnalysis;
   } catch (error) {
     console.error('Error analyzing screenshot:', error);
     return {
@@ -341,17 +201,8 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
 
 export async function getChatAdvice(params: ChatParams): Promise<string> {
   try {
-    const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
-    const messages: TextMessage[] = [
-      {
-        role: 'system',
-        content:
-          'You are RizzGoat, a friendly and knowledgeable dating coach. Provide structured advice in this format:\n\n💬 Say this:\n[1-2 line suggestion]\n\n🔄 If they respond with X:\n[Conditional advice]\n\n⚠️ Pitfalls to avoid:\n• [Bullet point]\n• [Bullet point]\n\nKeep advice practical, respectful, and confidence-building. Do not repeat prior outputs. If given a variation token, ignore it in the output and use it only to diversify the result.',
-      },
-      { role: 'user', content: `${params.message}\n\nVariation token: ${variation}` },
-    ];
-    const result = await callOpenAIChat(messages, TEXT_MODEL);
-    return result || "I'm here to help! Could you provide more details about your situation?";
+    const res = await trpcClient.ai.chatAdvice.mutate(params);
+    return res ?? "I'm here to help! Could you provide more details about your situation?";
   } catch (error) {
     console.error('Error getting chat advice:', error);
     return "I'm here to help! Could you provide more details about your situation?";
