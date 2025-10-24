@@ -1,4 +1,5 @@
-import { trpcClient } from "@/lib/trpc";
+import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 interface PickupLineParams {
   tone: string;
@@ -175,20 +176,63 @@ function getRandomFallbackLine(tone: string, spiceLevel: string): string {
   return spiceLines[Math.floor(Math.random() * spiceLines.length)];
 }
 
+function readExtra(): Record<string, string | undefined> {
+  const extra = (Constants?.expoConfig as any)?.extra ?? (Constants as any)?.manifest?.extra ?? {};
+  return extra as Record<string, string | undefined>;
+}
+
+function getApiOrigin(): string {
+  const extra = readExtra();
+  const candidates = [
+    process.env.EXPO_PUBLIC_API_URL,
+    extra?.EXPO_PUBLIC_API_URL,
+    process.env.EXPO_PUBLIC_API_BASE_URL,
+    extra?.EXPO_PUBLIC_API_BASE_URL,
+    process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
+    extra?.EXPO_PUBLIC_RORK_API_BASE_URL,
+  ].filter((v): v is string => typeof v === 'string' && v.length > 0);
+  if (candidates.length > 0) return candidates[0]!;
+  if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
+  return 'http://localhost:8787';
+}
+
+async function postJson<T>(path: string, body: unknown): Promise<T> {
+  const url = `${getApiOrigin()}${path}`;
+  console.log('[API] POST', url);
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+  const text = await res.text();
+  if (!res.ok) {
+    console.error('[API] Error', res.status, text);
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+  try {
+    return JSON.parse(text) as T;
+  } catch (e) {
+    console.error('[API] Invalid JSON', text);
+    throw e;
+  }
+}
+
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
   try {
-    const res = await trpcClient.ai.generatePickup.mutate(params);
-    return res ?? getRandomFallbackLine(params.tone, params.spiceLevel);
+    const data = await postJson<{ result?: string; error?: string }>(`/api/ai/pickup`, params);
+    if (data?.result && typeof data.result === 'string') return data.result;
+    return getRandomFallbackLine(params.tone, params.spiceLevel);
   } catch (e) {
-    console.error("[Pickup] Backend error", e);
+    console.error('[Pickup] Backend error', e);
     return getRandomFallbackLine(params.tone, params.spiceLevel);
   }
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
   try {
-    const res = await trpcClient.ai.analyzeScreenshot.mutate(params);
-    return res as ScreenshotAnalysis;
+    const data = await postJson<{ result?: ScreenshotAnalysis; error?: string }>(`/api/ai/screenshot`, params);
+    if (data?.result && isScreenshotAnalysis(data.result)) return data.result;
+    throw new Error('Invalid response');
   } catch (error) {
     console.error('Error analyzing screenshot:', error);
     return {
@@ -202,18 +246,12 @@ export async function analyzeScreenshot(params: ScreenshotParams): Promise<Scree
 export async function getChatAdvice(params: ChatParams): Promise<string> {
   try {
     console.log('[getChatAdvice] Making request:', params);
-    const res = await trpcClient.ai.chatAdvice.mutate(params);
-    console.log('[getChatAdvice] Response:', res);
-    return res ?? "I'm here to help! Could you provide more details about your situation?";
+    const data = await postJson<{ result?: string; error?: string }>(`/api/ai/chat`, params);
+    console.log('[getChatAdvice] Response:', data);
+    return data?.result ?? "I'm here to help! Could you provide more details about your situation?";
   } catch (error) {
     console.error('[getChatAdvice] Error:', error);
-    if (error && typeof error === 'object' && 'message' in error) {
-      console.error('[getChatAdvice] Error message:', error.message);
-    }
-    if (error && typeof error === 'object' && 'data' in error) {
-      console.error('[getChatAdvice] Error data:', (error as any).data);
-    }
-    throw error;
+    return "I'm here to help! Could you provide more details about your situation?";
   }
 }
 
