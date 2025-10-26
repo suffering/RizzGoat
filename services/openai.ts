@@ -192,20 +192,40 @@ function getApiOrigin(): string {
     extra?.EXPO_PUBLIC_RORK_API_BASE_URL,
   ].filter((v): v is string => typeof v === 'string' && v.length > 0);
   if (candidates.length > 0) return candidates[0]!;
+  try {
+    const slug = (Constants?.expoConfig as any)?.slug ?? (Constants as any)?.manifest?.slug;
+    if (slug && typeof slug === 'string') {
+      return `https://${slug}.rork.com`;
+    }
+  } catch {}
   if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
-  return 'http://localhost:8787';
+  return 'https://rork.com';
 }
 
 async function postJson<T>(path: string, body: unknown): Promise<T> {
-  const url = `${getApiOrigin()}${path}`;
+  const origin = getApiOrigin();
+  const url = `${origin}${path}`;
   console.log('[API] POST', url);
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
+  let res: Response;
+  try {
+    res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+      // Help browsers with CORS; no credentials are needed for our public API
+      mode: Platform.OS === 'web' ? 'cors' : undefined,
+      credentials: 'omit',
+    } as RequestInit);
+  } catch (err) {
+    console.error('[API] Network error while fetching', url, err);
+    throw new Error(`Network error contacting API at ${origin}. Check EXPO_PUBLIC_API_URL and server availability.`);
+  }
   const text = await res.text();
   if (!res.ok) {
+    const isHtml = text.startsWith('<!DOCTYPE') || (res.headers.get('content-type') ?? '').includes('text/html');
+    if (isHtml) {
+      console.error('[API] Received HTML instead of JSON. Likely incorrect API origin:', origin);
+    }
     console.error('[API] Error', res.status, text);
     throw new Error(`HTTP ${res.status}: ${text}`);
   }
