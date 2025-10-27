@@ -1,0 +1,10 @@
+node_modules
+app/
+apps/
+frontend/
+expo/
+packages/mobile/
+*.expo/*
+*.expo/*
+.expo
+.expo-shared
