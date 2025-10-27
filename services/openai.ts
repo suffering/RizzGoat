@@ -181,6 +181,8 @@ function readExtra(): Record<string, string | undefined> {
   return extra as Record<string, string | undefined>;
 }
 
+const sanitize = (url: string) => url.replace(/\/$/, '');
+
 function getApiOrigin(): string {
   const extra = readExtra();
   const candidates = [
@@ -191,14 +193,25 @@ function getApiOrigin(): string {
     process.env.EXPO_PUBLIC_RORK_API_BASE_URL,
     extra?.EXPO_PUBLIC_RORK_API_BASE_URL,
   ].filter((v): v is string => typeof v === 'string' && v.length > 0);
-  if (candidates.length > 0) return candidates[0]!;
+  if (candidates.length > 0) {
+    const chosen = sanitize(candidates[0]!);
+    console.log('[API] Using origin from env/extra:', chosen);
+    return chosen;
+  }
   try {
     const slug = (Constants?.expoConfig as any)?.slug ?? (Constants as any)?.manifest?.slug;
     if (slug && typeof slug === 'string') {
-      return `https://${slug}.rork.com`;
+      const origin = sanitize(`https://${slug}.rork.com`);
+      console.log('[API] Using slug fallback origin:', origin);
+      return origin;
     }
   } catch {}
-  if (Platform.OS === 'web' && typeof window !== 'undefined') return window.location.origin;
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const origin = sanitize(window.location.origin);
+    console.log('[API] Using window origin (web):', origin);
+    return origin;
+  }
+  console.log('[API] Using last-resort origin: https://rork.com');
   return 'https://rork.com';
 }
 
