@@ -1,26 +1,26 @@
-import express, { Request, Response } from "express"
-import cors from "cors"
-import chat from "./routes/ai/chat.js"
-import pickup from "./routes/ai/pickup.js"
+import express, { Request, Response } from "express";
+import cors from "cors";
+import chat from "./routes/ai/chat.js";
+import pickup from "./routes/ai/pickup.js";
+import screenshot from "./routes/ai/screenshot.js";
 
-const app = express()
-app.use(cors())
-app.use(express.json())
+const app = express();
+app.use(cors());
+app.use(express.urlencoded({ extended: true, limit: "10mb" }));
+app.use(express.json({ limit: "10mb" }));
 
-// Health check endpoint
 app.get("/api", (_req: Request, res: Response) => {
-  res.json({ status: "ok" })
-})
+  res.json({ status: "ok" });
+});
 
-// ✅ Main API routes
-app.use("/api/chat", chat)
-app.use("/api/pickup", pickup)
+app.use("/api/chat", chat);
+app.use("/api/pickup", pickup);
 
-// ✅ Aliases for Rork/TRPC compatibility (matches your /src calls)
-app.use("/api/ai/chat", chat)
-app.use("/api/ai/pickup", pickup)
+app.use("/api/ai/chat", chat);
+app.use("/api/ai/pickup", pickup);
+app.use("/api/ai/screenshot", screenshot);
 
-const port = process.env.PORT || 8080
+const port = process.env.PORT || 8080;
 app.listen(port, () => {
-  console.log("Backend up on", port)
-})
+  console.log("Backend up on", port);
+});
