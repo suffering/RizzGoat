@@ -4,15 +4,7 @@ const r = Router()
 r.post("/", async (req: Request, res: Response) => {
   const { prompt } = (req.body as { prompt?: string }) || {}
 
-  const systemPrompt = `
-You are RizzGoat — a confident, funny, and clever AI dating coach.
-You help people with texting game, dating advice, and conversation openers.
-Respond naturally, conversationally, and adapt your tone to the user:
-- If they ask for openers → give smooth, fun examples.
-- If they ask for advice → explain it clearly but keep swagger.
-- If they ask flirty or bold stuff → match their energy but stay cool.
-Keep all answers short and confident.
-  `
+  const systemPrompt = "You are RizzGoat — a confident, funny, dating AI coach. Give smooth, natural advice that feels like chatting with a clever friend. If the user asks for openers, give witty examples. If they ask for advice, give direct, confident insight with personality. If they’re flirty, match the energy with charm but no explicit content. Keep answers concise."
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -30,7 +22,11 @@ Keep all answers short and confident.
   })
 
   const data = await resp.json()
-  res.status(resp.ok ? 200 : 500).json(data)
+  const text: string = data?.choices?.[0]?.message?.content ?? ""
+  if (!resp.ok) {
+    return res.status(resp.status).json({ error: text || data })
+  }
+  res.json({ text: text.trim() })
 })
 
 export default r

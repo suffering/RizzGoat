@@ -4,17 +4,8 @@ const r = Router()
 r.post("/", async (req: Request, res: Response) => {
   const { level, vibe, context } = (req.body as any) || {}
 
-  const prompt = `
-You are RizzGoat — an AI expert in charisma and game.
-Create a smooth, original pickup line that fits this style:
-Spice Level: ${level} (Cute, Medium, or Spicy)
-Vibe: ${vibe} (Playful, Confident, Wholesome, or Bold)
-Context: ${context || "general"}.
-
-Keep it short, funny, and natural — like something you'd say in real life.
-Avoid cringy clichés unless done ironically.
-Only respond with the pickup line. No introductions.
-  `
+  const systemPrompt = "You are RizzGoat — a confident, funny, and original dating coach."
+  const userPrompt = `Generate a creative pickup line that matches these attributes:\nSpice Level: ${level} (Cute, Medium, Spicy)\nVibe: ${vibe} (Playful, Confident, Wholesome, Bold)\nContext: ${context || "general"}.\nKeep it short, clever, and naturally flirty — avoid generic or overused lines.\nReturn only the line itself.`
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
@@ -24,12 +15,19 @@ Only respond with the pickup line. No introductions.
     },
     body: JSON.stringify({
       model: "gpt-4o-mini",
-      messages: [{ role: "user", content: prompt }]
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ]
     })
   })
 
   const data = await resp.json()
-  res.status(resp.ok ? 200 : 500).json(data)
+  const text: string = data?.choices?.[0]?.message?.content ?? ""
+  if (!resp.ok) {
+    return res.status(resp.status).json({ error: text || data })
+  }
+  res.type("text/plain").send(text.trim())
 })
 
 export default r
