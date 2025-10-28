@@ -30,7 +30,7 @@ Return only the line itself.`
       })
     })
 
-    const data = await resp.json()
+    const data: any = await resp.json() // 👈 Explicitly type as any
     const text: string = data?.choices?.[0]?.message?.content ?? ""
 
     if (!resp.ok) {
@@ -45,4 +45,5 @@ Return only the line itself.`
 })
 
 export default router
+
 
