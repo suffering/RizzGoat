@@ -31,13 +31,14 @@ Keep answers concise.
       })
     })
 
-    const data: any = await resp.json() // 👈 Explicitly type as any
+    const data: any = await resp.json()
     const text: string = data?.choices?.[0]?.message?.content ?? ""
 
     if (!resp.ok) {
       return res.status(resp.status).json({ error: text || data })
     }
 
+    // ✅ Return valid JSON format for Rork frontend
     res.json({ text: text.trim() })
   } catch (error) {
     console.error("Chat AI error:", error)
