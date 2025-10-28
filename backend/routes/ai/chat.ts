@@ -31,7 +31,7 @@ Keep answers concise.
       })
     })
 
-    const data = await resp.json()
+    const data: any = await resp.json() // 👈 Explicitly type as any
     const text: string = data?.choices?.[0]?.message?.content ?? ""
 
     if (!resp.ok) {
@@ -46,4 +46,3 @@ Keep answers concise.
 })
 
 export default router
-
