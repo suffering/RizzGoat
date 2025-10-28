@@ -1,4 +1,5 @@
-import { Router, Request, Response } from "express";
+import { Router } from "express";
+
 
 const r = Router();
 
@@ -27,7 +28,7 @@ function extractJSON(text: string): ScreenshotAnalysis | null {
   return null;
 }
 
-r.post("/", async (req: Request, res: Response) => {
+r.post("/", async (req: any, res: any) => {
   const { base64Image, amplifyBold, targetType } = (req.body as {
     base64Image?: string;
     amplifyBold?: boolean;

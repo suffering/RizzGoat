@@ -1,7 +1,8 @@
-import { Router, Request, Response } from "express"
+import { Router } from "express"
+
 const r = Router()
 
-r.post("/", async (req: Request, res: Response) => {
+r.post("/", async (req: any, res: any) => {
   const { level, vibe, context } = (req.body as any) || {}
 
   const systemPrompt = "You are RizzGoat — a confident, funny, and original dating coach."
