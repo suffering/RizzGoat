@@ -1,16 +1,17 @@
 {
   "compilerOptions": {
-    "target": "ES2021",
-    "module": "ES2020",
+    "target": "ES2020",
+    "module": "ESNext",
     "moduleResolution": "Node",
-    "lib": ["ES2021", "DOM"],
-    "types": ["node", "express", "cors"],
-    "esModuleInterop": true,
-    "forceConsistentCasingInFileNames": true,
-    "strict": true,
-    "skipLibCheck": true,
     "outDir": "dist",
-    "rootDir": "./"
+    "rootDir": ".",
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "resolveJsonModule": true,
+    "types": ["node", "express", "cors"]
   },
-  "include": ["server.ts", "routes/**/*.ts"]
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
