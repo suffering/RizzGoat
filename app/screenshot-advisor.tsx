@@ -30,6 +30,7 @@ import {
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
 import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { analyzeScreenshot } from "@/services/openai";
@@ -62,16 +63,31 @@ export default function ScreenshotAdvisorScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: true,
       quality: 0.8,
-      base64: true,
+      base64: false,
     });
 
     if (!result.canceled && result.assets[0]) {
-      setSelectedImage(result.assets[0].uri);
-      const b64 = result.assets[0].base64 ?? null;
-      setLastBase64(b64);
-      if (b64) {
-        console.log('[ScreenshotAdvisor] image selected, analyzing default Safe/Witty/Bold');
-        analyzeImage(b64, false, null);
+      try {
+        const asset = result.assets[0];
+        setSelectedImage(asset.uri);
+        const targetWidth = 1024;
+        const actions: ImageManipulator.Action[] = [{ resize: { width: targetWidth } }];
+        const manipulated = await ImageManipulator.manipulateAsync(
+          asset.uri,
+          actions,
+          { compress: 0.6, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        const b64 = manipulated.base64 ?? null;
+        setLastBase64(b64);
+        if (b64) {
+          console.log('[ScreenshotAdvisor] image selected (compressed), analyzing default Safe/Witty/Bold');
+          analyzeImage(b64, false, null);
+        } else {
+          console.log('[ScreenshotAdvisor] No base64 after manipulation');
+        }
+      } catch (e) {
+        console.log('[ScreenshotAdvisor] Image processing error', e);
+        Alert.alert('Image Error', 'Could not process the image. Please try a different one.');
       }
     }
   };

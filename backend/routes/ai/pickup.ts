@@ -2,8 +2,11 @@ import { Router, Request, Response } from "express";
 
 const r = Router();
 r.post("/", async (req: Request, res: Response) => {
-  const { level, vibe, context } = (req.body as { level?: string; vibe?: string; context?: string }) || {};
-  const prompt = `make a pickup line level=${level ?? "medium"} vibe=${vibe ?? "playful"} context=${context ?? ""}`;
+  const body = (req.body as { level?: string; vibe?: string; context?: string; tone?: string; spiceLevel?: string }) || {};
+  const level = body.level ?? (body.spiceLevel ? body.spiceLevel.toLowerCase() : undefined);
+  const vibe = body.vibe ?? (body.tone ? body.tone.toLowerCase() : undefined);
+  const context = body.context ?? "";
+  const prompt = `make a pickup line level=${level ?? "cute"} vibe=${vibe ?? "playful"} context=${context}`;
 
   const resp = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",

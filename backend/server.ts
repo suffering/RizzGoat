@@ -6,8 +6,8 @@ import screenshot from "./routes/ai/screenshot.js";
 
 const app = express();
 app.use(cors());
-app.use(express.urlencoded({ extended: true, limit: "10mb" }));
-app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true, limit: "25mb" }));
+app.use(express.json({ limit: "25mb" }));
 
 app.get("/api", (_req: Request, res: Response) => {
   res.json({ status: "ok" });
