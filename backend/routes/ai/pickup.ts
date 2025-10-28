@@ -30,14 +30,15 @@ Return only the line itself.`
       })
     })
 
-    const data: any = await resp.json() // 👈 Explicitly type as any
+    const data: any = await resp.json()
     const text: string = data?.choices?.[0]?.message?.content ?? ""
 
     if (!resp.ok) {
       return res.status(resp.status).json({ error: text || data })
     }
 
-    res.type("text/plain").send(text.trim())
+    // ✅ Return valid JSON (Rork expects JSON, not plain text)
+    res.json({ text: text.trim() })
   } catch (error) {
     console.error("Pickup line error:", error)
     res.status(500).json({ error: "Failed to generate pickup line" })
