@@ -1,15 +1,16 @@
-import { Router } from "express"
+import { Router } from "express";
 
-const r = Router()
+const r = Router();
 
 r.post("/", async (req: any, res: any) => {
-  const { prompt } = req.body || {}
+  const { message } = (req.body as { message?: string }) || {};
 
-  if (!prompt)
-    return res.status(400).json({ error: "Missing chat prompt" })
+  if (!message) {
+    return res.status(400).json({ error: "Missing chat message" });
+  }
 
   const systemPrompt =
-    "You are RizzGoat — a confident, clever, and funny dating coach. Give direct, realistic, and charismatic advice for dating, texting, and relationships. Keep replies under 60 words, fun, and natural."
+    "You are RizzGoat — a confident, funny, dating AI coach. Give smooth, natural advice that feels like chatting with a clever friend. If the user asks for openers, give witty examples. If they ask for advice, give direct, confident insight with personality. If they’re flirty, match the energy with charm but no explicit content. Keep replies under 60 words.";
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -22,29 +23,30 @@ r.post("/", async (req: any, res: any) => {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt },
+          { role: "user", content: message },
         ],
       }),
-    })
+    });
 
-    const raw = await response.text()
-    let data: any = {}
+    const raw = await response.text();
+    let data: any = {};
     try {
-      data = JSON.parse(raw)
+      data = JSON.parse(raw);
     } catch {
-      console.error("Invalid JSON:", raw)
-      return res.status(500).json({ error: "Invalid response from OpenAI" })
+      console.error("Invalid JSON:", raw);
+      return res.status(500).json({ error: "Invalid response from OpenAI" });
     }
 
-    const text = data?.choices?.[0]?.message?.content?.trim()
-    if (!response.ok || !text)
-      return res.status(500).json({ error: "Failed to generate chat reply" })
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    if (!response.ok || !text) {
+      return res.status(500).json({ error: "Failed to generate chat reply" });
+    }
 
-    res.json({ text })
+    res.json({ result: text });
   } catch (err: any) {
-    console.error("Chat error:", err)
-    res.status(500).json({ error: "Failed to generate chat reply" })
+    console.error("Chat error:", err);
+    res.status(500).json({ error: "Failed to generate chat reply" });
   }
-})
+});
 
-export default r
+export default r;
