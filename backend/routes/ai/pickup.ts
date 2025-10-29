@@ -1,17 +1,17 @@
-import { Router } from "express";
+import { Router } from "express"
 
-const r = Router();
+const r = Router()
 
 r.post("/", async (req: any, res: any) => {
-  const body = (req.body as Record<string, unknown>) || {};
-  const tone = (body.tone as string) ?? (body.vibe as string) ?? "Playful";
-  const spiceLevel = (body.spiceLevel as string) ?? (body.level as string) ?? "Medium";
-  const context = (body.context as string) ?? "general";
+  const body = (req.body as Record<string, unknown>) || {}
+  const tone = (body.tone as string) ?? (body.vibe as string) ?? "Playful"
+  const spiceLevel = (body.spiceLevel as string) ?? (body.level as string) ?? "Medium"
+  const context = (body.context as string) ?? "general"
 
   const systemPrompt =
-    "You are RizzGoat — a confident, funny, and original dating coach. Generate a creative pickup line that matches the requested tone and spice level. Keep it short, clever, naturally flirty, and avoid generic or overused lines. Output ONLY the line.";
+    "You are RizzGoat — a confident, funny, and original dating coach. Generate one short, clever, naturally flirty pickup line that matches the tone and spice level. Avoid clichés and never wrap the line in quotes. Output only the line itself, nothing else."
 
-  const userPrompt = `Tone: ${tone}\nSpice Level: ${spiceLevel}\nContext: ${context}.`;
+  const userPrompt = `Tone: ${tone}\nSpice Level: ${spiceLevel}\nContext: ${context}.`
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -31,27 +31,30 @@ r.post("/", async (req: any, res: any) => {
         frequency_penalty: 0.5,
         top_p: 0.9,
       }),
-    });
+    })
 
-    const raw = await response.text();
-    let data: any = {};
+    const raw = await response.text()
+    let data: any = {}
     try {
-      data = JSON.parse(raw);
+      data = JSON.parse(raw)
     } catch {
-      console.error("Invalid JSON:", raw);
-      return res.status(500).json({ error: "Invalid response from OpenAI" });
+      console.error("Invalid JSON from OpenAI:", raw)
+      return res.status(500).json({ error: "Invalid response from OpenAI" })
     }
 
-    const text = (data?.choices?.[0]?.message?.content ?? "").trim().replace(/^"|"$/g, "");
+    let text = (data?.choices?.[0]?.message?.content ?? "").trim()
+    text = text.replace(/^["'“”]+|["'“”]+$/g, "") // strip weird quotes
+
     if (!response.ok || !text) {
-      return res.status(500).json({ error: "Failed to generate pickup line" });
+      console.error("Pickup generation failed:", raw)
+      return res.status(500).json({ error: "Failed to generate pickup line" })
     }
 
-    res.json({ result: text });
+    res.json({ result: { text } })
   } catch (err: any) {
-    console.error("Pickup error:", err);
-    res.status(500).json({ error: "Failed to generate pickup line" });
+    console.error("Pickup route error:", err)
+    res.status(500).json({ error: "Failed to generate pickup line" })
   }
-});
+})
 
-export default r;
+export default r
