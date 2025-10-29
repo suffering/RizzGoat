@@ -43,5 +43,3 @@ r.post("/", async (req: any, res: any) => {
 
 export default r
 
-
-export default router
