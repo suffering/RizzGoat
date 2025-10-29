@@ -3,43 +3,48 @@ import { Router } from "express"
 const r = Router()
 
 r.post("/", async (req: any, res: any) => {
+  const { prompt } = req.body || {}
+
+  if (!prompt)
+    return res.status(400).json({ error: "Missing chat prompt" })
+
+  const systemPrompt =
+    "You are RizzGoat — a confident, clever, and funny dating coach. Give direct, realistic, and charismatic advice for dating, texting, and relationships. Keep replies under 60 words, fun, and natural."
+
   try {
-    const { prompt } = req.body || {}
-
-    const systemPrompt =
-      "You are RizzGoat — a confident, funny, dating AI coach. Respond with smooth, natural advice like a clever friend. Keep replies short, charming, and natural. Avoid explicit content."
-
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
+        Authorization: `Bearer ${process.env.OPENAI_API_KEY ?? ""}`,
       },
       body: JSON.stringify({
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: prompt ?? "" },
+          { role: "user", content: prompt },
         ],
       }),
     })
 
-    const data = await response.json()
-
-    if (!response.ok) {
-      console.error("OpenAI error:", data)
-      return res.status(500).json({ error: "Failed to generate chat reply" })
+    const raw = await response.text()
+    let data: any = {}
+    try {
+      data = JSON.parse(raw)
+    } catch {
+      console.error("Invalid JSON:", raw)
+      return res.status(500).json({ error: "Invalid response from OpenAI" })
     }
 
     const text = data?.choices?.[0]?.message?.content?.trim()
-    if (!text) throw new Error("Empty response from OpenAI")
+    if (!response.ok || !text)
+      return res.status(500).json({ error: "Failed to generate chat reply" })
 
     res.json({ text })
   } catch (err: any) {
-    console.error("Chat route error:", err)
+    console.error("Chat error:", err)
     res.status(500).json({ error: "Failed to generate chat reply" })
   }
 })
 
 export default r
-
