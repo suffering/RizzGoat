@@ -50,7 +50,7 @@ r.post("/", async (req: any, res: any) => {
       return res.status(500).json({ error: "Failed to generate pickup line" })
     }
 
-    res.json({ result: { text } })
+    res.json({ result: text })
   } catch (err: any) {
     console.error("Pickup route error:", err)
     res.status(500).json({ error: "Failed to generate pickup line" })
