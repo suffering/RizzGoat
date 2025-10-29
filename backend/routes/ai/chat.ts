@@ -3,9 +3,12 @@ import { Router } from "express";
 const r = Router();
 
 r.post("/", async (req: any, res: any) => {
-  const { message } = (req.body as { message?: string }) || {};
+  const { message, prompt } = (req.body as { message?: string; prompt?: string }) || {};
+  const userInput = (typeof message === "string" && message.trim().length > 0)
+    ? message.trim()
+    : (typeof prompt === "string" ? prompt.trim() : "");
 
-  if (!message) {
+  if (!userInput) {
     return res.status(400).json({ error: "Missing chat message" });
   }
 
@@ -23,7 +26,7 @@ r.post("/", async (req: any, res: any) => {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: systemPrompt },
-          { role: "user", content: message },
+          { role: "user", content: userInput },
         ],
       }),
     });
