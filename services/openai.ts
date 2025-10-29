@@ -38,17 +38,6 @@ type AnyMessage = TextMessage | VisionMessage;
 const TEXT_MODEL = 'gpt-4o-mini';
 const VISION_MODEL = 'gpt-4o-mini';
 
-const CLICHE_BAN: string[] = [
-  'are you a magician? because whenever i look at you, everyone else disappears',
-  'do you have a map? i keep getting lost in your eyes',
-  "is your name google? because you have everything i've been searching for",
-  "did it hurt when you fell from heaven",
-  "are you a parking ticket? because you've got 'fine' written all over you",
-  'is it hot in here or is it just you',
-  "are you a camera? because every time i look at you, i smile",
-  'are you from tennessee? because you are the only ten i see',
-];
-
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
   if (!obj || typeof obj !== 'object') return false;
   const o = obj as Record<string, any>;
@@ -94,86 +83,6 @@ async function callOpenAIChat(
   _retries = 3,
 ): Promise<string> {
   throw new Error("Client no longer calls OpenAI directly. Use backend procedures.");
-}
-
-const FALLBACK_LINES: Record<string, Record<string, string[]>> = {
-  Playful: {
-    Cute: [
-      'Are you a magician? Because whenever I look at you, everyone else disappears.',
-      'Do you have a map? I keep getting lost in your eyes.',
-      "Is your name Google? Because you have everything I've been searching for.",
-    ],
-    Cheeky: [
-      "Are you a parking ticket? Because you've got 'fine' written all over you.",
-      'Do you believe in love at first sight, or should I walk by again?',
-      "If you were a vegetable, you'd be a cute-cumber.",
-    ],
-    Spicy: [
-      "Are you a campfire? Because you're hot and I want s'more.",
-      'Is it hot in here or is it just you?',
-      'Do you have a Band-Aid? I just scraped my knee falling for you.',
-    ],
-  },
-  Confident: {
-    Cute: [
-      "I'm not a photographer, but I can picture us together.",
-      'Your hand looks heavy. Can I hold it for you?',
-      'I was wondering if you had an extra heart. Mine was just stolen.',
-    ],
-    Cheeky: [
-      "I'm not usually this forward, but you've got me breaking all my rules.",
-      'They say nothing lasts forever. Want to be my nothing?',
-      'Are you my appendix? Because I have a funny feeling I should take you out.',
-    ],
-    Spicy: [
-      "I must be a snowflake, because I've fallen for you.",
-      'Are you a time traveler? Because I see you in my future.',
-      "If being sexy was a crime, you'd be guilty as charged.",
-    ],
-  },
-  Wholesome: {
-    Cute: [
-      "You must be made of copper and tellurium, because you're Cu-Te.",
-      'Are you a 45-degree angle? Because you\'re acute-y.',
-      'Do you like Star Wars? Because Yoda one for me.',
-    ],
-    Cheeky: [
-      'Are you a bank loan? Because you have my interest.',
-      'If you were a triangle, you\'d be acute one.',
-      'Are you Australian? Because you meet all of my koala-fications.',
-    ],
-    Spicy: [
-      "Is your dad a boxer? Because you're a knockout.",
-      'Are you a camera? Because every time I look at you, I smile.',
-      'Do you have a sunburn, or are you always this hot?',
-    ],
-  },
-  Bold: {
-    Cute: [
-      "I'm going to give you a kiss. If you don't like it, you can return it.",
-      'Life without you is like a broken pencil... pointless.',
-      'Are you French? Because Eiffel for you.',
-    ],
-    Cheeky: [
-      "I'm not drunk, I'm just intoxicated by you.",
-      'Kiss me if I\'m wrong, but dinosaurs still exist, right?',
-      "Feel my shirt. Know what it's made of? Boyfriend material.",
-    ],
-    Spicy: [
-      'Are you a fire alarm? Because you\'re really loud and annoying... just kidding, you\'re hot.',
-      "I'd say God bless you, but it looks like he already did.",
-      "Are you a loan? Because you've got my interest and the rates are rising.",
-    ],
-  },
-};
-
-function getRandomFallbackLine(tone: string, spiceLevel: string): string {
-  const toneLines = FALLBACK_LINES[tone] || FALLBACK_LINES.Playful;
-  const spiceLines = toneLines[spiceLevel] || toneLines.Cute || [];
-  if (spiceLines.length === 0) {
-    return 'Hey there! Mind if I steal a moment of your time?';
-  }
-  return spiceLines[Math.floor(Math.random() * spiceLines.length)];
 }
 
 function readExtra(): Record<string, string | undefined> {
@@ -251,14 +160,10 @@ async function postJson<T>(path: string, body: unknown): Promise<T> {
 }
 
 export async function generatePickupLine(params: PickupLineParams): Promise<string> {
-  try {
-    const data = await postJson<{ result?: string; error?: string }>(`/api/ai/pickup`, params);
-    if (data?.result && typeof data.result === 'string') return data.result;
-    return getRandomFallbackLine(params.tone, params.spiceLevel);
-  } catch (e) {
-    console.error('[Pickup] Backend error', e);
-    return getRandomFallbackLine(params.tone, params.spiceLevel);
-  }
+  const data = await postJson<{ result?: string; error?: string }>(`/api/ai/pickup`, params);
+  if (data?.result && typeof data.result === 'string') return data.result;
+  const err = typeof data?.error === 'string' ? data.error : 'Unknown error generating pickup line';
+  throw new Error(err);
 }
 
 export async function analyzeScreenshot(params: ScreenshotParams): Promise<ScreenshotAnalysis> {
