@@ -3,16 +3,15 @@ import { Router } from "express";
 const r = Router();
 
 r.post("/", async (req: any, res: any) => {
-  const { tone, spiceLevel, context } = (req.body as {
-    tone?: string;
-    spiceLevel?: string;
-    context?: string;
-  }) || {};
+  const body = (req.body as Record<string, unknown>) || {};
+  const tone = (body.tone as string) ?? (body.vibe as string) ?? "Playful";
+  const spiceLevel = (body.spiceLevel as string) ?? (body.level as string) ?? "Medium";
+  const context = (body.context as string) ?? "general";
 
   const systemPrompt =
     "You are RizzGoat — a confident, funny, and original dating coach. Generate a creative pickup line that matches the requested tone and spice level. Keep it short, clever, naturally flirty, and avoid generic or overused lines. Output ONLY the line.";
 
-  const userPrompt = `Tone: ${tone || "Playful"}\nSpice Level: ${spiceLevel || "Medium"}\nContext: ${context || "general"}.`;
+  const userPrompt = `Tone: ${tone}\nSpice Level: ${spiceLevel}\nContext: ${context}.`;
 
   try {
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
