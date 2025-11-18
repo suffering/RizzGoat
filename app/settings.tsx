@@ -8,6 +8,7 @@ import {
   Switch,
   Linking,
   Alert,
+  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -39,6 +40,30 @@ export default function SettingsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
 
+  const handleRateUs = React.useCallback(async () => {
+    const appStoreUrl = "https://apps.apple.com/app/id0000000000";
+    const playStoreUrl = "https://play.google.com/store/apps/details?id=com.rizzgoat.app";
+    const webUrl = "https://rizzgoat.app";
+    const storeUrl = Platform.select({
+      ios: appStoreUrl,
+      android: playStoreUrl,
+      default: webUrl,
+    }) ?? webUrl;
+    console.log("[Settings] Rate Us pressed", { storeUrl });
+    try {
+      const supported = await Linking.canOpenURL(storeUrl);
+      if (!supported) {
+        console.log("[Settings] Rate Us unsupported URL", { storeUrl });
+        Alert.alert("Rate Us", "Unable to open the store page right now.");
+        return;
+      }
+      await Linking.openURL(storeUrl);
+    } catch (error) {
+      console.log("[Settings] Rate Us error", error);
+      Alert.alert("Rate Us", "Something went wrong. Please try again later.");
+    }
+  }, []);
+
   const settingsSections: { title: string; items: SettingItem[] }[] = [
 
     {
@@ -67,7 +92,7 @@ export default function SettingsScreen() {
         {
           icon: Star,
           title: "Rate Us",
-          action: () => Alert.alert("Rate Us", "Thank you for your support!"),
+          action: handleRateUs,
           showArrow: true,
         },
       ],
@@ -140,62 +165,68 @@ export default function SettingsScreen() {
                 {section.title}
               </Text>
               <View style={[styles.sectionContent, { backgroundColor: theme.card }]}>
-                {section.items.map((item, itemIndex) => (
-                  <TouchableOpacity
-                    key={itemIndex}
-                    onPress={item.action}
-                    style={[
-                      styles.settingItem,
-                      itemIndex < section.items.length - 1 && styles.settingItemBorder,
-                    ]}
-                    activeOpacity={item.showSwitch ? 1 : 0.7}
-                  >
-                    {item.highlight ? (
-                      <LinearGradient
-                        colors={["#E3222B", "#FF7A59"]}
-                        style={styles.iconContainer}
-                      >
-                        <item.icon size={20} color="#FFFFFF" />
-                      </LinearGradient>
-                    ) : (
-                      <View
-                        style={[
-                          styles.iconContainer,
-                          { backgroundColor: theme.background },
-                        ]}
-                      >
-                        <item.icon size={20} color={theme.text} />
-                      </View>
-                    )}
-                    <View style={styles.itemContent}>
-                      <Text
-                        style={[
-                          styles.itemTitle,
-                          { color: theme.text },
-                          item.highlight && { fontWeight: "700" },
-                        ]}
-                      >
-                        {item.title}
-                      </Text>
-                      {item.subtitle && (
-                        <Text style={[styles.itemSubtitle, { color: theme.textSecondary }]}>
-                          {item.subtitle}
-                        </Text>
+                {section.items.map((item, itemIndex) => {
+                  const sectionKey = section.title.toLowerCase().replace(/\s+/g, "-");
+                  const itemKey = item.title.toLowerCase().replace(/\s+/g, "-");
+                  const testID = `settings-${sectionKey}-${itemKey}`;
+                  return (
+                    <TouchableOpacity
+                      key={itemIndex}
+                      testID={testID}
+                      onPress={item.action}
+                      style={[
+                        styles.settingItem,
+                        itemIndex < section.items.length - 1 && styles.settingItemBorder,
+                      ]}
+                      activeOpacity={item.showSwitch ? 1 : 0.7}
+                    >
+                      {item.highlight ? (
+                        <LinearGradient
+                          colors={["#E3222B", "#FF7A59"]}
+                          style={styles.iconContainer}
+                        >
+                          <item.icon size={20} color="#FFFFFF" />
+                        </LinearGradient>
+                      ) : (
+                        <View
+                          style={[
+                            styles.iconContainer,
+                            { backgroundColor: theme.background },
+                          ]}
+                        >
+                          <item.icon size={20} color={theme.text} />
+                        </View>
                       )}
-                    </View>
-                    {item.showArrow && (
-                      <Text style={{ color: theme.textSecondary }}>›</Text>
-                    )}
-                    {item.showSwitch && (
-                      <Switch
-                        value={item.switchValue}
-                        onValueChange={item.action}
-                        trackColor={{ false: theme.border, true: theme.primary }}
-                        thumbColor="#FFFFFF"
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
+                      <View style={styles.itemContent}>
+                        <Text
+                          style={[
+                            styles.itemTitle,
+                            { color: theme.text },
+                            item.highlight && { fontWeight: "700" },
+                          ]}
+                        >
+                          {item.title}
+                        </Text>
+                        {item.subtitle && (
+                          <Text style={[styles.itemSubtitle, { color: theme.textSecondary }]}>
+                            {item.subtitle}
+                          </Text>
+                        )}
+                      </View>
+                      {item.showArrow && (
+                        <Text style={{ color: theme.textSecondary }}>›</Text>
+                      )}
+                      {item.showSwitch && (
+                        <Switch
+                          value={item.switchValue}
+                          onValueChange={item.action}
+                          trackColor={{ false: theme.border, true: theme.primary }}
+                          thumbColor="#FFFFFF"
+                        />
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
           ))}
