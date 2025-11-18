@@ -20,11 +20,8 @@ import {
   Bell,
   Shield,
   FileText,
-  
-  RotateCcw,
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
-import { useAppState } from "@/providers/AppStateProvider";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface SettingItem {
@@ -41,25 +38,6 @@ interface SettingItem {
 export default function SettingsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { resetOnboarding } = useAppState();
-
-  const handleResetOnboarding = () => {
-    Alert.alert(
-      "Reset Onboarding",
-      "This will reset the app and show the intro animation again. Are you sure?",
-      [
-        { text: "Cancel", style: "cancel" },
-        { 
-          text: "Reset", 
-          style: "destructive",
-          onPress: () => {
-            resetOnboarding();
-            router.replace("/");
-          }
-        },
-      ]
-    );
-  };
 
   const settingsSections: { title: string; items: SettingItem[] }[] = [
 
@@ -113,18 +91,6 @@ export default function SettingsScreen() {
           icon: MessageSquare,
           title: "Message Us",
           action: () => Alert.alert("Support", "support@rizzgoat.app"),
-          showArrow: true,
-        },
-      ],
-    },
-    {
-      title: "Developer",
-      items: [
-        {
-          icon: RotateCcw,
-          title: "Reset Onboarding",
-          subtitle: "Show intro animation again",
-          action: handleResetOnboarding,
           showArrow: true,
         },
       ],
