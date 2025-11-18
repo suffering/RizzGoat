@@ -37,7 +37,7 @@ import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
 const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
-const SPICE_LEVELS = ["Cute", "Cheeky", "Spicy"];
+const SPICE_LEVELS = ["Cute", "Medium", "Spicy"];
 
 export default function PickupLinesScreen() {
   const router = useRouter();
@@ -89,7 +89,7 @@ export default function PickupLinesScreen() {
       const line = await generatePickupLine({
         tone: selectedTone,
         spiceLevel: SPICE_LEVELS[spiceLevel],
-        context,
+        context: context.trim(),
       });
       
       console.log('Generated line:', line);
