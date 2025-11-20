@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "RizzGoat",
-    "slug": "rizzgoat",
+    "slug": "rizzgoat-flirting-self-improvement",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -15,7 +15,7 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "app.rork.rizzgoat",
+      "bundleIdentifier": "app.rork.rizzgoat-flirting-self-improvement",
       "infoPlist": {
         "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
         "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
@@ -27,7 +27,7 @@
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "package": "app.rork.rizzgoat",
+      "package": "app.rork.rizzgoat-flirting-self-improvement",
       "permissions": [
         "android.permission.VIBRATE",
         "CAMERA",
