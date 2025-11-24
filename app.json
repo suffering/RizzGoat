@@ -8,11 +8,18 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+
+    "extra": {
+      "EXPO_PUBLIC_API_URL": "https://rizzgoat-1976.onrender.com",
+      "EXPO_PUBLIC_ENV": "production"
+    },
+
     "splash": {
       "image": "./assets/images/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "app.rork.rizzgoat-flirting-self-improvement",
@@ -22,6 +29,7 @@
         "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
       }
     },
+
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
@@ -35,9 +43,11 @@
         "WRITE_EXTERNAL_STORAGE"
       ]
     },
+
     "web": {
       "favicon": "./assets/images/favicon.png"
     },
+
     "plugins": [
       [
         "expo-router",
@@ -52,6 +62,7 @@
         }
       ]
     ],
+
     "experiments": {
       "typedRoutes": true
     }
