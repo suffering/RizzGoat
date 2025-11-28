@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef } from "react";
 import {
   View,
   Text,
@@ -53,6 +53,16 @@ export default function ScreenshotAdvisorScreen() {
   const [replies, setReplies] = useState<Reply[]>([]);
   const [selectedReply, setSelectedReply] = useState<number>(0);
   const [lastBase64, setLastBase64] = useState<string | null>(null);
+  const [imageDimensions, setImageDimensions] = useState<{ width: number; height: number } | null>(null);
+  
+  const previewWidth = Dimensions.get("window").width - 40;
+  const derivedImageHeight = imageDimensions
+    ? (imageDimensions.height / Math.max(imageDimensions.width, 1)) * previewWidth
+    : 500;
+  const imageHeight = Math.min(Math.max(derivedImageHeight, 360), 1600);
+  const scrollViewportHeight = Math.min(imageHeight, 420);
+  const canScrollImage = imageHeight > scrollViewportHeight + 4;
+  const scanTravelDistance = Math.max(scrollViewportHeight - 2, 0);
   
   const scanAnimation = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -70,6 +80,10 @@ export default function ScreenshotAdvisorScreen() {
       try {
         const asset = result.assets[0];
         setSelectedImage(asset.uri);
+        setImageDimensions({
+          width: asset.width ?? 1024,
+          height: asset.height ?? 2048,
+        });
         const targetWidth = 1024;
         const actions: ImageManipulator.Action[] = [{ resize: { width: targetWidth } }];
         const manipulated = await ImageManipulator.manipulateAsync(
@@ -279,25 +293,41 @@ export default function ScreenshotAdvisorScreen() {
           ) : (
             <>
               <View style={styles.imageContainer}>
-                <Image source={{ uri: selectedImage }} style={styles.screenshot} />
-                {analyzing && (
-                  <Animated.View
-                    testID="scan-line"
-                    style={[
-                      styles.scanLine,
-                      {
-                        transform: [
-                          {
-                            translateY: scanAnimation.interpolate({
-                              inputRange: [0, 1],
-                              outputRange: [0, 300],
-                            }),
-                          },
-                        ],
-                      },
-                    ]}
-                  />
-                )}
+                <View style={[styles.screenshotViewport, { height: scrollViewportHeight }]}> 
+                  <ScrollView
+                    testID="screenshot-scroll-area"
+                    style={styles.screenshotScroll}
+                    contentContainerStyle={styles.screenshotScrollContent}
+                    showsVerticalScrollIndicator={canScrollImage}
+                    nestedScrollEnabled
+                    scrollEnabled={canScrollImage}
+                    bounces={false}
+                  >
+                    <Image
+                      source={{ uri: selectedImage }}
+                      style={[styles.screenshot, { height: imageHeight }]}
+                    />
+                  </ScrollView>
+                  {analyzing && (
+                    <Animated.View
+                      testID="scan-line"
+                      pointerEvents="none"
+                      style={[
+                        styles.scanLine,
+                        {
+                          transform: [
+                            {
+                              translateY: scanAnimation.interpolate({
+                                inputRange: [0, 1],
+                                outputRange: [0, scanTravelDistance],
+                              }),
+                            },
+                          ],
+                        },
+                      ]}
+                    />
+                  )}
+                </View>
                 <TouchableOpacity
                   testID="change-image"
                   onPress={pickImage}
@@ -518,9 +548,20 @@ const styles = StyleSheet.create({
     position: "relative",
     marginBottom: 24,
   },
+  screenshotViewport: {
+    width: "100%",
+    borderRadius: 14,
+    overflow: "hidden",
+    backgroundColor: "rgba(0,0,0,0.2)",
+  },
+  screenshotScroll: {
+    flex: 1,
+  },
+  screenshotScrollContent: {
+    width: "100%",
+  },
   screenshot: {
     width: "100%",
-    height: 300,
     borderRadius: 14,
     resizeMode: "cover",
   },
