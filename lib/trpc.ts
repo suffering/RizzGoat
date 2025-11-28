@@ -1,6 +1,6 @@
 import { createTRPCReact } from "@trpc/react-query";
 import { httpLink } from "@trpc/client";
-import type { AppRouter } from "@/src/trpc/app-router";
+import type { AppRouter } from "../src/trpc/app-router";
 import superjson from "superjson";
 import { Platform } from "react-native";
 import Constants from "expo-constants";

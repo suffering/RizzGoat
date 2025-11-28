@@ -1,8 +1,14 @@
 import { z } from "zod";
-import { publicProcedure } from "@/src/trpc/create-context";
+import { publicProcedure } from "../../../create-context";
 import { OPENAI_API_KEY } from "@/config/secrets";
 
 const TEXT_MODEL = "gpt-4o-mini" as const;
+const pickupLineInputSchema = z.object({
+  tone: z.string(),
+  spiceLevel: z.string(),
+  context: z.string().optional(),
+});
+type PickupLineInput = z.infer<typeof pickupLineInputSchema>;
 
 function getOpenAIKey(): string {
   const envKey = (process.env.OPENAI_API_KEY ?? "").trim();
@@ -17,14 +23,8 @@ function getOpenAIKey(): string {
 }
 
 export default publicProcedure
-  .input(
-    z.object({
-      tone: z.string(),
-      spiceLevel: z.string(),
-      context: z.string().optional(),
-    })
-  )
-  .mutation(async ({ input }) => {
+  .input(pickupLineInputSchema)
+  .mutation(async ({ input }: { input: PickupLineInput }) => {
     const apiKey = getOpenAIKey();
 
     const CLICHE_BAN = [

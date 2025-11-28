@@ -11,9 +11,9 @@ import { REVENUECAT_API_KEY } from "@/config/secrets";
 
 const ENTITLEMENT_ID = "RizzGoat Pro";
 const PRODUCT_MAP = {
-  weekly: "weekly",
-  monthly: "monthly",
-  yearly: "yearly",
+  weekly: "rizzgoat.weekly",
+  monthly: "rizzgoat.monthly",
+  yearly: "rizzgoat.yearly",
 } as const;
 const PRODUCT_ORDER = ["weekly", "monthly", "yearly"] as const;
 
