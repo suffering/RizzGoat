@@ -430,8 +430,6 @@ export default function HomeScreen() {
             </LinearGradient>
           </View>
           
-          {/* Extra padding to ensure no white space */}
-          <View style={[styles.extraPadding, { backgroundColor: '#000000' }]} />
         </ScrollView>
       </SafeAreaView>
       
@@ -544,15 +542,13 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    flexGrow: 1,
-    paddingBottom: 100,
+    paddingBottom: 40,
     backgroundColor: '#000000',
-    minHeight: '100%',
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 30,
-    marginBottom: 50,
+    marginTop: 10,
+    marginBottom: 32,
   },
   pulseContainer: {
     alignItems: "center",
@@ -586,7 +582,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    gap: 24,
+    gap: 20,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -599,7 +595,6 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     padding: 24,
     borderWidth: 1,
-    backdropFilter: "blur(20px)",
   },
   cardHeader: {
     flexDirection: "row",
@@ -653,7 +648,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 40,
+    marginTop: 24,
     paddingHorizontal: 20,
   },
   footerCard: {
@@ -665,11 +660,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: "center",
     lineHeight: 20,
-  },
-  extraPadding: {
-    height: 200,
-    width: '100%',
-    backgroundColor: '#000000',
   },
   floatingIcon: {
     position: 'absolute',
