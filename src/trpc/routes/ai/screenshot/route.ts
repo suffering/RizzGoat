@@ -1,19 +1,17 @@
 import { z } from "zod";
-import { publicProcedure } from "@/backend/trpc/create-context";
+import { publicProcedure } from "@/src/trpc/create-context";
+import { OPENAI_API_KEY } from "@/config/secrets";
 
 const VISION_MODEL = "gpt-4o-mini" as const;
 
 function getOpenAIKey(): string {
-  if (process.env.OPENAI_API_KEY) {
-    return process.env.OPENAI_API_KEY;
+  const envKey = (process.env.OPENAI_API_KEY ?? "").trim();
+  if (envKey.length > 0) {
+    return envKey;
   }
-  try {
-    const secrets = require('@/config/secrets');
-    if (secrets.OPENAI_API_KEY) {
-      return secrets.OPENAI_API_KEY;
-    }
-  } catch (e) {
-    console.error('[getOpenAIKey] Could not load secrets file:', e);
+  const configKey = (OPENAI_API_KEY ?? "").trim();
+  if (configKey.length > 0) {
+    return configKey;
   }
   throw new Error("OPENAI_API_KEY not found in environment or secrets file");
 }

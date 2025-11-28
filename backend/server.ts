@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import chat from "./routes/ai/chat.js";
 import pickup from "./routes/ai/pickup.js";
@@ -9,7 +9,7 @@ app.use(cors());
 app.use(express.urlencoded({ extended: true, limit: "25mb" }));
 app.use(express.json({ limit: "25mb" }));
 
-app.get("/api", (_req: Request, res: Response) => {
+app.get("/api", (_req: any, res: any) => {
   res.json({ status: "ok" });
 });
 
