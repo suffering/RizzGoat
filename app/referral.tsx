@@ -10,7 +10,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { X, Users, Gift, Zap } from "lucide-react-native";
+import { X, Users, Gift, Zap, ArrowLeft, Share2 } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
@@ -19,6 +19,18 @@ export default function ReferralScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { referralCount } = useAppState();
+
+  const handleBackNavigation = () => {
+    if ((router as any).canGoBack && (router as any).canGoBack()) {
+      router.back();
+    } else {
+      router.replace("/");
+    }
+  };
+
+  const handleClose = () => {
+    router.replace("/");
+  };
   
   const progressAnim = useRef(new Animated.Value(0)).current;
   const numberFlipAnim = useRef(new Animated.Value(0)).current;
@@ -37,7 +49,7 @@ export default function ReferralScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [referralCount]);
+  }, [referralCount, progressAnim, numberFlipAnim]);
 
   const handleReferFriend = async () => {
     try {
@@ -54,6 +66,11 @@ export default function ReferralScreen() {
     { icon: Gift, title: "Advanced AI Analysis", description: "Deeper conversation insights" },
     { icon: Users, title: "Priority Support", description: "Get help faster" },
   ];
+  const benefitsTitleText = "What You\u2019ll Unlock";
+
+  const creditsEarned = referralCount * 25;
+  const cashEarned = referralCount * 5;
+  const cashTotalDisplay = "$" + cashEarned.toFixed(0);
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -66,13 +83,7 @@ export default function ReferralScreen() {
       
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => {
-            if ((router as any).canGoBack && (router as any).canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/');
-            }
-          }} style={styles.closeButton}>
+          <TouchableOpacity onPress={handleBackNavigation} style={styles.closeButton}>
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -94,6 +105,82 @@ export default function ReferralScreen() {
             <Text style={styles.subtitle}>
               Invite 5 friends and get Pro features forever
             </Text>
+          </View>
+
+          <View style={styles.referralCard}>
+            <LinearGradient
+              colors={["#6B1BFB", "#F54FB0"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.referralCardGradient}
+            >
+              <View style={styles.referralCardTopBar}>
+                <TouchableOpacity
+                  onPress={handleBackNavigation}
+                  style={styles.referralTopButton}
+                  testID="referral-card-back"
+                >
+                  <ArrowLeft size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  onPress={handleClose}
+                  style={styles.referralTopButton}
+                  testID="referral-card-close"
+                >
+                  <X size={18} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+              <Text style={styles.referralCardHeadline}>
+                Earn Legendary Rizz Rewards
+              </Text>
+              <Text style={styles.referralCardCopy}>
+                Drop your link to claim 50 free credits for every friend.
+              </Text>
+              <Text style={styles.referralCardCopy}>
+                Pocket a $5 cash bonus the moment they upgrade.
+              </Text>
+              <TouchableOpacity
+                onPress={handleReferFriend}
+                activeOpacity={0.9}
+                style={styles.shareButtonWrapper}
+                testID="referral-card-share"
+              >
+                <LinearGradient
+                  colors={["#FFFFFF", "rgba(255, 255, 255, 0.75)"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.shareButton}
+                >
+                  <View style={styles.shareButtonContent}>
+                    <Share2 size={18} color="#5416A5" />
+                    <Text style={styles.shareButtonText}>Share Link</Text>
+                  </View>
+                </LinearGradient>
+              </TouchableOpacity>
+              <LinearGradient
+                colors={["rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.04)"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.earningsCard}
+              >
+                <View style={styles.earningsHeader}>
+                  <Text style={styles.earningsLabel}>Current Earnings</Text>
+                  <Text style={styles.earningsLivePill}>LIVE</Text>
+                </View>
+                <Text style={styles.earningsTotal}>{cashTotalDisplay}</Text>
+                <View style={styles.earningsDivider} />
+                <View style={styles.earningsBreakdownRow}>
+                  <View style={[styles.breakdownItem, styles.breakdownItemSpacing]}>
+                    <Text style={styles.breakdownLabel}>Free Credits</Text>
+                    <Text style={styles.breakdownValue}>{creditsEarned}</Text>
+                  </View>
+                  <View style={styles.breakdownItem}>
+                    <Text style={styles.breakdownLabel}>Cash Bonus</Text>
+                    <Text style={styles.breakdownValue}>{cashTotalDisplay}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </LinearGradient>
           </View>
 
           <View style={styles.progressSection}>
@@ -137,7 +224,7 @@ export default function ReferralScreen() {
           </View>
 
           <View style={styles.benefitsSection}>
-            <Text style={styles.benefitsTitle}>What You'll Unlock</Text>
+            <Text style={styles.benefitsTitle}>{benefitsTitleText}</Text>
             {benefits.map((benefit, index) => (
               <View key={index} style={styles.benefitCard}>
                 <View style={styles.benefitIcon}>
@@ -218,6 +305,130 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "rgba(255, 255, 255, 0.9)",
     textAlign: "center",
+  },
+  referralCard: {
+    borderRadius: 28,
+    overflow: "hidden",
+    marginBottom: 32,
+    shadowColor: "#2C0B44",
+    shadowOpacity: 0.35,
+    shadowOffset: { width: 0, height: 16 },
+    shadowRadius: 30,
+    elevation: 18,
+  },
+  referralCardGradient: {
+    padding: 20,
+  },
+  referralCardTopBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 16,
+  },
+  referralTopButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  referralCardHeadline: {
+    fontSize: 22,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 8,
+  },
+  referralCardCopy: {
+    fontSize: 14,
+    color: "rgba(255, 255, 255, 0.88)",
+    textAlign: "center",
+    marginBottom: 4,
+  },
+  shareButtonWrapper: {
+    borderRadius: 999,
+    overflow: "hidden",
+    marginTop: 20,
+    marginBottom: 20,
+  },
+  shareButton: {
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+  },
+  shareButtonContent: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  shareButtonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#33104A",
+    marginLeft: 10,
+  },
+  earningsCard: {
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.28)",
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
+  },
+  earningsHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  earningsLabel: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.75)",
+    letterSpacing: 0.8,
+  },
+  earningsLivePill: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: "700",
+    color: "#6B1BFB",
+    backgroundColor: "#FFFFFF",
+  },
+  earningsTotal: {
+    fontSize: 34,
+    fontWeight: "800",
+    color: "#FFFFFF",
+    textAlign: "center",
+    marginBottom: 12,
+  },
+  earningsDivider: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: "rgba(255, 255, 255, 0.35)",
+    marginBottom: 12,
+  },
+  earningsBreakdownRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+  },
+  breakdownItem: {
+    flex: 1,
+    backgroundColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 14,
+  },
+  breakdownItemSpacing: {
+    marginRight: 12,
+  },
+  breakdownLabel: {
+    fontSize: 12,
+    color: "rgba(255, 255, 255, 0.7)",
+    marginBottom: 4,
+  },
+  breakdownValue: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#FFFFFF",
   },
   progressSection: {
     backgroundColor: "rgba(255, 255, 255, 0.95)",
