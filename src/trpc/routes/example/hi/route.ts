@@ -1,12 +1,9 @@
 import { z } from "zod";
-import { publicProcedure } from "../../../create-context";
-
-const hiInputSchema = z.object({ name: z.string() });
-type HiInput = z.infer<typeof hiInputSchema>;
+import { publicProcedure } from "@/src/trpc/create-context";
 
 export default publicProcedure
-  .input(hiInputSchema)
-  .mutation(({ input }: { input: HiInput }) => {
+  .input(z.object({ name: z.string() }))
+  .mutation(({ input }) => {
     return {
       hello: input.name,
       date: new Date(),

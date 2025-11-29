@@ -1,7 +1,6 @@
-import { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
-import { useRevenueCat } from "@/providers/RevenueCatProvider";
 
 interface Favorite {
   id: string;
@@ -27,7 +26,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [proPurchased, setProPurchased] = useState<boolean>(false);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan>(null);
-  const { entitlementActive } = useRevenueCat();
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(true);
@@ -82,8 +80,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }, [trialEndsAt]);
 
   const isPro = useMemo(() => {
-    return entitlementActive || proPurchased || isTrialActive || referralCount >= 5;
-  }, [entitlementActive, proPurchased, isTrialActive, referralCount]);
+    return proPurchased || isTrialActive || referralCount >= 5;
+  }, [proPurchased, isTrialActive, referralCount]);
 
   const startFreeTrial = async (days: number) => {
     try {

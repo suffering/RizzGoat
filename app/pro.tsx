@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -8,7 +8,6 @@ import {
   Animated,
   Alert,
   Platform,
-  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
@@ -16,7 +15,6 @@ import { X, Check, Sparkles, Zap, Crown, Crown as CrownIcon } from "lucide-react
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
-import { useRevenueCat } from "@/providers/RevenueCatProvider";
 import * as Haptics from "expo-haptics";
 
 const FEATURES = [
@@ -30,60 +28,11 @@ const FEATURES = [
   { text: "24/7 priority support", pro: true },
 ];
 
-type PlanProduct = "weekly" | "monthly" | "yearly";
-
-const PLAN_ORDER: PlanProduct[] = ["weekly", "monthly", "yearly"];
-
-const PLAN_META: Record<PlanProduct, { badge: string; badgeColor: string; gradient: [string, string]; outline?: string }> = {
-  weekly: {
-    badge: "FLEX",
-    badgeColor: "#FEE2E2",
-    gradient: ["#E3222B", "#FF7A59"],
-  },
-  monthly: {
-    badge: "POPULAR",
-    badgeColor: "#DDD6FE",
-    gradient: ["#8B5CF6", "#A78BFA"],
-  },
-  yearly: {
-    badge: "BEST VALUE",
-    badgeColor: "#D1FAE5",
-    gradient: ["#10B981", "#34D399"],
-    outline: "#10B981",
-  },
-};
-
-const formatDate = (input?: string | null) => {
-  if (!input) return "N/A";
-  const parsed = new Date(input);
-  if (Number.isNaN(parsed.getTime())) {
-    return "N/A";
-  }
-  return parsed.toLocaleDateString();
-};
-
 export default function ProScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { isTrialActive, startFreeTrial } = useAppState();
-  const {
-    isSupported: purchasesSupported,
-    packages,
-    purchasingProduct,
-    purchaseProduct,
-    refreshCustomerInfo,
-    refreshOfferings,
-    restorePurchases,
-    presentCustomerCenter,
-    customerInfo,
-    customerInfoError,
-    offeringsError,
-    purchaseError,
-    entitlementActive,
-    customerInfoLoading,
-    offeringsLoading,
-  } = useRevenueCat();
-
+  const { isTrialActive, startFreeTrial, subscribe, plan } = useAppState();
+  
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const featuresAnim = useRef(new Animated.Value(0)).current;
 
@@ -101,11 +50,7 @@ export default function ProScreen() {
         useNativeDriver: true,
       }),
     ]).start();
-  }, [featuresAnim, scaleAnim]);
-
-  const latestExpirationDate = (customerInfo as typeof customerInfo & { latestExpirationDate?: string | null })?.latestExpirationDate ?? null;
-
-  const planCards = useMemo(() => PLAN_ORDER.map((id) => ({ id, data: packages[id], meta: PLAN_META[id] })), [packages]);
+  }, []);
 
   const handleStartTrial = async () => {
     try {
@@ -119,58 +64,27 @@ export default function ProScreen() {
       } else {
         router.replace("/");
       }
-    } catch {
+    } catch (e) {
       Alert.alert("Error", "Could not start trial. Please try again.");
     }
   };
 
-  const handlePlanPress = async (productId: PlanProduct) => {
+  const handleSubscribe = async (p: "weekly" | "monthly" | "annual") => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      await purchaseProduct(productId);
-      Alert.alert("Success", "Your plan is now active.");
+      await subscribe(p);
+      Alert.alert("Subscribed", "Your plan is now active.");
       if (router.canGoBack()) {
         router.back();
       } else {
         router.replace("/");
       }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Subscription failed. Please try again.";
-      Alert.alert("Purchase failed", message);
+    } catch (e) {
+      Alert.alert("Error", "Subscription failed. Please try again.");
     }
   };
-
-  const handleRestore = async () => {
-    try {
-      await restorePurchases();
-      Alert.alert("Restored", "Purchases synced with RevenueCat.");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unable to restore purchases.";
-      Alert.alert("Restore failed", message);
-    }
-  };
-
-  const handleCustomerCenter = async () => {
-    try {
-      await presentCustomerCenter();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Customer Center unavailable.";
-      Alert.alert("Customer Center", message);
-    }
-  };
-
-  const handleSync = async () => {
-    await Promise.allSettled([refreshOfferings(), refreshCustomerInfo()]);
-    Alert.alert("Updated", "RevenueCat data refreshed.");
-  };
-
-  const statusMessages = useMemo(() => {
-    return [customerInfoError, offeringsError, purchaseError].filter(Boolean) as string[];
-  }, [customerInfoError, offeringsError, purchaseError]);
-
-  const disablePurchases = !purchasesSupported;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]} testID="pro-screen">
@@ -186,25 +100,24 @@ export default function ProScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
-
+      
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity
-            onPress={() => {
-              if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace("/");
-              }
-            }}
-            style={styles.closeButton}
-            testID="pro-close"
-          >
+          <TouchableOpacity onPress={() => {
+            if (router.canGoBack()) {
+              router.back();
+            } else {
+              router.replace('/');
+            }
+          }} style={styles.closeButton} testID="pro-close">
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
           <Animated.View
             style={[
               styles.heroSection,
@@ -224,9 +137,7 @@ export default function ProScreen() {
             </View>
             <Text style={styles.title}>{isTrialActive ? "Choose your plan" : "Unlock the full experience"}</Text>
             <Text style={styles.subtitle}>
-              {isTrialActive
-                ? "Your 3-day trial is active. Pick a plan to continue afterward."
-                : "Start a 3-day free trial. Cancel anytime."}
+              {isTrialActive ? "Your 3-day trial is active. Pick a plan to continue afterward." : "Start a 3-day free trial. Cancel anytime."}
             </Text>
           </Animated.View>
 
@@ -237,7 +148,7 @@ export default function ProScreen() {
             ]}
           >
             {FEATURES.map((feature, index) => (
-              <View key={feature.text} style={styles.featureRow}>
+              <View key={index} style={styles.featureRow}>
                 <View style={styles.checkContainer}>
                   <Check size={16} color="#10B981" />
                 </View>
@@ -246,119 +157,61 @@ export default function ProScreen() {
             ))}
           </Animated.View>
 
-          <View style={styles.statusCard}>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>RizzGoat Pro</Text>
-              <Text style={[styles.statusValue, entitlementActive ? styles.statusValueActive : styles.statusValueInactive]}>
-                {entitlementActive ? "Active" : "Locked"}
-              </Text>
-            </View>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Customer ID</Text>
-              <Text style={styles.statusValue}>{customerInfo?.originalAppUserId ?? "Not set"}</Text>
-            </View>
-            <View style={styles.statusRow}>
-              <Text style={styles.statusLabel}>Expires</Text>
-              <Text style={styles.statusValue}>{formatDate(latestExpirationDate)}</Text>
-            </View>
-            {(customerInfoLoading || offeringsLoading) && (
-              <Text style={styles.statusSyncText}>Syncing RevenueCat data…</Text>
-            )}
-            {disablePurchases && (
-              <Text style={styles.statusWarning}>RevenueCat purchases are available on iOS/Android builds.</Text>
-            )}
-            {statusMessages.length > 0 && (
-              <View style={styles.statusErrors}>
-                {statusMessages.map((message) => (
-                  <Text key={message} style={styles.statusErrorText}>{message}</Text>
-                ))}
-              </View>
-            )}
-            <View style={styles.statusButtonsRow}>
-              <TouchableOpacity
-                onPress={handleRestore}
-                style={styles.statusButton}
-                activeOpacity={0.9}
-                disabled={disablePurchases}
-                testID="restore-purchases"
-              >
-                <Text style={styles.statusButtonText}>Restore</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleCustomerCenter}
-                style={styles.statusButton}
-                activeOpacity={0.9}
-                disabled={disablePurchases}
-                testID="customer-center"
-              >
-                <Text style={styles.statusButtonText}>Customer Center</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={handleSync}
-                style={styles.statusButton}
-                activeOpacity={0.9}
-                testID="sync-revenuecat"
-              >
-                <Text style={styles.statusButtonText}>Refresh</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
           {!isTrialActive ? (
             <View style={styles.ctaSection}>
               <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
                 <Text style={styles.ctaTitle}>3-Day Free Trial</Text>
                 <Text style={styles.ctaSubtitle}>Then $6.99/week, $19.99/month, or $119.99/year</Text>
-                <TouchableOpacity
-                  onPress={handleStartTrial}
-                  activeOpacity={0.9}
-                  style={styles.ctaButton}
-                  testID="start-trial-btn"
-                >
+                <TouchableOpacity onPress={handleStartTrial} activeOpacity={0.9} style={styles.ctaButton} testID="start-trial-btn">
                   <Text style={styles.ctaButtonText}>Start Free Trial</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
           ) : (
             <View style={styles.plansSection}>
-              {planCards.map(({ id, data, meta }) => (
-                <TouchableOpacity
-                  key={id}
-                  onPress={() => handlePlanPress(id)}
-                  style={[
-                    styles.planCard,
-                    id === "yearly" && styles.bestValueCard,
-                    meta.outline ? { borderColor: meta.outline } : null,
-                    disablePurchases && styles.planDisabled,
-                  ]}
-                  activeOpacity={0.9}
-                  disabled={disablePurchases || purchasingProduct === id}
-                  testID={`plan-${id}`}
-                >
-                  {id === "yearly" && (
-                    <View style={styles.bestValueBadge}>
-                      <Zap size={16} color="#FFFFFF" />
-                      <Text style={styles.bestValueText}>BEST VALUE</Text>
-                    </View>
-                  )}
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planName}>{data.title}</Text>
-                    <View style={[styles.popularBadge, { backgroundColor: meta.badgeColor }]}>
-                      <Text style={styles.popularText}>{data.badge ?? meta.badge}</Text>
-                    </View>
+              <TouchableOpacity onPress={() => handleSubscribe("weekly")} style={styles.planCard} activeOpacity={0.9} testID="plan-weekly">
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>Weekly</Text>
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>FLEX</Text>
                   </View>
-                  <Text style={styles.planPrice}>{data.price}</Text>
-                  <Text style={styles.planPeriod}>{data.periodLabel}</Text>
-                  {data.description && <Text style={styles.planDescription}>{data.description}</Text>}
-                  <LinearGradient colors={meta.gradient} style={styles.planButton}>
-                    {purchasingProduct === id ? (
-                      <ActivityIndicator color="#FFFFFF" />
-                    ) : (
-                      <Text style={styles.planButtonText}>Continue</Text>
-                    )}
-                  </LinearGradient>
-                </TouchableOpacity>
-              ))}
+                </View>
+                <Text style={styles.planPrice}>$6.99</Text>
+                <Text style={styles.planPeriod}>per week</Text>
+                <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.planButton}>
+                  <Text style={styles.planButtonText}>Continue</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => handleSubscribe("monthly")} style={styles.planCard} activeOpacity={0.9} testID="plan-monthly">
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>Monthly</Text>
+                  <View style={styles.popularBadge}>
+                    <Text style={styles.popularText}>POPULAR</Text>
+                  </View>
+                </View>
+                <Text style={styles.planPrice}>$19.99</Text>
+                <Text style={styles.planPeriod}>per month</Text>
+                <LinearGradient colors={["#8B5CF6", "#A78BFA"]} style={styles.planButton}>
+                  <Text style={styles.planButtonText}>Continue</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={() => handleSubscribe("annual")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-annual">
+                <View style={styles.bestValueBadge}>
+                  <Zap size={16} color="#FFFFFF" />
+                  <Text style={styles.bestValueText}>BEST VALUE</Text>
+                </View>
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>Annual</Text>
+                  <Text style={styles.saveBadge}>Save more</Text>
+                </View>
+                <Text style={styles.planPrice}>$119.99</Text>
+                <Text style={styles.planPeriod}>per year</Text>
+                <LinearGradient colors={["#10B981", "#34D399"]} style={styles.planButton}>
+                  <Text style={styles.planButtonText}>Continue</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
           )}
 
@@ -483,65 +336,6 @@ const styles = StyleSheet.create({
     color: "#000000",
     flex: 1,
   },
-  statusCard: {
-    backgroundColor: "rgba(15, 15, 16, 0.85)",
-    borderRadius: 20,
-    padding: 20,
-    gap: 10,
-    marginBottom: 24,
-  },
-  statusRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  statusLabel: {
-    color: "rgba(255, 255, 255, 0.7)",
-    fontSize: 14,
-  },
-  statusValue: {
-    color: "#FFFFFF",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  statusValueActive: {
-    color: "#34D399",
-  },
-  statusValueInactive: {
-    color: "#F87171",
-  },
-  statusSyncText: {
-    color: "rgba(255, 255, 255, 0.6)",
-    fontSize: 12,
-  },
-  statusWarning: {
-    color: "#FBBF24",
-    fontSize: 12,
-  },
-  statusErrors: {
-    gap: 4,
-  },
-  statusErrorText: {
-    color: "#F87171",
-    fontSize: 12,
-  },
-  statusButtonsRow: {
-    flexDirection: "row",
-    gap: 12,
-    marginTop: 4,
-  },
-  statusButton: {
-    flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
-    borderRadius: 12,
-    paddingVertical: 12,
-    alignItems: "center",
-  },
-  statusButtonText: {
-    color: "#FFFFFF",
-    fontSize: 13,
-    fontWeight: "600",
-  },
   ctaSection: {
     marginBottom: 24,
   },
@@ -583,11 +377,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     padding: 24,
     position: "relative",
-    borderWidth: 1,
-    borderColor: "rgba(0,0,0,0.04)",
-  },
-  planDisabled: {
-    opacity: 0.65,
   },
   bestValueCard: {
     borderWidth: 2,
@@ -622,6 +411,7 @@ const styles = StyleSheet.create({
     color: "#000000",
   },
   popularBadge: {
+    backgroundColor: "#FEE2E2",
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
@@ -629,7 +419,12 @@ const styles = StyleSheet.create({
   popularText: {
     fontSize: 10,
     fontWeight: "700",
-    color: "#1F2937",
+    color: "#E3222B",
+  },
+  saveBadge: {
+    fontSize: 14,
+    fontWeight: "600",
+    color: "#10B981",
   },
   planPrice: {
     fontSize: 32,
@@ -640,11 +435,6 @@ const styles = StyleSheet.create({
   planPeriod: {
     fontSize: 14,
     color: "rgba(0, 0, 0, 0.6)",
-    marginBottom: 8,
-  },
-  planDescription: {
-    fontSize: 13,
-    color: "rgba(0,0,0,0.6)",
     marginBottom: 16,
   },
   planButton: {

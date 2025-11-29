@@ -1,10 +1,8 @@
 import { z } from "zod";
-import { publicProcedure } from "../../../create-context";
+import { publicProcedure } from "@/src/trpc/create-context";
 import { OPENAI_API_KEY } from "@/config/secrets";
 
 const TEXT_MODEL = "gpt-4o-mini" as const;
-const chatAdviceInputSchema = z.object({ message: z.string() });
-type ChatAdviceInput = z.infer<typeof chatAdviceInputSchema>;
 
 function getOpenAIKey(): string {
   const envKey = (process.env.OPENAI_API_KEY ?? "").trim();
@@ -19,8 +17,8 @@ function getOpenAIKey(): string {
 }
 
 export default publicProcedure
-  .input(chatAdviceInputSchema)
-  .mutation(async ({ input }: { input: ChatAdviceInput }) => {
+  .input(z.object({ message: z.string() }))
+  .mutation(async ({ input }) => {
     try {
       console.log("[ChatAdvice] Received request:", input.message);
       
