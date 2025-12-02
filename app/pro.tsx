@@ -69,7 +69,7 @@ export default function ProScreen() {
     }
   };
 
-  const handleSubscribe = async (p: "weekly" | "monthly" | "annual") => {
+  const handleSubscribe = async (p: "weekly" | "monthly" | "yearly") => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -197,7 +197,7 @@ export default function ProScreen() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleSubscribe("annual")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-annual">
+              <TouchableOpacity onPress={() => handleSubscribe("yearly")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-yearly">
                 <View style={styles.bestValueBadge}>
                   <Zap size={16} color="#FFFFFF" />
                   <Text style={styles.bestValueText}>BEST VALUE</Text>
