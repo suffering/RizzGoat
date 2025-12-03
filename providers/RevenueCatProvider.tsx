@@ -9,7 +9,7 @@ import type {
   PurchasesOfferings,
   PurchasesPackage,
 } from "react-native-purchases";
-import { REVENUECAT_API_KEY } from "@/config/secrets";
+import { REVENUECAT_API_KEY } from "@/config/secrets.ts";
 import Purchases, { LOG_LEVEL } from "@/services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "lifetime";
@@ -38,232 +38,238 @@ const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
   lifetime: ["lifetime", "annual", "rc_annual", "rizzgoat.lifetime"],
 };
 
-export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatContextValue>(() => {
-  const isSupported = Platform.OS !== "web" && Boolean(Purchases) && typeof Purchases?.configure === "function";
-  const queryClient = useQueryClient();
-  const [isConfigured, setIsConfigured] = useState<boolean>(false);
-  const [lastError, setLastError] = useState<string | null>(null);
+export const [RevenueCatProvider, useRevenueCat] =
+  createContextHook<RevenueCatContextValue>(() => {
+    const isSupported =
+      Platform.OS !== "web" &&
+      Boolean(Purchases) &&
+      typeof Purchases?.configure === "function";
 
-  const initialize = useCallback(
-    async (appUserId?: string | null) => {
-      if (!isSupported || !Purchases) {
-        const message = "RevenueCat is unavailable on this platform.";
-        setLastError(message);
-        return;
-      }
-      if (isConfigured) {
-        return;
-      }
-      if (!REVENUECAT_API_KEY) {
-        const message = "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
-        setLastError(message);
-        throw new Error(message);
-      }
-      try {
-        if (LOG_LEVEL && typeof Purchases.setLogLevel === "function") {
-          const chosenLevel = LOG_LEVEL.DEBUG ?? LOG_LEVEL.INFO ?? LOG_LEVEL.WARN ?? LOG_LEVEL.ERROR ?? 4;
-          Purchases.setLogLevel(chosenLevel);
+    const queryClient = useQueryClient();
+    const [isConfigured, setIsConfigured] = useState(false);
+    const [lastError, setLastError] = useState<string | null>(null);
+
+    const initialize = useCallback(
+      async (appUserId?: string | null) => {
+        if (!isSupported || !Purchases) {
+          const message = "RevenueCat is unavailable on this platform.";
+          setLastError(message);
+          return;
         }
-        await Purchases.configure({ apiKey: REVENUECAT_API_KEY, appUserID: appUserId ?? undefined });
-        setIsConfigured(true);
-        setLastError(null);
-      } catch (error) {
-        const message = (error as Error)?.message ?? "Failed to configure RevenueCat";
-        setLastError(message);
-        throw error;
-      }
-    },
-    [isConfigured, isSupported],
-  );
+        if (isConfigured) return;
 
-  useEffect(() => {
-    if (!isSupported) {
-      return;
-    }
-    initialize().catch(() => {});
-  }, [initialize, isSupported]);
+        if (!REVENUECAT_API_KEY) {
+          const message =
+            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
+          setLastError(message);
+          throw new Error(message);
+        }
 
-  useEffect(() => {
-    if (!isSupported || !isConfigured || !Purchases) {
-      return;
-    }
+        try {
+          if (LOG_LEVEL && typeof Purchases.setLogLevel === "function") {
+            const chosenLevel =
+              LOG_LEVEL.DEBUG ??
+              LOG_LEVEL.INFO ??
+              LOG_LEVEL.WARN ??
+              LOG_LEVEL.ERROR ??
+              4;
 
-    const listener: CustomerInfoUpdateListener = (info) => {
-      queryClient.setQueryData(["revenuecat", "customer-info"], info);
-    };
+            Purchases.setLogLevel(chosenLevel);
+          }
 
-    Purchases.addCustomerInfoUpdateListener(listener);
+          await Purchases.configure({
+            apiKey: REVENUECAT_API_KEY,
+            appUserID: appUserId ?? undefined,
+          });
 
-    return () => {
-      if (typeof Purchases.removeCustomerInfoUpdateListener === "function") {
-        Purchases.removeCustomerInfoUpdateListener(listener);
-      }
-    };
-  }, [isConfigured, isSupported, queryClient]);
+          setIsConfigured(true);
+          setLastError(null);
+        } catch (error) {
+          const message =
+            (error as Error)?.message ?? "Failed to configure RevenueCat";
+          setLastError(message);
+          throw error;
+        }
+      },
+      [isConfigured, isSupported]
+    );
 
-  const {
-    data: offeringsData,
-    refetch: refetchOfferings,
-    isLoading: isOfferingsLoading,
-  } = useQuery({
-    queryKey: ["revenuecat", "offerings"],
-    enabled: isSupported && isConfigured,
-    queryFn: async () => {
-      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
-      return Purchases.getOfferings();
-    },
-    staleTime: 5 * 60 * 1000,
-  });
+    useEffect(() => {
+      if (!isSupported) return;
+      initialize().catch(() => {});
+    }, [initialize, isSupported]);
 
-  const {
-    data: customerInfo,
-    refetch: refetchCustomerInfo,
-    isLoading: isCustomerInfoLoading,
-  } = useQuery({
-    queryKey: ["revenuecat", "customer-info"],
-    enabled: isSupported && isConfigured,
-    queryFn: async () => {
-      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
-      return Purchases.getCustomerInfo();
-    },
-    refetchInterval: 60 * 1000,
-  });
+    useEffect(() => {
+      if (!isSupported || !isConfigured || !Purchases) return;
 
-  const availablePackages = useMemo(() => {
-    if (!offeringsData) return [];
-    const packages: PurchasesPackage[] = [];
-    const offeringList: PurchasesOffering[] = [];
+      const listener: CustomerInfoUpdateListener = (info) => {
+        queryClient.setQueryData(["revenuecat", "customer-info"], info);
+      };
 
-    if (offeringsData.current) offeringList.push(offeringsData.current);
-    if (offeringsData.all) {
-      Object.values(offeringsData.all).forEach((offering) => {
-        if (offering) offeringList.push(offering as PurchasesOffering);
-      });
-    }
+      Purchases.addCustomerInfoUpdateListener(listener);
 
-    offeringList.forEach((offering) => {
-      offering.availablePackages.forEach((pkg) => packages.push(pkg));
+      return () => {
+        if (typeof Purchases.removeCustomerInfoUpdateListener === "function") {
+          Purchases.removeCustomerInfoUpdateListener(listener);
+        }
+      };
+    }, [isConfigured, isSupported, queryClient]);
+
+    const {
+      data: offeringsData,
+      refetch: refetchOfferings,
+      isLoading: isOfferingsLoading,
+    } = useQuery({
+      queryKey: ["revenuecat", "offerings"],
+      enabled: isSupported && isConfigured,
+      queryFn: async () => {
+        if (!Purchases) throw new Error("RevenueCat unavailable");
+        return Purchases.getOfferings();
+      },
+      staleTime: 300000,
     });
 
-    return packages;
-  }, [offeringsData]);
+    const {
+      data: customerInfo,
+      refetch: refetchCustomerInfo,
+      isLoading: isCustomerInfoLoading,
+    } = useQuery({
+      queryKey: ["revenuecat", "customer-info"],
+      enabled: isSupported && isConfigured,
+      queryFn: async () => {
+        if (!Purchases) throw new Error("RevenueCat unavailable");
+        return Purchases.getCustomerInfo();
+      },
+      refetchInterval: 60000,
+    });
 
-  const getPackageForPlan = useCallback(
-    (plan: PlanProductId) => {
-      const matchers = PACKAGE_MATCHERS[plan];
-      const target = availablePackages.find((pkg) => {
-        const identifier = (pkg.identifier ?? "").toLowerCase();
-        const productId = (pkg.product.identifier ?? "").toLowerCase();
-        return matchers.some((matcher) => identifier.includes(matcher) || productId.includes(matcher));
-      });
-      return target ?? null;
-    },
-    [availablePackages],
-  );
+    const availablePackages = useMemo(() => {
+      if (!offeringsData) return [];
+      const result: PurchasesPackage[] = [];
+      const allOfferings: PurchasesOffering[] = [];
 
-  const {
-    mutateAsync: purchasePackageAsync,
-    isPending: isPurchasePending,
-  } = useMutation({
-    mutationFn: async (pkg: PurchasesPackage) => {
-      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
-      const { customerInfo: info } = await Purchases.purchasePackage(pkg);
-      return info;
-    },
-    onSuccess: (info) => {
-      queryClient.setQueryData(["revenuecat", "customer-info"], info);
-      setLastError(null);
-    },
-    onError: (error) => {
-      const message = (error as Error)?.message ?? "Purchase failed";
-      setLastError(message);
-    },
-  });
+      if (offeringsData.current) allOfferings.push(offeringsData.current);
+      if (offeringsData.all)
+        Object.values(offeringsData.all).forEach((o) => o && allOfferings.push(o));
 
-  const {
-    mutateAsync: restorePurchasesAsync,
-    isPending: isRestorePending,
-  } = useMutation({
-    mutationFn: async () => {
-      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
-      return Purchases.restorePurchases();
-    },
-    onSuccess: (info) => {
-      queryClient.setQueryData(["revenuecat", "customer-info"], info);
-      setLastError(null);
-    },
-    onError: (error) => {
-      const message = (error as Error)?.message ?? "Restore failed";
-      setLastError(message);
-    },
-  });
+      allOfferings.forEach((o) =>
+        o.availablePackages.forEach((pkg) => result.push(pkg))
+      );
 
-  const purchasePlan = useCallback(
-    async (plan: PlanProductId) => {
-      if (!isSupported) {
-        const message = "Purchases are unavailable on this platform.";
-        setLastError(message);
-        throw new Error(message);
-      }
-      await initialize();
-      const pkg = getPackageForPlan(plan);
-      if (!pkg) {
-        const message = `No RevenueCat package found for plan ${plan}.`;
-        setLastError(message);
-        throw new Error(message);
-      }
-      const info = await purchasePackageAsync(pkg);
+      return result;
+    }, [offeringsData]);
+
+    const getPackageForPlan = useCallback(
+      (plan: PlanProductId) => {
+        const matchers = PACKAGE_MATCHERS[plan];
+        return (
+          availablePackages.find((pkg) => {
+            const id = (pkg.product.identifier ?? "").toLowerCase();
+            const alias = (pkg.identifier ?? "").toLowerCase();
+            return matchers.some(
+              (m) => id.includes(m) || alias.includes(m)
+            );
+          }) ?? null
+        );
+      },
+      [availablePackages]
+    );
+
+    const {
+      mutateAsync: purchasePackageAsync,
+      isPending: isPurchasePending,
+    } = useMutation({
+      mutationFn: async (pkg: PurchasesPackage) => {
+        const { customerInfo: info } = await Purchases.purchasePackage(pkg);
+        return info;
+      },
+      onSuccess: (info) => {
+        queryClient.setQueryData(["revenuecat", "customer-info"], info);
+        setLastError(null);
+      },
+      onError: (err) => {
+        setLastError((err as Error).message ?? "Purchase failed");
+      },
+    });
+
+    const {
+      mutateAsync: restorePurchasesAsync,
+      isPending: isRestorePending,
+    } = useMutation({
+      mutationFn: async () => {
+        return Purchases.restorePurchases();
+      },
+      onSuccess: (info) => {
+        queryClient.setQueryData(["revenuecat", "customer-info"], info);
+        setLastError(null);
+      },
+      onError: (err) => {
+        setLastError((err as Error).message ?? "Restore failed");
+      },
+    });
+
+    const purchasePlan = useCallback(
+      async (plan: PlanProductId) => {
+        await initialize();
+        const pkg = getPackageForPlan(plan);
+        if (!pkg) {
+          const msg = `No RevenueCat package found for ${plan}`;
+          setLastError(msg);
+          throw new Error(msg);
+        }
+        const info = await purchasePackageAsync(pkg);
+        await refetchCustomerInfo();
+        return info ?? null;
+      },
+      [
+        getPackageForPlan,
+        initialize,
+        purchasePackageAsync,
+        refetchCustomerInfo,
+      ]
+    );
+
+    const restore = useCallback(async () => {
+      const info = await restorePurchasesAsync();
       await refetchCustomerInfo();
       return info ?? null;
-    },
-    [getPackageForPlan, initialize, isSupported, purchasePackageAsync, refetchCustomerInfo],
-  );
+    }, [restorePurchasesAsync, refetchCustomerInfo]);
 
-  const restore = useCallback(async () => {
-    if (!isSupported) {
-      const message = "Restore is unavailable on this platform.";
-      setLastError(message);
-      throw new Error(message);
-    }
-    const info = await restorePurchasesAsync();
-    await refetchCustomerInfo();
-    return info ?? null;
-  }, [isSupported, refetchCustomerInfo, restorePurchasesAsync]);
+    const refreshOfferings = useCallback(async () => {
+      await refetchOfferings();
+    }, [refetchOfferings]);
 
-  const refreshOfferings = useCallback(async () => {
-    await refetchOfferings();
-  }, [refetchOfferings]);
+    const refreshCustomerInfo = useCallback(async () => {
+      await refetchCustomerInfo();
+    }, [refetchCustomerInfo]);
 
-  const refreshCustomerInfo = useCallback(async () => {
-    await refetchCustomerInfo();
-  }, [refetchCustomerInfo]);
+    const currentOffering = offeringsData?.current ?? null;
+    const isEntitledToPro = useMemo(() => {
+      return Boolean(customerInfo?.entitlements?.active?.["RizzGoat Pro"]);
+    }, [customerInfo]);
 
-  const currentOffering = offeringsData?.current ?? null;
+    const isLoading =
+      (isSupported && !isConfigured) ||
+      isOfferingsLoading ||
+      isCustomerInfoLoading;
 
-  const isEntitledToPro = useMemo(() => {
-    const active = customerInfo?.entitlements?.active ?? {};
-    return Boolean(active["RizzGoat Pro"]);
-  }, [customerInfo]);
+    const isPurchasing = isPurchasePending || isRestorePending;
 
-  const isLoading = (isSupported && !isConfigured) || isOfferingsLoading || isCustomerInfoLoading;
-  const isPurchasing = isPurchasePending || isRestorePending;
-
-  return {
-    isSupported,
-    isConfigured,
-    isLoading,
-    isPurchasing,
-    offerings: offeringsData,
-    currentOffering,
-    availablePackages,
-    customerInfo,
-    isEntitledToPro,
-    lastError,
-    initialize,
-    refreshOfferings,
-    refreshCustomerInfo,
-    purchasePlan,
-    restore,
-  } as RevenueCatContextValue;
-});
-
+    return {
+      isSupported,
+      isConfigured,
+      isLoading,
+      isPurchasing,
+      offerings: offeringsData,
+      currentOffering,
+      availablePackages,
+      customerInfo,
+      isEntitledToPro,
+      lastError,
+      initialize,
+      refreshOfferings,
+      refreshCustomerInfo,
+      purchasePlan,
+      restore,
+    };
+  });
