@@ -11,7 +11,14 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { X, Check, Sparkles, Zap, Crown, Crown as CrownIcon } from "lucide-react-native";
+import {
+  X,
+  Check,
+  Sparkles,
+  Zap,
+  Crown,
+  Crown as CrownIcon,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
@@ -32,7 +39,7 @@ export default function ProScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { isTrialActive, startFreeTrial, subscribe, plan } = useAppState();
-  
+
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const featuresAnim = useRef(new Animated.Value(0)).current;
 
@@ -55,7 +62,9 @@ export default function ProScreen() {
   const handleStartTrial = async () => {
     try {
       if (Platform.OS !== "web") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        await Haptics.notificationAsync(
+          Haptics.NotificationFeedbackType.Success
+        );
       }
       await startFreeTrial(3);
       Alert.alert("Trial Activated", "Enjoy 3 days of Pro features.");
@@ -69,7 +78,9 @@ export default function ProScreen() {
     }
   };
 
-  const handleSubscribe = async (p: "weekly" | "monthly" | "yearly") => {
+  const handleSubscribe = async (
+    p: "weekly" | "monthly" | "lifetime"
+  ) => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -87,7 +98,10 @@ export default function ProScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: theme.background }]} testID="pro-screen">
+    <View
+      style={[styles.container, { backgroundColor: theme.background }]}
+      testID="pro-screen"
+    >
       <LinearGradient
         colors={["#0F0F10", "#1A1A1B"]}
         style={styles.bg}
@@ -100,16 +114,20 @@ export default function ProScreen() {
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
       />
-      
+
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={() => {
-            if (router.canGoBack()) {
-              router.back();
-            } else {
-              router.replace('/');
-            }
-          }} style={styles.closeButton} testID="pro-close">
+          <TouchableOpacity
+            onPress={() => {
+              if (router.canGoBack()) {
+                router.back();
+              } else {
+                router.replace("/");
+              }
+            }}
+            style={styles.closeButton}
+            testID="pro-close"
+          >
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
@@ -119,13 +137,13 @@ export default function ProScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Animated.View
-            style={[
-              styles.heroSection,
-              { transform: [{ scale: scaleAnim }] },
-            ]}
+            style={[styles.heroSection, { transform: [{ scale: scaleAnim }] }]}
           >
             <View style={styles.brandRow}>
-              <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.brandBadge}>
+              <LinearGradient
+                colors={["#E3222B", "#FF7A59"]}
+                style={styles.brandBadge}
+              >
                 <CrownIcon size={18} color="#FFFFFF" />
               </LinearGradient>
               <Text style={styles.brandText}>RizzGoat Pro</Text>
@@ -135,17 +153,20 @@ export default function ProScreen() {
               <Sparkles size={24} color="#FFFFFF" style={styles.sparkle1} />
               <Sparkles size={20} color="#FFFFFF" style={styles.sparkle2} />
             </View>
-            <Text style={styles.title}>{isTrialActive ? "Choose your plan" : "Unlock the full experience"}</Text>
+            <Text style={styles.title}>
+              {isTrialActive
+                ? "Choose your plan"
+                : "Unlock the full experience"}
+            </Text>
             <Text style={styles.subtitle}>
-              {isTrialActive ? "Your 3-day trial is active. Pick a plan to continue afterward." : "Start a 3-day free trial. Cancel anytime."}
+              {isTrialActive
+                ? "Your 3-day trial is active. Pick a plan to continue afterward."
+                : "Start a 3-day free trial. Cancel anytime."}
             </Text>
           </Animated.View>
 
           <Animated.View
-            style={[
-              styles.featuresSection,
-              { opacity: featuresAnim },
-            ]}
+            style={[styles.featuresSection, { opacity: featuresAnim }]}
           >
             {FEATURES.map((feature, index) => (
               <View key={index} style={styles.featureRow}>
@@ -159,17 +180,32 @@ export default function ProScreen() {
 
           {!isTrialActive ? (
             <View style={styles.ctaSection}>
-              <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
+              <LinearGradient
+                colors={["#E3222B", "#FF7A59"]}
+                style={styles.ctaCard}
+              >
                 <Text style={styles.ctaTitle}>3-Day Free Trial</Text>
-                <Text style={styles.ctaSubtitle}>Then $6.99/week, $19.99/month, or $119.99/year</Text>
-                <TouchableOpacity onPress={handleStartTrial} activeOpacity={0.9} style={styles.ctaButton} testID="start-trial-btn">
+                <Text style={styles.ctaSubtitle}>
+                  Then $6.99/week, $19.99/month, or $119.99 lifetime
+                </Text>
+                <TouchableOpacity
+                  onPress={handleStartTrial}
+                  activeOpacity={0.9}
+                  style={styles.ctaButton}
+                  testID="start-trial-btn"
+                >
                   <Text style={styles.ctaButtonText}>Start Free Trial</Text>
                 </TouchableOpacity>
               </LinearGradient>
             </View>
           ) : (
             <View style={styles.plansSection}>
-              <TouchableOpacity onPress={() => handleSubscribe("weekly")} style={styles.planCard} activeOpacity={0.9} testID="plan-weekly">
+              <TouchableOpacity
+                onPress={() => handleSubscribe("weekly")}
+                style={styles.planCard}
+                activeOpacity={0.9}
+                testID="plan-weekly"
+              >
                 <View style={styles.planHeader}>
                   <Text style={styles.planName}>Weekly</Text>
                   <View style={styles.popularBadge}>
@@ -178,12 +214,20 @@ export default function ProScreen() {
                 </View>
                 <Text style={styles.planPrice}>$6.99</Text>
                 <Text style={styles.planPeriod}>per week</Text>
-                <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.planButton}>
+                <LinearGradient
+                  colors={["#E3222B", "#FF7A59"]}
+                  style={styles.planButton}
+                >
                   <Text style={styles.planButtonText}>Continue</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleSubscribe("monthly")} style={styles.planCard} activeOpacity={0.9} testID="plan-monthly">
+              <TouchableOpacity
+                onPress={() => handleSubscribe("monthly")}
+                style={styles.planCard}
+                activeOpacity={0.9}
+                testID="plan-monthly"
+              >
                 <View style={styles.planHeader}>
                   <Text style={styles.planName}>Monthly</Text>
                   <View style={styles.popularBadge}>
@@ -192,23 +236,34 @@ export default function ProScreen() {
                 </View>
                 <Text style={styles.planPrice}>$19.99</Text>
                 <Text style={styles.planPeriod}>per month</Text>
-                <LinearGradient colors={["#8B5CF6", "#A78BFA"]} style={styles.planButton}>
+                <LinearGradient
+                  colors={["#8B5CF6", "#A78BFA"]}
+                  style={styles.planButton}
+                >
                   <Text style={styles.planButtonText}>Continue</Text>
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleSubscribe("yearly")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-yearly">
+              <TouchableOpacity
+                onPress={() => handleSubscribe("lifetime")}
+                style={[styles.planCard, styles.bestValueCard]}
+                activeOpacity={0.9}
+                testID="plan-lifetime"
+              >
                 <View style={styles.bestValueBadge}>
                   <Zap size={16} color="#FFFFFF" />
                   <Text style={styles.bestValueText}>BEST VALUE</Text>
                 </View>
                 <View style={styles.planHeader}>
-                  <Text style={styles.planName}>Annual</Text>
-                  <Text style={styles.saveBadge}>Save more</Text>
+                  <Text style={styles.planName}>Lifetime</Text>
+                  <Text style={styles.saveBadge}>One-time purchase</Text>
                 </View>
                 <Text style={styles.planPrice}>$119.99</Text>
-                <Text style={styles.planPeriod}>per year</Text>
-                <LinearGradient colors={["#10B981", "#34D399"]} style={styles.planButton}>
+                <Text style={styles.planPeriod}>pay once, Pro forever</Text>
+                <LinearGradient
+                  colors={["#10B981", "#34D399"]}
+                  style={styles.planButton}
+                >
                   <Text style={styles.planButtonText}>Continue</Text>
                 </LinearGradient>
               </TouchableOpacity>
@@ -217,7 +272,8 @@ export default function ProScreen() {
 
           <Text style={styles.terms}>
             • 3-day free trial then chosen plan applies{"\n"}
-            • Cancel anytime in Settings{"\n"}
+            • Cancel weekly or monthly anytime in Settings{"\n"}
+            • Lifetime is a one-time purchase{"\n"}
             • Prices in USD
           </Text>
         </ScrollView>
