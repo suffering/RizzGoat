@@ -12,7 +12,7 @@ import type {
 import { REVENUECAT_API_KEY } from "@/config/secrets";
 import Purchases, { LOG_LEVEL } from "@/services/revenuecatModule";
 
-export type PlanProductId = "weekly" | "monthly" | "yearly";
+export type PlanProductId = "weekly" | "monthly" | "lifetime";
 
 interface RevenueCatContextValue {
   isSupported: boolean;
@@ -35,7 +35,7 @@ interface RevenueCatContextValue {
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
   weekly: ["weekly"],
   monthly: ["monthly"],
-  yearly: ["yearly", "annual"],
+  lifetime: ["lifetime", "annual", "rc_annual", "rizzgoat.lifetime"],
 };
 
 export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatContextValue>(() => {
@@ -48,7 +48,6 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     async (appUserId?: string | null) => {
       if (!isSupported || !Purchases) {
         const message = "RevenueCat is unavailable on this platform.";
-        console.warn("[RevenueCat]", message);
         setLastError(message);
         return;
       }
@@ -57,13 +56,10 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
       }
       if (!REVENUECAT_API_KEY) {
         const message = "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
-        console.error("[RevenueCat]", message);
         setLastError(message);
         throw new Error(message);
       }
-
       try {
-        console.log("[RevenueCat] Configuring SDK");
         if (LOG_LEVEL && typeof Purchases.setLogLevel === "function") {
           const chosenLevel = LOG_LEVEL.DEBUG ?? LOG_LEVEL.INFO ?? LOG_LEVEL.WARN ?? LOG_LEVEL.ERROR ?? 4;
           Purchases.setLogLevel(chosenLevel);
@@ -72,7 +68,6 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
         setIsConfigured(true);
         setLastError(null);
       } catch (error) {
-        console.error("[RevenueCat] configure error", error);
         const message = (error as Error)?.message ?? "Failed to configure RevenueCat";
         setLastError(message);
         throw error;
@@ -85,7 +80,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     if (!isSupported) {
       return;
     }
-    initialize().catch((error) => console.error("[RevenueCat] initialization failed", error));
+    initialize().catch(() => {});
   }, [initialize, isSupported]);
 
   useEffect(() => {
@@ -94,7 +89,6 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     }
 
     const listener: CustomerInfoUpdateListener = (info) => {
-      console.log("[RevenueCat] customer info update received");
       queryClient.setQueryData(["revenuecat", "customer-info"], info);
     };
 
@@ -115,10 +109,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     queryKey: ["revenuecat", "offerings"],
     enabled: isSupported && isConfigured,
     queryFn: async () => {
-      if (!Purchases) {
-        throw new Error("RevenueCat is unavailable on this platform.");
-      }
-      console.log("[RevenueCat] Fetching offerings");
+      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
       return Purchases.getOfferings();
     },
     staleTime: 5 * 60 * 1000,
@@ -132,34 +123,28 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     queryKey: ["revenuecat", "customer-info"],
     enabled: isSupported && isConfigured,
     queryFn: async () => {
-      if (!Purchases) {
-        throw new Error("RevenueCat is unavailable on this platform.");
-      }
-      console.log("[RevenueCat] Fetching customer info");
+      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
       return Purchases.getCustomerInfo();
     },
     refetchInterval: 60 * 1000,
   });
 
   const availablePackages = useMemo(() => {
-    if (!offeringsData) {
-      return [];
-    }
+    if (!offeringsData) return [];
     const packages: PurchasesPackage[] = [];
     const offeringList: PurchasesOffering[] = [];
-    if (offeringsData.current) {
-      offeringList.push(offeringsData.current);
-    }
+
+    if (offeringsData.current) offeringList.push(offeringsData.current);
     if (offeringsData.all) {
       Object.values(offeringsData.all).forEach((offering) => {
-        if (offering) {
-          offeringList.push(offering as PurchasesOffering);
-        }
+        if (offering) offeringList.push(offering as PurchasesOffering);
       });
     }
+
     offeringList.forEach((offering) => {
       offering.availablePackages.forEach((pkg) => packages.push(pkg));
     });
+
     return packages;
   }, [offeringsData]);
 
@@ -181,10 +166,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     isPending: isPurchasePending,
   } = useMutation({
     mutationFn: async (pkg: PurchasesPackage) => {
-      if (!Purchases) {
-        throw new Error("RevenueCat is unavailable on this platform.");
-      }
-      console.log("[RevenueCat] Starting purchase for", pkg.identifier ?? pkg.product.identifier);
+      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
       const { customerInfo: info } = await Purchases.purchasePackage(pkg);
       return info;
     },
@@ -194,7 +176,6 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     },
     onError: (error) => {
       const message = (error as Error)?.message ?? "Purchase failed";
-      console.error("[RevenueCat] purchase error", message);
       setLastError(message);
     },
   });
@@ -204,10 +185,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     isPending: isRestorePending,
   } = useMutation({
     mutationFn: async () => {
-      if (!Purchases) {
-        throw new Error("RevenueCat is unavailable on this platform.");
-      }
-      console.log("[RevenueCat] Restoring purchases");
+      if (!Purchases) throw new Error("RevenueCat is unavailable on this platform.");
       return Purchases.restorePurchases();
     },
     onSuccess: (info) => {
@@ -216,7 +194,6 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     },
     onError: (error) => {
       const message = (error as Error)?.message ?? "Restore failed";
-      console.error("[RevenueCat] restore error", message);
       setLastError(message);
     },
   });
@@ -262,6 +239,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
   }, [refetchCustomerInfo]);
 
   const currentOffering = offeringsData?.current ?? null;
+
   const isEntitledToPro = useMemo(() => {
     const active = customerInfo?.entitlements?.active ?? {};
     return Boolean(active["RizzGoat Pro"]);
@@ -288,3 +266,4 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
     restore,
   } as RevenueCatContextValue;
 });
+
