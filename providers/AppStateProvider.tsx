@@ -12,8 +12,8 @@ interface Favorite {
 }
 
 interface UserProfile {
-  sex: 'male' | 'female' | 'other';
-  ageRange: '18-24' | '25-34' | '35-44' | '45+';
+  sex: "male" | "female" | "other";
+  ageRange: "18-24" | "25-34" | "35-44" | "45+";
   completedOnboarding: boolean;
 }
 
@@ -23,16 +23,28 @@ const derivePlanFromSubscriptions = (subscriptions?: string[] | null): Plan => {
   if (!subscriptions || subscriptions.length === 0) {
     return null;
   }
+
   const normalized = subscriptions.map((sub) => sub.toLowerCase());
+
   if (normalized.some((value) => value.includes("weekly"))) {
     return "weekly";
   }
+
   if (normalized.some((value) => value.includes("monthly"))) {
     return "monthly";
   }
-  if (normalized.some((value) => value.includes("year") || value.includes("annual"))) {
-    return "yearly";
+
+  if (
+    normalized.some(
+      (value) =>
+        value.includes("lifetime") ||
+        value.includes("rizzgoat.lifetime") ||
+        value.includes("annual")
+    )
+  ) {
+    return "lifetime";
   }
+
   return null;
 };
 
@@ -53,7 +65,9 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     if (!customerInfo?.activeSubscriptions?.length) {
       return;
     }
-    const derivedPlan = derivePlanFromSubscriptions(customerInfo.activeSubscriptions);
+    const derivedPlan = derivePlanFromSubscriptions(
+      customerInfo.activeSubscriptions
+    );
     if (derivedPlan && derivedPlan !== plan) {
       setPlan(derivedPlan);
       AsyncStorage.setItem("plan", derivedPlan).catch((error) => {
@@ -64,7 +78,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const loadAppState = async () => {
     try {
-      const [savedFavorites, savedReferrals, savedProfile, savedTrialEndsAt, savedPlan] = await Promise.all([
+      const [
+        savedFavorites,
+        savedReferrals,
+        savedProfile,
+        savedTrialEndsAt,
+        savedPlan,
+      ] = await Promise.all([
         AsyncStorage.getItem("favorites"),
         AsyncStorage.getItem("referralCount"),
         AsyncStorage.getItem("userProfile"),
@@ -75,17 +95,21 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (savedFavorites) {
         setFavorites(JSON.parse(savedFavorites));
       }
+
       if (savedReferrals) {
         const parsed = parseInt(savedReferrals, 10);
         setReferralCount(Number.isNaN(parsed) ? 0 : parsed);
       }
+
       if (savedTrialEndsAt) {
         setTrialEndsAt(savedTrialEndsAt);
       }
+
       if (savedPlan) {
         const parsedPlan = savedPlan as Plan;
         setPlan(parsedPlan);
       }
+
       if (savedProfile) {
         const profile: UserProfile = JSON.parse(savedProfile);
         setUserProfile(profile);
@@ -105,6 +129,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   }, [trialEndsAt]);
 
   const referralUnlock = referralCount >= 5;
+
   const isPro = useMemo(() => {
     return isEntitledToPro || isTrialActive || referralUnlock;
   }, [isEntitledToPro, isTrialActive, referralUnlock]);
@@ -131,23 +156,37 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     }
   };
 
-  const completeOnboarding = async (profile: Omit<UserProfile, 'completedOnboarding'>) => {
-    const completeProfile: UserProfile = { ...profile, completedOnboarding: true };
+  const completeOnboarding = async (
+    profile: Omit<UserProfile, "completedOnboarding">
+  ) => {
+    const completeProfile: UserProfile = {
+      ...profile,
+      completedOnboarding: true,
+    };
     setUserProfile(completeProfile);
     setShowOnboarding(false);
     try {
-      await AsyncStorage.setItem("userProfile", JSON.stringify(completeProfile));
+      await AsyncStorage.setItem(
+        "userProfile",
+        JSON.stringify(completeProfile)
+      );
     } catch (error) {
       console.log("Error saving user profile:", error);
     }
   };
 
   const addFavorite = async (favorite: Favorite) => {
-    const newFavorite = { ...favorite, createdAt: new Date().toISOString() };
+    const newFavorite = {
+      ...favorite,
+      createdAt: new Date().toISOString(),
+    };
     const updatedFavorites = [...favorites, newFavorite];
     setFavorites(updatedFavorites);
     try {
-      await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      await AsyncStorage.setItem(
+        "favorites",
+        JSON.stringify(updatedFavorites)
+      );
     } catch (error) {
       console.log("Error saving favorite:", error);
     }
@@ -157,7 +196,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     const updatedFavorites = favorites.filter((f) => f.id !== id);
     setFavorites(updatedFavorites);
     try {
-      await AsyncStorage.setItem("favorites", JSON.stringify(updatedFavorites));
+      await AsyncStorage.setItem(
+        "favorites",
+        JSON.stringify(updatedFavorites)
+      );
     } catch (error) {
       console.log("Error removing favorite:", error);
     }
@@ -201,3 +243,4 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetOnboarding,
   };
 });
+
