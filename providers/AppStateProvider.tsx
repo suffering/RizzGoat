@@ -24,22 +24,22 @@ const derivePlanFromSubscriptions = (subscriptions?: string[] | null): Plan => {
     return null;
   }
 
-  const normalized = subscriptions.map((sub) => sub.toLowerCase());
+  const normalized = subscriptions.map((s) => s.toLowerCase());
 
-  if (normalized.some((value) => value.includes("weekly"))) {
+  if (normalized.some((v) => v.includes("weekly"))) {
     return "weekly";
   }
 
-  if (normalized.some((value) => value.includes("monthly"))) {
+  if (normalized.some((v) => v.includes("monthly"))) {
     return "monthly";
   }
 
   if (
     normalized.some(
-      (value) =>
-        value.includes("lifetime") ||
-        value.includes("rizzgoat.lifetime") ||
-        value.includes("annual")
+      (v) =>
+        v.includes("lifetime") ||
+        v.includes("rizzgoat.lifetime") ||
+        v.includes("annual")
     )
   ) {
     return "lifetime";
@@ -65,14 +65,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     if (!customerInfo?.activeSubscriptions?.length) {
       return;
     }
-    const derivedPlan = derivePlanFromSubscriptions(
-      customerInfo.activeSubscriptions
-    );
-    if (derivedPlan && derivedPlan !== plan) {
-      setPlan(derivedPlan);
-      AsyncStorage.setItem("plan", derivedPlan).catch((error) => {
-        console.log("Error persisting RevenueCat plan:", error);
-      });
+    const derived = derivePlanFromSubscriptions(customerInfo.activeSubscriptions);
+    if (derived && derived !== plan) {
+      setPlan(derived);
+      AsyncStorage.setItem("plan", derived).catch(() => {});
     }
   }, [customerInfo, plan]);
 
@@ -97,8 +93,8 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       if (savedReferrals) {
-        const parsed = parseInt(savedReferrals, 10);
-        setReferralCount(Number.isNaN(parsed) ? 0 : parsed);
+        const n = parseInt(savedReferrals, 10);
+        setReferralCount(Number.isNaN(n) ? 0 : n);
       }
 
       if (savedTrialEndsAt) {
@@ -106,8 +102,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
 
       if (savedPlan) {
-        const parsedPlan = savedPlan as Plan;
-        setPlan(parsedPlan);
+        setPlan(savedPlan as Plan);
       }
 
       if (savedProfile) {
@@ -115,17 +110,12 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
         setUserProfile(profile);
         setShowOnboarding(!profile.completedOnboarding);
       }
-    } catch (error) {
-      console.log("Error loading app state:", error);
-    }
+    } catch {}
   };
 
   const isTrialActive = useMemo(() => {
-    if (!trialEndsAt) {
-      return false;
-    }
-    const ends = new Date(trialEndsAt).getTime();
-    return Date.now() < ends;
+    if (!trialEndsAt) return false;
+    return Date.now() < new Date(trialEndsAt).getTime();
   }, [trialEndsAt]);
 
   const referralUnlock = referralCount >= 5;
@@ -136,83 +126,57 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const startFreeTrial = async (days: number) => {
     try {
-      const ends = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      const ends = new Date(Date.now() + days * 86400000);
       const iso = ends.toISOString();
       setTrialEndsAt(iso);
       await AsyncStorage.setItem("trialEndsAt", iso);
-    } catch (error) {
-      console.log("Error starting trial:", error);
-    }
+    } catch {}
   };
 
-  const subscribe = async (newPlan: Exclude<Plan, null>) => {
+  const subscribe = async (newPlan: "weekly" | "monthly" | "lifetime") => {
     try {
       await purchasePlan(newPlan);
       setPlan(newPlan);
       await AsyncStorage.setItem("plan", newPlan);
-    } catch (error) {
-      console.log("Error subscribing:", error);
-      throw error;
+    } catch (e) {
+      throw e;
     }
   };
 
   const completeOnboarding = async (
     profile: Omit<UserProfile, "completedOnboarding">
   ) => {
-    const completeProfile: UserProfile = {
-      ...profile,
-      completedOnboarding: true,
-    };
-    setUserProfile(completeProfile);
+    const p: UserProfile = { ...profile, completedOnboarding: true };
+    setUserProfile(p);
     setShowOnboarding(false);
     try {
-      await AsyncStorage.setItem(
-        "userProfile",
-        JSON.stringify(completeProfile)
-      );
-    } catch (error) {
-      console.log("Error saving user profile:", error);
-    }
+      await AsyncStorage.setItem("userProfile", JSON.stringify(p));
+    } catch {}
   };
 
   const addFavorite = async (favorite: Favorite) => {
-    const newFavorite = {
-      ...favorite,
-      createdAt: new Date().toISOString(),
-    };
-    const updatedFavorites = [...favorites, newFavorite];
-    setFavorites(updatedFavorites);
+    const newFavorite = { ...favorite, createdAt: new Date().toISOString() };
+    const updated = [...favorites, newFavorite];
+    setFavorites(updated);
     try {
-      await AsyncStorage.setItem(
-        "favorites",
-        JSON.stringify(updatedFavorites)
-      );
-    } catch (error) {
-      console.log("Error saving favorite:", error);
-    }
+      await AsyncStorage.setItem("favorites", JSON.stringify(updated));
+    } catch {}
   };
 
   const removeFavorite = async (id: string) => {
-    const updatedFavorites = favorites.filter((f) => f.id !== id);
-    setFavorites(updatedFavorites);
+    const updated = favorites.filter((f) => f.id !== id);
+    setFavorites(updated);
     try {
-      await AsyncStorage.setItem(
-        "favorites",
-        JSON.stringify(updatedFavorites)
-      );
-    } catch (error) {
-      console.log("Error removing favorite:", error);
-    }
+      await AsyncStorage.setItem("favorites", JSON.stringify(updated));
+    } catch {}
   };
 
   const incrementReferral = async () => {
-    const newCount = referralCount + 1;
-    setReferralCount(newCount);
+    const n = referralCount + 1;
+    setReferralCount(n);
     try {
-      await AsyncStorage.setItem("referralCount", newCount.toString());
-    } catch (error) {
-      console.log("Error updating referral count:", error);
-    }
+      await AsyncStorage.setItem("referralCount", n.toString());
+    } catch {}
   };
 
   const resetOnboarding = async () => {
@@ -220,9 +184,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setUserProfile(null);
     try {
       await AsyncStorage.removeItem("userProfile");
-    } catch (error) {
-      console.log("Error resetting onboarding:", error);
-    }
+    } catch {}
   };
 
   return {
@@ -243,4 +205,3 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetOnboarding,
   };
 });
-
