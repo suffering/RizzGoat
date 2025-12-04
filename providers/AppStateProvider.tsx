@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
-import { PlanProductId, useRevenueCat } from "@/providers/RevenueCatProvider.ts";
+import { PlanProductId, useRevenueCat } from "@/providers/RevenueCatProvider";
 
 interface Favorite {
   id: string;
@@ -78,7 +78,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       if (savedPlan) setPlan(savedPlan as Plan);
 
       if (profile) {
-        const p = JSON.parse(profile);
+        const p = JSON.parse(profile) as UserProfile;
         setUserProfile(p);
         setShowOnboarding(!p.completedOnboarding);
       }
@@ -92,9 +92,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const referralUnlock = referralCount >= 5;
 
-  const isPro = useMemo(() => {
-    return isEntitledToPro || isTrialActive || referralUnlock;
-  }, [isEntitledToPro, isTrialActive, referralUnlock]);
+  const isPro = useMemo(
+    () => isEntitledToPro || isTrialActive || referralUnlock,
+    [isEntitledToPro, isTrialActive, referralUnlock]
+  );
 
   const startFreeTrial = async (days: number) => {
     const ends = new Date(Date.now() + days * 86400000).toISOString();
@@ -105,11 +106,13 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const subscribe = async (newPlan: PlanProductId) => {
     await purchasePlan(newPlan);
     setPlan(newPlan);
-    await AsyncStorage.setItem("plan", newPlan);
+    await AsyncStorage.setItem("plan", newPlan ?? "");
   };
 
-  const completeOnboarding = async (p: Omit<UserProfile, "completedOnboarding">) => {
-    const obj = { ...p, completedOnboarding: true };
+  const completeOnboarding = async (
+    p: Omit<UserProfile, "completedOnboarding">
+  ) => {
+    const obj: UserProfile = { ...p, completedOnboarding: true };
     setUserProfile(obj);
     setShowOnboarding(false);
     await AsyncStorage.setItem("userProfile", JSON.stringify(obj));
@@ -158,3 +161,4 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetOnboarding,
   };
 });
+
