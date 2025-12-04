@@ -9,7 +9,7 @@ import type {
   PurchasesOfferings,
   PurchasesPackage,
 } from "react-native-purchases";
-import { REVENUECAT_API_KEY } from "@/config/secrets.ts";
+import { REVENUECAT_API_KEY } from "@/config/secrets";
 import Purchases, { LOG_LEVEL } from "@/services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "lifetime";
@@ -166,9 +166,7 @@ export const [RevenueCatProvider, useRevenueCat] =
           availablePackages.find((pkg) => {
             const id = (pkg.product.identifier ?? "").toLowerCase();
             const alias = (pkg.identifier ?? "").toLowerCase();
-            return matchers.some(
-              (m) => id.includes(m) || alias.includes(m)
-            );
+            return matchers.some((m) => id.includes(m) || alias.includes(m));
           }) ?? null
         );
       },
@@ -204,7 +202,7 @@ export const [RevenueCatProvider, useRevenueCat] =
         setLastError(null);
       },
       onError: (err) => {
-        setLastError((err as Error).message ?? "Restore failed");
+        setLastError((err as Error).message ?? "Restore failed";
       },
     });
 
@@ -244,9 +242,10 @@ export const [RevenueCatProvider, useRevenueCat] =
     }, [refetchCustomerInfo]);
 
     const currentOffering = offeringsData?.current ?? null;
-    const isEntitledToPro = useMemo(() => {
-      return Boolean(customerInfo?.entitlements?.active?.["RizzGoat Pro"]);
-    }, [customerInfo]);
+    const isEntitledToPro = useMemo(
+      () => Boolean(customerInfo?.entitlements?.active?.["RizzGoat Pro"]),
+      [customerInfo]
+    );
 
     const isLoading =
       (isSupported && !isConfigured) ||
