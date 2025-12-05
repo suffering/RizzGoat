@@ -10,8 +10,8 @@ import type {
   PurchasesPackage,
 } from "react-native-purchases";
 
-import { REVENUECAT_API_KEY } from "../config/secrets";  
-import Purchases, { LOG_LEVEL } from "../services/revenuecatModule"; 
+import { REVENUECAT_API_KEY } from "../src/secrets";
+import Purchases, { LOG_LEVEL } from "../services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "lifetime";
 
@@ -53,15 +53,17 @@ export const [RevenueCatProvider, useRevenueCat] =
     const initialize = useCallback(
       async (appUserId?: string | null) => {
         if (!isSupported || !Purchases) {
-          setLastError("RevenueCat unavailable");
+          const message = "RevenueCat is unavailable on this platform.";
+          setLastError(message);
           return;
         }
         if (isConfigured) return;
 
         if (!REVENUECAT_API_KEY) {
-          const msg = "Missing EXPO_PUBLIC_REVENUECAT_API_KEY";
-          setLastError(msg);
-          throw new Error(msg);
+          const message =
+            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
+          setLastError(message);
+          throw new Error(message);
         }
 
         try {
@@ -83,16 +85,19 @@ export const [RevenueCatProvider, useRevenueCat] =
 
           setIsConfigured(true);
           setLastError(null);
-        } catch (e) {
-          setLastError((e as Error).message);
-          throw e;
+        } catch (error) {
+          const message =
+            (error as Error)?.message ?? "Failed to configure RevenueCat";
+          setLastError(message);
+          throw error;
         }
       },
       [isConfigured, isSupported]
     );
 
     useEffect(() => {
-      if (isSupported) initialize().catch(() => {});
+      if (!isSupported) return;
+      initialize().catch(() => {});
     }, [initialize, isSupported]);
 
     useEffect(() => {
@@ -118,7 +123,10 @@ export const [RevenueCatProvider, useRevenueCat] =
     } = useQuery({
       queryKey: ["revenuecat", "offerings"],
       enabled: isSupported && isConfigured,
-      queryFn: () => Purchases.getOfferings(),
+      queryFn: async () => {
+        if (!Purchases) throw new Error("RevenueCat unavailable");
+        return Purchases.getOfferings();
+      },
       staleTime: 300000,
     });
 
@@ -129,24 +137,27 @@ export const [RevenueCatProvider, useRevenueCat] =
     } = useQuery({
       queryKey: ["revenuecat", "customer-info"],
       enabled: isSupported && isConfigured,
-      queryFn: () => Purchases.getCustomerInfo(),
+      queryFn: async () => {
+        if (!Purchases) throw new Error("RevenueCat unavailable");
+        return Purchases.getCustomerInfo();
+      },
       refetchInterval: 60000,
     });
 
     const availablePackages = useMemo(() => {
       if (!offeringsData) return [];
-      const items: PurchasesPackage[] = [];
-
+      const result: PurchasesPackage[] = [];
       const allOfferings: PurchasesOffering[] = [];
+
       if (offeringsData.current) allOfferings.push(offeringsData.current);
       if (offeringsData.all)
         Object.values(offeringsData.all).forEach((o) => o && allOfferings.push(o));
 
-      allOfferings.forEach((off) =>
-        off.availablePackages.forEach((pkg) => items.push(pkg))
+      allOfferings.forEach((o) =>
+        o.availablePackages.forEach((pkg) => result.push(pkg))
       );
 
-      return items;
+      return result;
     }, [offeringsData]);
 
     const getPackageForPlan = useCallback(
@@ -154,8 +165,8 @@ export const [RevenueCatProvider, useRevenueCat] =
         const matchers = PACKAGE_MATCHERS[plan];
         return (
           availablePackages.find((pkg) => {
-            const id = pkg.product.identifier.toLowerCase();
-            const alias = pkg.identifier.toLowerCase();
+            const id = (pkg.product.identifier ?? "").toLowerCase();
+            const alias = (pkg.identifier ?? "").toLowerCase();
             return matchers.some((m) => id.includes(m) || alias.includes(m));
           }) ?? null
         );
@@ -163,43 +174,58 @@ export const [RevenueCatProvider, useRevenueCat] =
       [availablePackages]
     );
 
-    const { mutateAsync: purchasePackageAsync, isPending: isPurchasePending } =
-      useMutation({
-        mutationFn: async (pkg: PurchasesPackage) => {
-          const { customerInfo: info } = await Purchases.purchasePackage(pkg);
-          return info;
-        },
-        onSuccess: (info) => {
-          queryClient.setQueryData(["revenuecat", "customer-info"], info);
-          setLastError(null);
-        },
-        onError: (err) => {
-          setLastError((err as Error).message);
-        },
-      });
+    const {
+      mutateAsync: purchasePackageAsync,
+      isPending: isPurchasePending,
+    } = useMutation({
+      mutationFn: async (pkg: PurchasesPackage) => {
+        const { customerInfo: info } = await Purchases.purchasePackage(pkg);
+        return info;
+      },
+      onSuccess: (info) => {
+        queryClient.setQueryData(["revenuecat", "customer-info"], info);
+        setLastError(null);
+      },
+      onError: (err) => {
+        setLastError((err as Error).message ?? "Purchase failed");
+      },
+    });
 
-    const { mutateAsync: restorePurchasesAsync, isPending: isRestorePending } =
-      useMutation({
-        mutationFn: () => Purchases.restorePurchases(),
-        onSuccess: (info) => {
-          queryClient.setQueryData(["revenuecat", "customer-info"], info);
-          setLastError(null);
-        },
-        onError: (err) => {
-          setLastError((err as Error).message);
-        },
-      });
+    const {
+      mutateAsync: restorePurchasesAsync,
+      isPending: isRestorePending,
+    } = useMutation({
+      mutationFn: async () => {
+        return Purchases.restorePurchases();
+      },
+      onSuccess: (info) => {
+        queryClient.setQueryData(["revenuecat", "customer-info"], info);
+        setLastError(null);
+      },
+      onError: (err) => {
+        setLastError((err as Error).message ?? "Restore failed");
+      },
+    });
 
     const purchasePlan = useCallback(
       async (plan: PlanProductId) => {
         await initialize();
         const pkg = getPackageForPlan(plan);
-        if (!pkg) throw new Error(`No package for ${plan}`);
+        if (!pkg) {
+          const msg = `No RevenueCat package found for ${plan}`;
+          setLastError(msg);
+          throw new Error(msg);
+        }
         const info = await purchasePackageAsync(pkg);
         await refetchCustomerInfo();
         return info ?? null;
       },
-      [initialize, getPackageForPlan, purchasePackageAsync, refetchCustomerInfo]
+      [
+        getPackageForPlan,
+        initialize,
+        purchasePackageAsync,
+        refetchCustomerInfo,
+      ]
     );
 
     const restore = useCallback(async () => {
@@ -208,26 +234,43 @@ export const [RevenueCatProvider, useRevenueCat] =
       return info ?? null;
     }, [restorePurchasesAsync, refetchCustomerInfo]);
 
+    const refreshOfferings = useCallback(async () => {
+      await refetchOfferings();
+    }, [refetchOfferings]);
+
+    const refreshCustomerInfo = useCallback(async () => {
+      await refetchCustomerInfo();
+    }, [refetchCustomerInfo]);
+
+    const currentOffering = offeringsData?.current ?? null;
+    const isEntitledToPro = useMemo(
+      () => Boolean(customerInfo?.entitlements?.active?.["RizzGoat Pro"]),
+      [customerInfo]
+    );
+
+    const isLoading =
+      (isSupported && !isConfigured) ||
+      isOfferingsLoading ||
+      isCustomerInfoLoading;
+
+    const isPurchasing = isPurchasePending || isRestorePending;
+
     return {
       isSupported,
       isConfigured,
-      isLoading:
-        (isSupported && !isConfigured) ||
-        isOfferingsLoading ||
-        isCustomerInfoLoading,
-      isPurchasing: isPurchasePending || isRestorePending,
+      isLoading,
+      isPurchasing,
       offerings: offeringsData,
-      currentOffering: offeringsData?.current ?? null,
+      currentOffering,
       availablePackages,
       customerInfo,
-      isEntitledToPro: Boolean(
-        customerInfo?.entitlements?.active?.["RizzGoat Pro"]
-      ),
+      isEntitledToPro,
       lastError,
       initialize,
-      refreshOfferings: refetchOfferings,
-      refreshCustomerInfo: refetchCustomerInfo,
+      refreshOfferings,
+      refreshCustomerInfo,
       purchasePlan,
       restore,
     };
   });
+
