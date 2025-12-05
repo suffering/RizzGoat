@@ -2,10 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
 
-import {
-  PlanProductId,
-  useRevenueCat,
-} from "./RevenueCatProvider"; // FIXED IMPORT
+import { PlanProductId, useRevenueCat } from "../providers/RevenueCatProvider";
 
 interface Favorite {
   id: string;
@@ -24,7 +21,7 @@ interface UserProfile {
 type Plan = PlanProductId | null;
 
 const derivePlanFromSubscriptions = (s?: string[] | null): Plan => {
-  if (!s || s.length === 0) return null;
+  if (!s || !s.length) return null;
 
   const v = s.map((x) => x.toLowerCase());
   if (v.some((x) => x.includes("weekly"))) return "weekly";
@@ -44,7 +41,6 @@ const derivePlanFromSubscriptions = (s?: string[] | null): Plan => {
 
 export const [AppStateProvider, useAppState] = createContextHook(() => {
   const { isEntitledToPro, purchasePlan, customerInfo } = useRevenueCat();
-
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [referralCount, setReferralCount] = useState(0);
   const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
@@ -53,10 +49,19 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [showOnboarding, setShowOnboarding] = useState(true);
 
   useEffect(() => {
-    loadState();
+    load();
   }, []);
 
-  const loadState = async () => {
+  useEffect(() => {
+    if (!customerInfo?.activeSubscriptions?.length) return;
+    const found = derivePlanFromSubscriptions(customerInfo.activeSubscriptions);
+    if (found && found !== plan) {
+      setPlan(found);
+      AsyncStorage.setItem("plan", found).catch(() => {});
+    }
+  }, [customerInfo, plan]);
+
+  const load = async () => {
     try {
       const [favs, refs, profile, trial, savedPlan] = await Promise.all([
         AsyncStorage.getItem("favorites"),
@@ -78,19 +83,6 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
       }
     } catch {}
   };
-
-  useEffect(() => {
-    if (!customerInfo?.activeSubscriptions?.length) return;
-
-    const found = derivePlanFromSubscriptions(
-      customerInfo.activeSubscriptions
-    );
-
-    if (found && found !== plan) {
-      setPlan(found);
-      AsyncStorage.setItem("plan", found).catch(() => {});
-    }
-  }, [customerInfo, plan]);
 
   const isTrialActive = useMemo(() => {
     if (!trialEndsAt) return false;
@@ -167,4 +159,3 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     resetOnboarding,
   };
 });
-
