@@ -73,7 +73,7 @@ app.post('/api/ai/chat', async (c) => {
     const message = body?.message ?? '';
     if (!message) return c.json({ error: 'message is required' }, 400);
 
-    const apiKey = process.env.OPENAI_API_KEY || (await import('@/config/secrets')).OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || (await import('@/secrets')).OPENAI_API_KEY;
     if (!apiKey) return c.json({ error: 'OPENAI_API_KEY not configured' }, 500);
 
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
@@ -103,7 +103,8 @@ app.post('/api/ai/chat', async (c) => {
     const data = (await res.json()) as any;
     const content = data?.choices?.[0]?.message?.content as string | undefined;
     return c.json({ result: content ?? "I'm here to help! Could you provide more details about your situation?" });
-  } catch (e) {
+  } catch (error) {
+    console.error('[chat-hono] exception', error);
     return c.json({ error: 'AI request failed' }, 500);
   }
 });
@@ -118,7 +119,7 @@ app.post('/api/ai/pickup', async (c) => {
       return c.json({ error: 'tone and spiceLevel are required' }, 400);
     }
 
-    const apiKey = process.env.OPENAI_API_KEY || (await import('@/config/secrets')).OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || (await import('@/secrets')).OPENAI_API_KEY;
     if (!apiKey) {
       return c.json({ error: 'OPENAI_API_KEY not configured' }, 500);
     }
@@ -212,7 +213,7 @@ app.post('/api/ai/screenshot', async (c) => {
     const { base64Image, amplifyBold, targetType } = body;
     if (!base64Image) return c.json({ error: 'base64Image is required' }, 400);
 
-    const apiKey = process.env.OPENAI_API_KEY || (await import('@/config/secrets')).OPENAI_API_KEY;
+    const apiKey = process.env.OPENAI_API_KEY || (await import('@/secrets')).OPENAI_API_KEY;
     if (!apiKey) return c.json({ error: 'OPENAI_API_KEY not configured' }, 500);
 
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
@@ -277,7 +278,8 @@ app.post('/api/ai/screenshot', async (c) => {
     };
 
     return c.json({ result: parsed ?? fallback });
-  } catch (e) {
+  } catch (error) {
+    console.error('[screenshot-hono] exception', error);
     return c.json({ error: 'AI request failed' }, 500);
   }
 });

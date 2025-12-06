@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Platform } from "react-native";
+import { AppState, Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -10,8 +10,8 @@ import type {
   PurchasesPackage,
 } from "react-native-purchases";
 
-import { REVENUECAT_API_KEY } from "../src/secrets";
-import Purchases, { LOG_LEVEL } from "../services/revenuecatModule";
+import { REVENUECAT_API_KEY } from "@/secrets";
+import Purchases, { configureRevenueCat } from "@/services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "lifetime";
 
@@ -39,6 +39,8 @@ const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
   lifetime: ["lifetime", "annual", "rc_annual", "rizzgoat.lifetime"],
 };
 
+const ENTITLEMENT_ID = "pro";
+
 export const [RevenueCatProvider, useRevenueCat] =
   createContextHook<RevenueCatContextValue>(() => {
     const isSupported =
@@ -48,6 +50,9 @@ export const [RevenueCatProvider, useRevenueCat] =
 
     const queryClient = useQueryClient();
     const [isConfigured, setIsConfigured] = useState(false);
+    const [configuredAppUserId, setConfiguredAppUserId] = useState<string | null>(
+      null,
+    );
     const [lastError, setLastError] = useState<string | null>(null);
 
     const initialize = useCallback(
@@ -57,7 +62,12 @@ export const [RevenueCatProvider, useRevenueCat] =
           setLastError(message);
           return;
         }
-        if (isConfigured) return;
+
+        const normalizedUserId = appUserId ?? null;
+
+        if (isConfigured && configuredAppUserId === normalizedUserId) {
+          return;
+        }
 
         if (!REVENUECAT_API_KEY) {
           const message =
@@ -67,23 +77,9 @@ export const [RevenueCatProvider, useRevenueCat] =
         }
 
         try {
-          if (LOG_LEVEL && typeof Purchases.setLogLevel === "function") {
-            const chosenLevel =
-              LOG_LEVEL.DEBUG ??
-              LOG_LEVEL.INFO ??
-              LOG_LEVEL.WARN ??
-              LOG_LEVEL.ERROR ??
-              4;
-
-            Purchases.setLogLevel(chosenLevel);
-          }
-
-          await Purchases.configure({
-            apiKey: REVENUECAT_API_KEY,
-            appUserID: appUserId ?? undefined,
-          });
-
+          await configureRevenueCat(normalizedUserId ?? undefined);
           setIsConfigured(true);
+          setConfiguredAppUserId(normalizedUserId);
           setLastError(null);
         } catch (error) {
           const message =
@@ -92,7 +88,7 @@ export const [RevenueCatProvider, useRevenueCat] =
           throw error;
         }
       },
-      [isConfigured, isSupported]
+      [configuredAppUserId, isConfigured, isSupported],
     );
 
     useEffect(() => {
@@ -144,6 +140,19 @@ export const [RevenueCatProvider, useRevenueCat] =
       refetchInterval: 60000,
     });
 
+    useEffect(() => {
+      if (!isSupported || !isConfigured) return;
+      const subscription = AppState.addEventListener("change", (status) => {
+        if (status === "active") {
+          refetchCustomerInfo();
+        }
+      });
+
+      return () => {
+        subscription.remove();
+      };
+    }, [isConfigured, isSupported, refetchCustomerInfo]);
+
     const availablePackages = useMemo(() => {
       if (!offeringsData) return [];
       const result: PurchasesPackage[] = [];
@@ -154,7 +163,7 @@ export const [RevenueCatProvider, useRevenueCat] =
         Object.values(offeringsData.all).forEach((o) => o && allOfferings.push(o));
 
       allOfferings.forEach((o) =>
-        o.availablePackages.forEach((pkg) => result.push(pkg))
+        o.availablePackages.forEach((pkg) => result.push(pkg)),
       );
 
       return result;
@@ -171,7 +180,7 @@ export const [RevenueCatProvider, useRevenueCat] =
           }) ?? null
         );
       },
-      [availablePackages]
+      [availablePackages],
     );
 
     const {
@@ -220,19 +229,15 @@ export const [RevenueCatProvider, useRevenueCat] =
         await refetchCustomerInfo();
         return info ?? null;
       },
-      [
-        getPackageForPlan,
-        initialize,
-        purchasePackageAsync,
-        refetchCustomerInfo,
-      ]
+      [getPackageForPlan, initialize, purchasePackageAsync, refetchCustomerInfo],
     );
 
     const restore = useCallback(async () => {
+      await initialize();
       const info = await restorePurchasesAsync();
       await refetchCustomerInfo();
       return info ?? null;
-    }, [restorePurchasesAsync, refetchCustomerInfo]);
+    }, [initialize, refetchCustomerInfo, restorePurchasesAsync]);
 
     const refreshOfferings = useCallback(async () => {
       await refetchOfferings();
@@ -244,8 +249,8 @@ export const [RevenueCatProvider, useRevenueCat] =
 
     const currentOffering = offeringsData?.current ?? null;
     const isEntitledToPro = useMemo(
-      () => Boolean(customerInfo?.entitlements?.active?.["RizzGoat Pro"]),
-      [customerInfo]
+      () => Boolean(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]),
+      [customerInfo],
     );
 
     const isLoading =
@@ -273,4 +278,3 @@ export const [RevenueCatProvider, useRevenueCat] =
       restore,
     };
   });
-
