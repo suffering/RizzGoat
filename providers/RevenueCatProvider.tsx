@@ -41,6 +41,7 @@ const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
 };
 
 const ENTITLEMENT_ID = "pro";
+const PRIMARY_OFFERING_ID = "ofrngb5fd12e734";
 
 export const [RevenueCatProvider, useRevenueCat] =
   createContextHook<RevenueCatContextValue>(() => {
@@ -154,25 +155,13 @@ export const [RevenueCatProvider, useRevenueCat] =
       };
     }, [isConfigured, isSupported, refetchCustomerInfo]);
 
-    const availablePackages = useMemo(() => {
-      if (!offeringsData) return [];
-      const result: PurchasesPackage[] = [];
-      const allOfferings: PurchasesOffering[] = [];
-
-      if (offeringsData.current) allOfferings.push(offeringsData.current);
-      if (offeringsData.all)
-        Object.values(offeringsData.all).forEach((o) => o && allOfferings.push(o));
-
-      allOfferings.forEach((o) =>
-        o.availablePackages.forEach((pkg) => result.push(pkg)),
-      );
-
-      return result;
-    }, [offeringsData]);
-
     const currentOffering = useMemo(() => {
-      if (offeringsData?.current) return offeringsData.current;
-      if (offeringsData?.all) {
+      if (!offeringsData) return null;
+      if (offeringsData.all?.[PRIMARY_OFFERING_ID]) {
+        return offeringsData.all[PRIMARY_OFFERING_ID];
+      }
+      if (offeringsData.current) return offeringsData.current;
+      if (offeringsData.all) {
         const first = Object.values(offeringsData.all).find(
           (offering): offering is PurchasesOffering => Boolean(offering),
         );
@@ -180,6 +169,20 @@ export const [RevenueCatProvider, useRevenueCat] =
       }
       return null;
     }, [offeringsData]);
+
+    const availablePackages = useMemo(() => {
+      if (currentOffering) {
+        return [...currentOffering.availablePackages];
+      }
+      if (!offeringsData) return [];
+      const fallback: PurchasesPackage[] = [];
+      if (offeringsData.all) {
+        Object.values(offeringsData.all).forEach((offering) => {
+          offering?.availablePackages.forEach((pkg) => fallback.push(pkg));
+        });
+      }
+      return fallback;
+    }, [currentOffering, offeringsData]);
 
     const getPackageForPlan = useCallback(
       (plan: PlanProductId) => {
