@@ -20,20 +20,18 @@ interface UserProfile {
 
 type Plan = PlanProductId | null;
 
+const YEARLY_MATCHERS = ["year", "annual", "12month", "rc_annual"] as const;
+const LIFETIME_MATCHERS = ["lifetime", "rizzgoat.lifetime", "payonce"] as const;
+
 const derivePlanFromSubscriptions = (s?: string[] | null): Plan => {
   if (!s || !s.length) return null;
 
   const v = s.map((x) => x.toLowerCase());
   if (v.some((x) => x.includes("weekly"))) return "weekly";
   if (v.some((x) => x.includes("monthly"))) return "monthly";
-  if (
-    v.some(
-      (x) =>
-        x.includes("lifetime") ||
-        x.includes("rizzgoat.lifetime") ||
-        x.includes("annual")
-    )
-  )
+  if (v.some((x) => YEARLY_MATCHERS.some((matcher) => x.includes(matcher))))
+    return "yearly";
+  if (v.some((x) => LIFETIME_MATCHERS.some((matcher) => x.includes(matcher))))
     return "lifetime";
 
   return null;

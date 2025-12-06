@@ -13,7 +13,7 @@ import type {
 import { REVENUECAT_API_KEY } from "../src/secrets";
 import Purchases, { LOG_LEVEL } from "../services/revenuecatModule";
 
-export type PlanProductId = "weekly" | "monthly" | "lifetime";
+export type PlanProductId = "weekly" | "monthly" | "yearly" | "lifetime";
 
 interface RevenueCatContextValue {
   isSupported: boolean;
@@ -31,12 +31,14 @@ interface RevenueCatContextValue {
   refreshCustomerInfo: () => Promise<void>;
   purchasePlan: (plan: PlanProductId) => Promise<CustomerInfo | null>;
   restore: () => Promise<CustomerInfo | null>;
+  getPackageForPlan: (plan: PlanProductId) => PurchasesPackage | null;
 }
 
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
-  weekly: ["weekly"],
-  monthly: ["monthly"],
-  lifetime: ["lifetime", "annual", "rc_annual", "rizzgoat.lifetime"],
+  weekly: ["week", "rc_weekly", "weekly"],
+  monthly: ["month", "rc_monthly", "monthly"],
+  yearly: ["year", "annual", "rc_annual", "12month"],
+  lifetime: ["lifetime", "rc_lifetime", "payonce"],
 };
 
 export const [RevenueCatProvider, useRevenueCat] =
@@ -271,6 +273,7 @@ export const [RevenueCatProvider, useRevenueCat] =
       refreshCustomerInfo,
       purchasePlan,
       restore,
+      getPackageForPlan,
     };
   });
 
