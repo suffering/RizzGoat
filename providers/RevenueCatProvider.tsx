@@ -35,13 +35,13 @@ interface RevenueCatContextValue {
 }
 
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
-  weekly: ["weekly"],
-  monthly: ["monthly"],
-  lifetime: ["lifetime", "annual", "rc_annual", "rizzgoat.lifetime"],
+  weekly: ["rizzgoat.weekly"],
+  monthly: ["rizzgoat.monthly"],
+  lifetime: ["rizzgoat.lifetime"],
 };
 
 const ENTITLEMENT_ID = "pro";
-const PRIMARY_OFFERING_ID = "ofrngb5fd12e734";
+const PRIMARY_OFFERING_ID = "default";
 
 export const [RevenueCatProvider, useRevenueCat] =
   createContextHook<RevenueCatContextValue>(() => {
