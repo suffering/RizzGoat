@@ -31,6 +31,7 @@ interface RevenueCatContextValue {
   refreshCustomerInfo: () => Promise<void>;
   purchasePlan: (plan: PlanProductId) => Promise<CustomerInfo | null>;
   restore: () => Promise<CustomerInfo | null>;
+  getPackageForPlan: (plan: PlanProductId) => PurchasesPackage | null;
 }
 
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
@@ -169,6 +170,17 @@ export const [RevenueCatProvider, useRevenueCat] =
       return result;
     }, [offeringsData]);
 
+    const currentOffering = useMemo(() => {
+      if (offeringsData?.current) return offeringsData.current;
+      if (offeringsData?.all) {
+        const first = Object.values(offeringsData.all).find(
+          (offering): offering is PurchasesOffering => Boolean(offering),
+        );
+        if (first) return first;
+      }
+      return null;
+    }, [offeringsData]);
+
     const getPackageForPlan = useCallback(
       (plan: PlanProductId) => {
         const matchers = PACKAGE_MATCHERS[plan];
@@ -247,7 +259,6 @@ export const [RevenueCatProvider, useRevenueCat] =
       await refetchCustomerInfo();
     }, [refetchCustomerInfo]);
 
-    const currentOffering = offeringsData?.current ?? null;
     const isEntitledToPro = useMemo(
       () => Boolean(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]),
       [customerInfo],
@@ -276,5 +287,6 @@ export const [RevenueCatProvider, useRevenueCat] =
       refreshCustomerInfo,
       purchasePlan,
       restore,
+      getPackageForPlan,
     };
   });

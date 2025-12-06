@@ -8,15 +8,24 @@ import {
   Animated,
   Alert,
   Platform,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
-import { X, Check, Sparkles, Zap, Crown, Crown as CrownIcon } from "lucide-react-native";
+import {
+  X,
+  Check,
+  Sparkles,
+  Zap,
+  Crown,
+  Crown as CrownIcon,
+} from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
-import { useRevenueCat } from "@/providers/RevenueCatProvider";
+import { PlanProductId, useRevenueCat } from "@/providers/RevenueCatProvider";
 import * as Haptics from "expo-haptics";
+import type { PurchasesPackage } from "react-native-purchases";
 
 const FEATURES = [
   { text: "Unlimited pickup lines", pro: true },
@@ -29,28 +38,96 @@ const FEATURES = [
   { text: "24/7 priority support", pro: true },
 ];
 
+type PlanMeta = {
+  id: PlanProductId;
+  label: string;
+  tag: string;
+  periodLabel: string;
+  description: string;
+  gradient: readonly [string, string];
+  badge: "sparkles" | "crown" | "zap";
+  testID: string;
+};
+
+const PLAN_META: PlanMeta[] = [
+  {
+    id: "weekly",
+    label: "Weekly Flex",
+    tag: "FLEX",
+    periodLabel: "per week",
+    description: "Test new drops with max flexibility",
+    gradient: ["#E3222B", "#FF7A59"],
+    badge: "sparkles",
+    testID: "plan-weekly",
+  },
+  {
+    id: "monthly",
+    label: "Monthly Momentum",
+    tag: "POPULAR",
+    periodLabel: "per month",
+    description: "Balanced value for consistent rizz",
+    gradient: ["#8B5CF6", "#A78BFA"],
+    badge: "crown",
+    testID: "plan-monthly",
+  },
+  {
+    id: "lifetime",
+    label: "Lifetime Elite",
+    tag: "BEST VALUE",
+    periodLabel: "one-time purchase",
+    description: "Own the crown forever",
+    gradient: ["#10B981", "#34D399"],
+    badge: "zap",
+    testID: "plan-lifetime",
+  },
+];
+
+type PlanOption = {
+  meta: PlanMeta;
+  pkg: PurchasesPackage;
+};
+
 export default function ProScreen() {
   const router = useRouter();
   const { theme } = useTheme();
   const { isTrialActive, startFreeTrial, subscribe } = useAppState();
-  const { currentOffering } = useRevenueCat();
+  const {
+    isLoading: isRevenueCatLoading,
+    isPurchasing,
+    lastError,
+    refreshOfferings,
+    getPackageForPlan,
+  } = useRevenueCat();
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const featuresAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.sequence([
-      Animated.spring(scaleAnim, { toValue: 1, friction: 3, tension: 40, useNativeDriver: true }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        friction: 3,
+        tension: 40,
+        useNativeDriver: true,
+      }),
       Animated.timing(featuresAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
     ]).start();
-  }, []);
+  }, [featuresAnim, scaleAnim]);
 
-  const weekly = currentOffering?.availablePackages?.find(p => p.identifier.toLowerCase().includes("week"));
-  const monthly = currentOffering?.availablePackages?.find(p => p.identifier.toLowerCase().includes("month"));
-  const lifetime = currentOffering?.availablePackages?.find(p =>
-    p.product.identifier.toLowerCase().includes("lifetime") ||
-    p.identifier.toLowerCase().includes("annual")
-  );
+  useEffect(() => {
+    refreshOfferings().catch(() => {});
+  }, [refreshOfferings]);
+
+  const planOptions = useMemo<PlanOption[]>(() => {
+    return PLAN_META.map((meta) => {
+      const pkg = getPackageForPlan(meta.id);
+      if (!pkg) return null;
+      return { meta, pkg };
+    }).filter((option): option is PlanOption => Boolean(option));
+  }, [getPackageForPlan]);
+
+  const isPlansLoading = isRevenueCatLoading && planOptions.length === 0;
+  const planButtonLabel = isPurchasing ? "Processing..." : "Continue";
 
   const handleStartTrial = async () => {
     try {
@@ -61,23 +138,37 @@ export default function ProScreen() {
       Alert.alert("Trial Activated", "Enjoy 3 days of Pro features.");
       if (router.canGoBack()) router.back();
       else router.replace("/");
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Could not start trial. Please try again.");
     }
   };
 
-  const handleSubscribe = async (p: "weekly" | "monthly" | "lifetime") => {
+  const handleSubscribe = async (plan: PlanProductId) => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
-      await subscribe(p);
+      await subscribe(plan);
       Alert.alert("Subscribed", "Your plan is now active.");
       if (router.canGoBack()) router.back();
       else router.replace("/");
-    } catch (e) {
+    } catch {
       Alert.alert("Error", "Subscription failed. Please try again.");
     }
+  };
+
+  const handleRefreshProducts = async () => {
+    try {
+      await refreshOfferings();
+    } catch {
+      Alert.alert("Error", "Could not refresh plans. Please try again.");
+    }
+  };
+
+  const renderBadgeIcon = (badge: PlanMeta["badge"]) => {
+    if (badge === "sparkles") return <Sparkles size={14} color="#FFFFFF" style={styles.planTagIcon} />;
+    if (badge === "crown") return <Crown size={14} color="#FFFFFF" style={styles.planTagIcon} />;
+    return <Zap size={14} color="#FFFFFF" style={styles.planTagIcon} />;
   };
 
   return (
@@ -100,7 +191,8 @@ export default function ProScreen() {
         </View>
 
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <Animated.View style={[styles.heroSection, { transform: [{ scale: scaleAnim }] }]}>
+          <Animated.View style={[styles.heroSection, { transform: [{ scale: scaleAnim }] }]}
+            testID="pro-hero">
             <View style={styles.brandRow}>
               <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.brandBadge}>
                 <CrownIcon size={18} color="#FFFFFF" />
@@ -114,7 +206,9 @@ export default function ProScreen() {
             </View>
             <Text style={styles.title}>{isTrialActive ? "Choose your plan" : "Unlock the full experience"}</Text>
             <Text style={styles.subtitle}>
-              {isTrialActive ? "Your 3-day trial is active. Pick a plan to continue afterward." : "Start a 3-day free trial. Cancel anytime."}
+              {isTrialActive
+                ? "Your 3-day trial is active. Pick a plan to continue afterward."
+                : "Start a 3-day free trial. Cancel anytime."}
             </Text>
           </Animated.View>
 
@@ -129,7 +223,7 @@ export default function ProScreen() {
             ))}
           </Animated.View>
 
-          {!isTrialActive ? (
+          {!isTrialActive && (
             <View style={styles.ctaSection}>
               <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
                 <Text style={styles.ctaTitle}>3-Day Free Trial</Text>
@@ -139,64 +233,72 @@ export default function ProScreen() {
                 </TouchableOpacity>
               </LinearGradient>
             </View>
-          ) : (
-            <View style={styles.plansSection}>
-
-              {weekly && (
-                <TouchableOpacity onPress={() => handleSubscribe("weekly")} style={styles.planCard} activeOpacity={0.9} testID="plan-weekly">
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planName}>{weekly.product.title}</Text>
-                    <View style={styles.popularBadge}><Text style={styles.popularText}>FLEX</Text></View>
-                  </View>
-                  <Text style={styles.planPrice}>{weekly.product.priceString}</Text>
-                  <Text style={styles.planPeriod}>per week</Text>
-                  <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.planButton}>
-                    <Text style={styles.planButtonText}>Continue</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-
-              {monthly && (
-                <TouchableOpacity onPress={() => handleSubscribe("monthly")} style={styles.planCard} activeOpacity={0.9} testID="plan-monthly">
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planName}>{monthly.product.title}</Text>
-                    <View style={styles.popularBadge}><Text style={styles.popularText}>POPULAR</Text></View>
-                  </View>
-                  <Text style={styles.planPrice}>{monthly.product.priceString}</Text>
-                  <Text style={styles.planPeriod}>per month</Text>
-                  <LinearGradient colors={["#8B5CF6", "#A78BFA"]} style={styles.planButton}>
-                    <Text style={styles.planButtonText}>Continue</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-
-              {lifetime && (
-                <TouchableOpacity onPress={() => handleSubscribe("lifetime")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-lifetime">
-                  <View style={styles.bestValueBadge}>
-                    <Zap size={16} color="#FFFFFF" />
-                    <Text style={styles.bestValueText}>BEST VALUE</Text>
-                  </View>
-                  <View style={styles.planHeader}>
-                    <Text style={styles.planName}>{lifetime.product.title}</Text>
-                    <Text style={styles.saveBadge}>One-time purchase</Text>
-                  </View>
-                  <Text style={styles.planPrice}>{lifetime.product.priceString}</Text>
-                  <Text style={styles.planPeriod}>pay once, Pro forever</Text>
-                  <LinearGradient colors={["#10B981", "#34D399"]} style={styles.planButton}>
-                    <Text style={styles.planButtonText}>Continue</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
-              )}
-
-            </View>
           )}
+
+          <View style={styles.plansSection}>
+            <View style={styles.plansHeader}>
+              <Text style={styles.plansTitle}>Choose your plan</Text>
+              <TouchableOpacity onPress={handleRefreshProducts} disabled={isPurchasing} testID="refresh-plans-btn">
+                <Text style={styles.refreshLink}>Refresh</Text>
+              </TouchableOpacity>
+            </View>
+
+            {lastError && (
+              <View style={styles.errorCard} testID="revenuecat-error">
+                <Text style={styles.errorText}>{lastError}</Text>
+              </View>
+            )}
+
+            {isPlansLoading && (
+              <View style={styles.loadingCard} testID="plans-loading">
+                <ActivityIndicator color="#FF7A59" />
+                <Text style={styles.loadingText}>Loading live prices...</Text>
+              </View>
+            )}
+
+            {!isPlansLoading && planOptions.length === 0 && (
+              <View style={styles.emptyStateCard} testID="plans-empty">
+                <Text style={styles.emptyTitle}>Products unavailable</Text>
+                <Text style={styles.emptySubtitle}>Tap refresh to pull them from RevenueCat now that the API key is set.</Text>
+                <TouchableOpacity style={styles.refreshButton} onPress={handleRefreshProducts} testID="refresh-offerings-btn">
+                  <Text style={styles.refreshButtonText}>Refresh products</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {planOptions.map(({ meta, pkg }) => (
+              <TouchableOpacity
+                key={meta.id}
+                onPress={() => handleSubscribe(meta.id)}
+                style={[styles.planCard, meta.id === "lifetime" && styles.planCardHighlight]}
+                activeOpacity={0.9}
+                testID={meta.testID}
+                disabled={isPurchasing}
+                accessibilityState={{ disabled: isPurchasing }}
+              >
+                <View style={styles.planHeader}>
+                  <Text style={styles.planName}>{pkg.product.title || meta.label}</Text>
+                  <View style={[styles.planTag, meta.badge === "zap" ? styles.planTagSuccess : styles.planTagAccent]}>
+                    {renderBadgeIcon(meta.badge)}
+                    <Text style={styles.planTagText}>{meta.tag}</Text>
+                  </View>
+                </View>
+                <Text style={styles.planDescription}>{meta.description}</Text>
+                <Text style={styles.planPrice}>{pkg.product.priceString}</Text>
+                <Text style={styles.planPeriod}>{meta.periodLabel}</Text>
+                <LinearGradient colors={[...meta.gradient]} style={styles.planButton}>
+                  <Text style={styles.planButtonText}>{planButtonLabel}</Text>
+                </LinearGradient>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <Text style={styles.terms}>
             • 3-day free trial then chosen plan applies{"\n"}
             • Cancel weekly or monthly anytime in Settings{"\n"}
             • Lifetime is a one-time purchase{"\n"}
-            • Prices pulled dynamically from RevenueCat{"\n"}
-            • Prices in your region currency
+            • Prices pulled live from RevenueCat offerings{"\n"}
+            • Displayed in your local currency
           </Text>
         </ScrollView>
       </SafeAreaView>
@@ -207,7 +309,15 @@ export default function ProScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   bg: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0 },
-  topGlow: { position: "absolute", left: -60, right: -60, top: -40, height: 360, borderBottomLeftRadius: 300, borderBottomRightRadius: 300 },
+  topGlow: {
+    position: "absolute",
+    left: -60,
+    right: -60,
+    top: -40,
+    height: 360,
+    borderBottomLeftRadius: 300,
+    borderBottomRightRadius: 300,
+  },
   safeArea: { flex: 1 },
   header: { alignItems: "flex-end", paddingHorizontal: 20, paddingVertical: 16 },
   closeButton: { padding: 8 },
@@ -221,9 +331,23 @@ const styles = StyleSheet.create({
   sparkle2: { position: "absolute", bottom: -5, left: -15 },
   title: { fontSize: 28, fontWeight: "800", color: "#FFFFFF", textAlign: "center", marginBottom: 10 },
   subtitle: { fontSize: 14, color: "rgba(255, 255, 255, 0.9)", textAlign: "center" },
-  featuresSection: { backgroundColor: "rgba(255, 255, 255, 0.95)", borderRadius: 20, padding: 20, marginTop: 18, marginBottom: 22 },
+  featuresSection: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
+    padding: 20,
+    marginTop: 18,
+    marginBottom: 22,
+  },
   featureRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
-  checkContainer: { width: 24, height: 24, borderRadius: 12, backgroundColor: "rgba(16,185,129,0.12)", justifyContent: "center", alignItems: "center", marginRight: 12 },
+  checkContainer: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: "rgba(16,185,129,0.12)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  },
   featureText: { fontSize: 15, color: "#000000", flex: 1 },
   ctaSection: { marginBottom: 24 },
   ctaCard: { borderRadius: 20, padding: 24, alignItems: "center" },
@@ -232,18 +356,57 @@ const styles = StyleSheet.create({
   ctaButton: { backgroundColor: "#000000", paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12 },
   ctaButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800", letterSpacing: 0.3 },
   plansSection: { gap: 16, marginBottom: 24 },
-  planCard: { backgroundColor: "rgba(255,255,255,0.96)", borderRadius: 20, padding: 24, position: "relative" },
-  bestValueCard: { borderWidth: 2, borderColor: "#10B981" },
-  bestValueBadge: { position: "absolute", top: -12, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 4, backgroundColor: "#10B981", paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 },
-  bestValueText: { color: "#FFFFFF", fontSize: 12, fontWeight: "700" },
+  plansHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  plansTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
+  refreshLink: { color: "#FF7A59", fontSize: 13, fontWeight: "600" },
+  planCard: {
+    backgroundColor: "rgba(255,255,255,0.96)",
+    borderRadius: 20,
+    padding: 24,
+    position: "relative",
+    marginBottom: 8,
+  },
+  planCardHighlight: { borderWidth: 2, borderColor: "#10B981" },
   planHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  planName: { fontSize: 20, fontWeight: "700", color: "#000000" },
-  popularBadge: { backgroundColor: "#FEE2E2", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
-  popularText: { fontSize: 10, fontWeight: "700", color: "#E3222B" },
-  saveBadge: { fontSize: 14, fontWeight: "600", color: "#10B981" },
+  planName: { fontSize: 20, fontWeight: "700", color: "#000000", flex: 1, marginRight: 12 },
+  planTag: { flexDirection: "row", alignItems: "center", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
+  planTagIcon: { marginRight: 4 },
+  planTagText: { color: "#FFFFFF", fontSize: 11, fontWeight: "700" },
+  planTagAccent: { backgroundColor: "#E3222B" },
+  planTagSuccess: { backgroundColor: "#10B981" },
+  planDescription: { fontSize: 14, color: "rgba(0,0,0,0.7)", marginBottom: 16 },
   planPrice: { fontSize: 32, fontWeight: "800", color: "#000000", marginBottom: 4 },
   planPeriod: { fontSize: 14, color: "rgba(0,0,0,0.6)", marginBottom: 16 },
   planButton: { paddingVertical: 14, borderRadius: 12, alignItems: "center" },
   planButtonText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
-  terms: { fontSize: 12, color: "rgba(255,255,255,0.8)", textAlign: "center", lineHeight: 18 },
+  errorCard: {
+    borderRadius: 16,
+    backgroundColor: "rgba(227,34,43,0.15)",
+    padding: 16,
+  },
+  errorText: { color: "#FFB4A6", fontSize: 13 },
+  loadingCard: {
+    borderRadius: 18,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+    padding: 20,
+    alignItems: "center",
+  },
+  loadingText: { marginTop: 12, color: "rgba(255,255,255,0.75)", fontSize: 14 },
+  emptyStateCard: {
+    borderRadius: 18,
+    padding: 20,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+  },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF", marginBottom: 6 },
+  emptySubtitle: { fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "center", marginBottom: 16 },
+  refreshButton: { borderRadius: 12, backgroundColor: "#FF7A59", paddingHorizontal: 20, paddingVertical: 10 },
+  refreshButtonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
+  terms: {
+    fontSize: 12,
+    color: "rgba(255,255,255,0.8)",
+    textAlign: "center",
+    lineHeight: 18,
+  },
 });
