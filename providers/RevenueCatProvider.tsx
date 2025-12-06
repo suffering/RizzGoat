@@ -10,7 +10,7 @@ import type {
   PurchasesPackage,
 } from "react-native-purchases";
 
-import { REVENUECAT_API_KEY } from "../src/secrets";
+import { REVENUECAT_API_KEY } from "@/config/secrets";
 import Purchases, { LOG_LEVEL } from "../services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "yearly" | "lifetime";
