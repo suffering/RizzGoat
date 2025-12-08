@@ -19,20 +19,29 @@ const combinedExtra: ExtraBag = {
 const readString = (value: unknown): string | undefined =>
   typeof value === "string" && value.length > 0 ? value : undefined;
 
-const fromExtra = (key: string): string | undefined => readString(combinedExtra[key]);
+const fromExtra = (...keys: string[]): string | undefined => {
+  for (const key of keys) {
+    const value = readString(combinedExtra[key]);
+    if (value) return value;
+  }
+  return undefined;
+};
 
-const openAiEnv =
-  typeof process !== "undefined" && typeof process.env !== "undefined"
-    ? readString(process.env.OPENAI_API_KEY)
-    : undefined;
-
-const revenueCatEnv =
-  typeof process !== "undefined" && typeof process.env !== "undefined"
-    ? readString(process.env.EXPO_PUBLIC_REVENUECAT_API_KEY)
-    : undefined;
+const readEnv = (...keys: string[]): string | undefined => {
+  if (typeof process === "undefined" || typeof process.env === "undefined") {
+    return undefined;
+  }
+  for (const key of keys) {
+    const value = readString(process.env[key]);
+    if (value) return value;
+  }
+  return undefined;
+};
 
 export const OPENAI_API_KEY: string =
-  fromExtra("OPENAI_API_KEY") ?? openAiEnv ?? "";
+  fromExtra("OPENAI_API_KEY") ?? readEnv("OPENAI_API_KEY") ?? "";
 
 export const REVENUECAT_API_KEY: string =
-  fromExtra("EXPO_PUBLIC_REVENUECAT_API_KEY") ?? revenueCatEnv ?? "";
+  fromExtra("EXPO_PUBLIC_REVENUECAT_API_KEY", "REVENUECAT_API_KEY") ??
+  readEnv("EXPO_PUBLIC_REVENUECAT_API_KEY", "REVENUECAT_API_KEY") ??
+  "";
