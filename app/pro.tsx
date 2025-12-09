@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo, useState } from "react";
+import React, { useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -39,6 +39,8 @@ const FEATURES = [
   { text: "Early access to new features", pro: true },
   { text: "24/7 priority support", pro: true },
 ];
+
+const FEATURED_FEATURES = FEATURES.slice(0, 4);
 
 type PlanMeta = {
   id: PlanProductId;
@@ -128,7 +130,6 @@ export default function ProScreen() {
   const scaleAnim = useRef(new Animated.Value(0)).current;
   const featuresAnim = useRef(new Animated.Value(0)).current;
   const autoPaywallShown = useRef(false);
-  const [activePlanId, setActivePlanId] = useState<PlanProductId | null>(null);
 
   useEffect(() => {
     Animated.sequence([
@@ -207,7 +208,6 @@ export default function ProScreen() {
 
   const handleSubscribe = async (plan: PlanProductId) => {
     try {
-      setActivePlanId(plan);
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
       }
@@ -223,8 +223,6 @@ export default function ProScreen() {
         "Subscription failed",
         (error as Error)?.message ?? lastError ?? "Please try again.",
       );
-    } finally {
-      setActivePlanId(null);
     }
   };
 
@@ -275,11 +273,6 @@ export default function ProScreen() {
       return <Crown size={14} color="#FFFFFF" style={styles.planTagIcon} />;
     }
     return <Zap size={14} color="#FFFFFF" style={styles.planTagIcon} />;
-  };
-
-  const renderPlanButtonText = (planId: PlanProductId) => {
-    if (isPurchasing && activePlanId === planId) return "Processing...";
-    return "Continue";
   };
 
   return (
@@ -335,8 +328,12 @@ export default function ProScreen() {
             </Text>
           </Animated.View>
 
-          <Animated.View style={[styles.featuresSection, { opacity: featuresAnim }]}>
-            {FEATURES.map((feature, index) => (
+          <Animated.View
+            style={[styles.featuresSection, { opacity: featuresAnim }]}
+            testID="pro-feature-list"
+          >
+            <Text style={styles.featuresHeading}>Why creators upgrade</Text>
+            {FEATURED_FEATURES.map((feature, index) => (
               <View key={index} style={styles.featureRow}>
                 <View style={styles.checkContainer}>
                   <Check size={16} color="#10B981" />
@@ -345,6 +342,53 @@ export default function ProScreen() {
               </View>
             ))}
           </Animated.View>
+
+          <View style={styles.priceSection}>
+            <Text style={styles.priceTitle}>Live pricing</Text>
+            {isPlansLoading && (
+              <View style={styles.loadingCard} testID="live-prices-loading">
+                <ActivityIndicator color="#FF7A59" />
+                <Text style={styles.loadingText}>Fetching prices...</Text>
+              </View>
+            )}
+            {!isPlansLoading && planOptions.length === 0 && (
+              <View style={styles.emptyStateCard} testID="live-prices-empty">
+                <Text style={styles.emptyTitle}>Products unavailable</Text>
+                <Text style={styles.emptySubtitle}>
+                  Pull latest offerings from RevenueCat to show pricing here.
+                </Text>
+                <TouchableOpacity
+                  style={styles.refreshButton}
+                  onPress={refreshOfferings}
+                  testID="refresh-live-prices"
+                >
+                  <Text style={styles.refreshButtonText}>Refresh</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+            {planOptions.map(({ meta, pkg, trialStatus }) => (
+              <TouchableOpacity
+                key={`price-${meta.id}`}
+                onPress={() => handleSubscribe(meta.id)}
+                style={styles.priceRow}
+                activeOpacity={0.9}
+                disabled={isPurchasing}
+                testID={`${meta.testID}-price-row`}
+              >
+                <View style={styles.priceRowLeft}>
+                  <Text style={styles.priceRowLabel}>{pkg.product.title || meta.label}</Text>
+                  <Text style={styles.priceRowDescription}>{meta.description}</Text>
+                </View>
+                <View style={styles.priceRowRight}>
+                  <Text style={styles.priceRowPrice}>{pkg.product.priceString}</Text>
+                  <Text style={styles.priceRowPeriod}>{meta.periodLabel}</Text>
+                  {isTrialEligible(trialStatus) && (
+                    <Text style={styles.priceRowTrial}>Trial available</Text>
+                  )}
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
 
           <View style={styles.ctaSection}>
             <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
@@ -366,9 +410,9 @@ export default function ProScreen() {
 
           <View style={styles.plansSection}>
             <View style={styles.plansHeader}>
-              <Text style={styles.plansTitle}>Choose your plan</Text>
+              <Text style={styles.plansTitle}>Need more context?</Text>
               <TouchableOpacity onPress={handleOpenPaywall} testID="open-paywall-inline">
-                <Text style={styles.refreshLink}>Show universal paywall</Text>
+                <Text style={styles.refreshLink}>Launch full paywall</Text>
               </TouchableOpacity>
             </View>
 
@@ -378,61 +422,16 @@ export default function ProScreen() {
               </View>
             )}
 
-            {isPlansLoading && (
-              <View style={styles.loadingCard} testID="plans-loading">
-                <ActivityIndicator color="#FF7A59" />
-                <Text style={styles.loadingText}>Loading live prices...</Text>
-              </View>
-            )}
-
-            {!isPlansLoading && planOptions.length === 0 && (
-              <View style={styles.emptyStateCard} testID="plans-empty">
-                <Text style={styles.emptyTitle}>Products unavailable</Text>
-                <Text style={styles.emptySubtitle}>
-                  Tap refresh to pull them from RevenueCat now that the API key is set.
-                </Text>
-                <TouchableOpacity
-                  style={styles.refreshButton}
-                  onPress={refreshOfferings}
-                  testID="refresh-offerings-btn"
-                >
-                  <Text style={styles.refreshButtonText}>Refresh products</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {planOptions.map(({ meta, pkg, trialStatus }) => (
-              <TouchableOpacity
-                key={meta.id}
-                onPress={() => handleSubscribe(meta.id)}
-                style={[styles.planCard, meta.id === "lifetime" && styles.planCardHighlight]}
-                activeOpacity={0.9}
-                testID={meta.testID}
-                disabled={isPurchasing}
-                accessibilityState={{ disabled: isPurchasing }}
-              >
-                <View style={styles.planHeader}>
-                  <Text style={styles.planName}>{pkg.product.title || meta.label}</Text>
-                  <View
-                    style={[
-                      styles.planTag,
-                      meta.badge === "zap" ? styles.planTagSuccess : styles.planTagAccent,
-                    ]}
-                  >
-                    {renderBadgeIcon(meta.badge)}
-                    <Text style={styles.planTagText}>{meta.tag}</Text>
-                  </View>
+            {PLAN_META.map((meta) => (
+              <View key={`${meta.id}-summary`} style={styles.planSummaryRow}>
+                <View style={styles.planSummaryLeft}>
+                  {renderBadgeIcon(meta.badge)}
+                  <Text style={styles.planSummaryText}>{meta.label}</Text>
                 </View>
-                <Text style={styles.planDescription}>{meta.description}</Text>
-                <Text style={styles.planPrice}>{pkg.product.priceString}</Text>
-                <Text style={styles.planPeriod}>{meta.periodLabel}</Text>
-                {isTrialEligible(trialStatus) && (
-                  <Text style={styles.planTrial}>Includes intro free trial</Text>
-                )}
-                <LinearGradient colors={[...meta.gradient]} style={styles.planButton}>
-                  <Text style={styles.planButtonText}>{renderPlanButtonText(meta.id)}</Text>
+                <LinearGradient colors={meta.gradient} style={styles.planSummaryBadge}>
+                  <Text style={styles.planSummaryBadgeText}>{meta.tag}</Text>
                 </LinearGradient>
-              </TouchableOpacity>
+              </View>
             ))}
           </View>
 
@@ -500,6 +499,12 @@ const styles = StyleSheet.create({
     marginTop: 18,
     marginBottom: 22,
   },
+  featuresHeading: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#0F0F10",
+    marginBottom: 16,
+  },
   featureRow: { flexDirection: "row", alignItems: "center", marginBottom: 14 },
   checkContainer: {
     width: 24,
@@ -511,6 +516,29 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   featureText: { fontSize: 15, color: "#000000", flex: 1 },
+  priceSection: {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 26,
+  },
+  priceTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700", marginBottom: 14 },
+  priceRow: {
+    backgroundColor: "rgba(255,255,255,0.95)",
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  priceRowLeft: { flex: 1, marginRight: 12 },
+  priceRowLabel: { fontSize: 16, fontWeight: "700", color: "#0F0F10" },
+  priceRowDescription: { fontSize: 13, color: "rgba(0,0,0,0.6)", marginTop: 2 },
+  priceRowRight: { alignItems: "flex-end" },
+  priceRowPrice: { fontSize: 20, fontWeight: "800", color: "#0F0F10" },
+  priceRowPeriod: { fontSize: 12, color: "rgba(0,0,0,0.5)", marginTop: 2 },
+  priceRowTrial: { fontSize: 11, color: "#059669", fontWeight: "600", marginTop: 4 },
   ctaSection: { marginBottom: 24 },
   ctaCard: { borderRadius: 20, padding: 24, alignItems: "center" },
   ctaTitle: { fontSize: 22, fontWeight: "800", color: "#FFFFFF", marginBottom: 6 },
@@ -522,31 +550,11 @@ const styles = StyleSheet.create({
   plansHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   plansTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
   refreshLink: { color: "#FF7A59", fontSize: 13, fontWeight: "600" },
-  planCard: {
-    backgroundColor: "rgba(255,255,255,0.96)",
-    borderRadius: 20,
-    padding: 24,
-    position: "relative",
-    marginBottom: 8,
-  },
-  planCardHighlight: { borderWidth: 2, borderColor: "#10B981" },
-  planHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  planName: { fontSize: 20, fontWeight: "700", color: "#000000", flex: 1, marginRight: 12 },
-  planTag: { flexDirection: "row", alignItems: "center", borderRadius: 999, paddingHorizontal: 10, paddingVertical: 4 },
-  planTagIcon: { marginRight: 4 },
-  planTagText: { color: "#FFFFFF", fontSize: 11, fontWeight: "700" },
-  planTagAccent: { backgroundColor: "#E3222B" },
-  planTagSuccess: { backgroundColor: "#10B981" },
-  planDescription: { fontSize: 14, color: "rgba(0,0,0,0.7)", marginBottom: 12 },
-  planPrice: { fontSize: 32, fontWeight: "800", color: "#000000", marginBottom: 2 },
-  planPeriod: { fontSize: 14, color: "rgba(0,0,0,0.6)", marginBottom: 12 },
-  planTrial: { fontSize: 12, color: "#059669", fontWeight: "600", marginBottom: 12 },
-  planButton: { paddingVertical: 14, borderRadius: 12, alignItems: "center" },
-  planButtonText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
   errorCard: {
     borderRadius: 16,
     backgroundColor: "rgba(227,34,43,0.15)",
     padding: 16,
+    marginBottom: 10,
   },
   errorText: { color: "#FFB4A6", fontSize: 13 },
   loadingCard: {
@@ -555,6 +563,7 @@ const styles = StyleSheet.create({
     borderColor: "rgba(255,255,255,0.12)",
     padding: 20,
     alignItems: "center",
+    marginBottom: 12,
   },
   loadingText: { marginTop: 12, color: "rgba(255,255,255,0.75)", fontSize: 14 },
   emptyStateCard: {
@@ -562,11 +571,27 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
+    marginBottom: 12,
   },
   emptyTitle: { fontSize: 18, fontWeight: "700", color: "#FFFFFF", marginBottom: 6 },
   emptySubtitle: { fontSize: 14, color: "rgba(255,255,255,0.75)", textAlign: "center", marginBottom: 16 },
   refreshButton: { borderRadius: 12, backgroundColor: "#FF7A59", paddingHorizontal: 20, paddingVertical: 10 },
   refreshButtonText: { color: "#FFFFFF", fontWeight: "700", fontSize: 14 },
+  planSummaryRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 10,
+  },
+  planSummaryLeft: { flexDirection: "row", alignItems: "center", gap: 8 },
+  planSummaryText: { color: "rgba(255,255,255,0.9)", fontSize: 14, fontWeight: "600" },
+  planSummaryBadge: {
+    borderRadius: 999,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+  },
+  planSummaryBadgeText: { color: "#FFFFFF", fontSize: 11, fontWeight: "700" },
+  planTagIcon: { marginRight: 4 },
   footerActions: {
     flexDirection: "row",
     justifyContent: "space-between",
