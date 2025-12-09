@@ -43,6 +43,7 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
   const { isEntitledToPro, purchasePlan, customerInfo } = useRevenueCat();
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [referralCount, setReferralCount] = useState(0);
+  const [trialEndsAt, setTrialEndsAt] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(true);
@@ -62,15 +63,17 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
 
   const load = async () => {
     try {
-      const [favs, refs, profile, savedPlan] = await Promise.all([
+      const [favs, refs, profile, trial, savedPlan] = await Promise.all([
         AsyncStorage.getItem("favorites"),
         AsyncStorage.getItem("referralCount"),
         AsyncStorage.getItem("userProfile"),
+        AsyncStorage.getItem("trialEndsAt"),
         AsyncStorage.getItem("plan"),
       ]);
 
       if (favs) setFavorites(JSON.parse(favs));
       if (refs) setReferralCount(parseInt(refs, 10) || 0);
+      if (trial) setTrialEndsAt(trial);
       if (savedPlan) setPlan(savedPlan as Plan);
 
       if (profile) {
@@ -81,11 +84,22 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     } catch {}
   };
 
+  const isTrialActive = useMemo(() => {
+    if (!trialEndsAt) return false;
+    return Date.now() < new Date(trialEndsAt).getTime();
+  }, [trialEndsAt]);
+
   const referralUnlock = referralCount >= 5;
 
   const isPro = useMemo(() => {
-    return isEntitledToPro || referralUnlock;
-  }, [isEntitledToPro, referralUnlock]);
+    return isEntitledToPro || isTrialActive || referralUnlock;
+  }, [isEntitledToPro, isTrialActive, referralUnlock]);
+
+  const startFreeTrial = async (days: number) => {
+    const ends = new Date(Date.now() + days * 86400000).toISOString();
+    setTrialEndsAt(ends);
+    await AsyncStorage.setItem("trialEndsAt", ends);
+  };
 
   const subscribe = async (newPlan: PlanProductId) => {
     await purchasePlan(newPlan);
@@ -134,7 +148,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     referralCount,
     incrementReferral,
     isPro,
+    isTrialActive,
+    trialEndsAt,
     plan,
+    startFreeTrial,
     subscribe,
     userProfile,
     showOnboarding,
