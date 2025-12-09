@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { AppState, Platform } from "react-native";
+import { AppState, Linking, Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
@@ -32,6 +32,8 @@ interface RevenueCatContextValue {
   purchasePlan: (plan: PlanProductId) => Promise<CustomerInfo | null>;
   restore: () => Promise<CustomerInfo | null>;
   getPackageForPlan: (plan: PlanProductId) => PurchasesPackage | null;
+  presentRemotePaywall: (offeringId?: string) => Promise<CustomerInfo | null>;
+  openCustomerCenter: () => Promise<void>;
 }
 
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
@@ -41,7 +43,29 @@ const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
 };
 
 const ENTITLEMENT_ID = "pro";
-const PRIMARY_OFFERING_ID = "default";
+const PRIMARY_OFFERING_ID = "ofrngb5fd12e734";
+
+const APPLE_SUBSCRIPTION_MANAGEMENT_URL = "https://apps.apple.com/account/subscriptions";
+const GOOGLE_SUBSCRIPTION_MANAGEMENT_URL = "https://play.google.com/store/account/subscriptions";
+
+const openPlatformSubscriptionSettings = async () => {
+  const targetUrl = Platform.select({
+    ios: APPLE_SUBSCRIPTION_MANAGEMENT_URL,
+    android: GOOGLE_SUBSCRIPTION_MANAGEMENT_URL,
+  });
+
+  if (!targetUrl) {
+    throw new Error("Customer Center is unavailable on this platform.");
+  }
+
+  const canOpen = await Linking.canOpenURL(targetUrl);
+  if (canOpen) {
+    await Linking.openURL(targetUrl);
+    return;
+  }
+
+  await Linking.openURL(targetUrl);
+};
 
 export const [RevenueCatProvider, useRevenueCat] =
   createContextHook<RevenueCatContextValue>(() => {
@@ -160,6 +184,9 @@ export const [RevenueCatProvider, useRevenueCat] =
       if (offeringsData.all?.[PRIMARY_OFFERING_ID]) {
         return offeringsData.all[PRIMARY_OFFERING_ID];
       }
+      if (offeringsData.current?.identifier === PRIMARY_OFFERING_ID) {
+        return offeringsData.current;
+      }
       if (offeringsData.current) return offeringsData.current;
       if (offeringsData.all) {
         const first = Object.values(offeringsData.all).find(
@@ -262,6 +289,81 @@ export const [RevenueCatProvider, useRevenueCat] =
       await refetchCustomerInfo();
     }, [refetchCustomerInfo]);
 
+    const presentRemotePaywall = useCallback(
+      async (offeringId?: string) => {
+        await initialize();
+
+        if (!isSupported || !Purchases) {
+          const message = "RevenueCat is unavailable on this platform.";
+          setLastError(message);
+          throw new Error(message);
+        }
+
+        const revenueCatUI = Purchases as unknown as {
+          presentPaywall?: (params: {
+            offeringIdentifier?: string;
+          }) => Promise<{ customerInfo?: CustomerInfo }>;
+        };
+
+        if (!revenueCatUI.presentPaywall) {
+          const fallbackMessage =
+            "RevenueCat Paywall UI requires a custom dev client or production build.";
+          setLastError(fallbackMessage);
+          throw new Error(fallbackMessage);
+        }
+
+        try {
+          const result = await revenueCatUI.presentPaywall({
+            offeringIdentifier: offeringId ?? PRIMARY_OFFERING_ID,
+          });
+          if (result?.customerInfo) {
+            queryClient.setQueryData(
+              ["revenuecat", "customer-info"],
+              result.customerInfo,
+            );
+          }
+          setLastError(null);
+          return result?.customerInfo ?? null;
+        } catch (error) {
+          const message =
+            (error as Error)?.message ?? "RevenueCat paywall presentation failed";
+          setLastError(message);
+          throw error;
+        }
+      },
+      [initialize, isSupported, queryClient],
+    );
+
+    const openCustomerCenter = useCallback(async () => {
+      await initialize();
+
+      if (!isSupported || !Purchases) {
+        const message = "RevenueCat is unavailable on this platform.";
+        setLastError(message);
+        throw new Error(message);
+      }
+
+      const revenueCatUI = Purchases as unknown as {
+        presentCustomerCenter?: () => Promise<void>;
+      };
+
+      if (revenueCatUI.presentCustomerCenter) {
+        await revenueCatUI.presentCustomerCenter();
+        setLastError(null);
+        return;
+      }
+
+      try {
+        await openPlatformSubscriptionSettings();
+        setLastError(null);
+      } catch (error) {
+        const message =
+          (error as Error)?.message ?? "Unable to open subscription settings";
+        setLastError(message);
+        throw error;
+      }
+    }, [initialize, isSupported]);
+
     const isEntitledToPro = useMemo(
       () => Boolean(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]),
       [customerInfo],
@@ -291,5 +393,7 @@ export const [RevenueCatProvider, useRevenueCat] =
       purchasePlan,
       restore,
       getPackageForPlan,
+      presentRemotePaywall,
+      openCustomerCenter,
     };
   });
