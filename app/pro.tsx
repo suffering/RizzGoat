@@ -90,7 +90,7 @@ type PlanOption = {
 export default function ProScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { isTrialActive, startFreeTrial, subscribe } = useAppState();
+  const { subscribe } = useAppState();
   const {
     isLoading: isRevenueCatLoading,
     isPurchasing,
@@ -127,21 +127,7 @@ export default function ProScreen() {
   }, [getPackageForPlan]);
 
   const isPlansLoading = isRevenueCatLoading && planOptions.length === 0;
-  const planButtonLabel = isPurchasing ? "Processing..." : "Continue";
-
-  const handleStartTrial = async () => {
-    try {
-      if (Platform.OS !== "web") {
-        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      }
-      await startFreeTrial(3);
-      Alert.alert("Trial Activated", "Enjoy 3 days of Pro features.");
-      if (router.canGoBack()) router.back();
-      else router.replace("/");
-    } catch {
-      Alert.alert("Error", "Could not start trial. Please try again.");
-    }
-  };
+  const planButtonLabel = isPurchasing ? "Processing..." : "Start 3-Day Trial";
 
   const handleSubscribe = async (plan: PlanProductId) => {
     try {
@@ -149,7 +135,7 @@ export default function ProScreen() {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       }
       await subscribe(plan);
-      Alert.alert("Subscribed", "Your plan is now active.");
+      Alert.alert("Trial activated", "Enjoy every feature during your 3-day trial.");
       if (router.canGoBack()) router.back();
       else router.replace("/");
     } catch {
@@ -204,11 +190,9 @@ export default function ProScreen() {
               <Sparkles size={24} color="#FFFFFF" style={styles.sparkle1} />
               <Sparkles size={20} color="#FFFFFF" style={styles.sparkle2} />
             </View>
-            <Text style={styles.title}>{isTrialActive ? "Choose your plan" : "Unlock the full experience"}</Text>
+            <Text style={styles.title}>Start your 3-day free trial</Text>
             <Text style={styles.subtitle}>
-              {isTrialActive
-                ? "Your 3-day trial is active. Pick a plan to continue afterward."
-                : "Start a 3-day free trial. Cancel anytime."}
+              Choose any plan below to unlock every feature instantly. You won’t be charged until the trial ends.
             </Text>
           </Animated.View>
 
@@ -223,17 +207,12 @@ export default function ProScreen() {
             ))}
           </Animated.View>
 
-          {!isTrialActive && (
-            <View style={styles.ctaSection}>
-              <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
-                <Text style={styles.ctaTitle}>3-Day Free Trial</Text>
-                <Text style={styles.ctaSubtitle}>Unlock all features with any plan</Text>
-                <TouchableOpacity onPress={handleStartTrial} activeOpacity={0.9} style={styles.ctaButton} testID="start-trial-btn">
-                  <Text style={styles.ctaButtonText}>Start Free Trial</Text>
-                </TouchableOpacity>
-              </LinearGradient>
-            </View>
-          )}
+          <View style={styles.ctaSection} testID="trial-info-card">
+            <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
+              <Text style={styles.ctaTitle}>3-day trial included</Text>
+              <Text style={styles.ctaSubtitle}>Pick any plan to unlock everything now. Cancel before day 3 to avoid charges.</Text>
+            </LinearGradient>
+          </View>
 
           <View style={styles.plansSection}>
             <View style={styles.plansHeader}>
@@ -286,6 +265,7 @@ export default function ProScreen() {
                 <Text style={styles.planDescription}>{meta.description}</Text>
                 <Text style={styles.planPrice}>{pkg.product.priceString}</Text>
                 <Text style={styles.planPeriod}>{meta.periodLabel}</Text>
+                <Text style={styles.planTrialText}>Includes 3-day free trial</Text>
                 <LinearGradient colors={[...meta.gradient]} style={styles.planButton}>
                   <Text style={styles.planButtonText}>{planButtonLabel}</Text>
                 </LinearGradient>
@@ -352,9 +332,7 @@ const styles = StyleSheet.create({
   ctaSection: { marginBottom: 24 },
   ctaCard: { borderRadius: 20, padding: 24, alignItems: "center" },
   ctaTitle: { fontSize: 22, fontWeight: "800", color: "#FFFFFF", marginBottom: 6 },
-  ctaSubtitle: { fontSize: 13, color: "#FFFFFF", opacity: 0.9, marginBottom: 14 },
-  ctaButton: { backgroundColor: "#000000", paddingVertical: 14, paddingHorizontal: 18, borderRadius: 12 },
-  ctaButtonText: { color: "#FFFFFF", fontSize: 16, fontWeight: "800", letterSpacing: 0.3 },
+  ctaSubtitle: { fontSize: 13, color: "#FFFFFF", opacity: 0.9 },
   plansSection: { gap: 16, marginBottom: 24 },
   plansHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   plansTitle: { color: "#FFFFFF", fontSize: 18, fontWeight: "700" },
@@ -376,7 +354,8 @@ const styles = StyleSheet.create({
   planTagSuccess: { backgroundColor: "#10B981" },
   planDescription: { fontSize: 14, color: "rgba(0,0,0,0.7)", marginBottom: 16 },
   planPrice: { fontSize: 32, fontWeight: "800", color: "#000000", marginBottom: 4 },
-  planPeriod: { fontSize: 14, color: "rgba(0,0,0,0.6)", marginBottom: 16 },
+  planPeriod: { fontSize: 14, color: "rgba(0,0,0,0.6)", marginBottom: 8 },
+  planTrialText: { fontSize: 13, color: "rgba(0,0,0,0.7)", fontWeight: "600", marginBottom: 12 },
   planButton: { paddingVertical: 14, borderRadius: 12, alignItems: "center" },
   planButtonText: { fontSize: 16, fontWeight: "700", color: "#FFFFFF" },
   errorCard: {
