@@ -5,24 +5,55 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
   CustomerInfo,
   CustomerInfoUpdateListener,
+  IntroEligibility,
   PurchasesOffering,
   PurchasesOfferings,
   PurchasesPackage,
 } from "react-native-purchases";
-
 import { REVENUECAT_API_KEY } from "@/secrets";
 import Purchases, { configureRevenueCat } from "@/services/revenuecatModule";
 
 export type PlanProductId = "weekly" | "monthly" | "lifetime";
+
+type RevenueCatTrialEligibility = Record<string, IntroEligibility>;
+
+type RevenueCatPaywallOptions = {
+  offeringIdentifier?: string;
+  placementIdentifier?: string;
+  displayCloseButton?: boolean;
+};
+
+type RevenueCatPaywallResult = {
+  action?: string;
+  customerInfo?: CustomerInfo;
+};
+
+type RevenueCatCustomerCenterResult = {
+  action?: string;
+  customerInfo?: CustomerInfo;
+};
+
+type PurchasesWithUI = typeof Purchases & {
+  presentPaywall?: (
+    options?: RevenueCatPaywallOptions,
+  ) => Promise<RevenueCatPaywallResult>;
+  presentCustomerCenter?: () => Promise<RevenueCatCustomerCenterResult>;
+};
+
+const purchasesWithUI = Purchases as PurchasesWithUI;
 
 interface RevenueCatContextValue {
   isSupported: boolean;
   isConfigured: boolean;
   isLoading: boolean;
   isPurchasing: boolean;
+  isPaywallAvailable: boolean;
+  isCustomerCenterAvailable: boolean;
   offerings?: PurchasesOfferings;
   currentOffering?: PurchasesOffering | null;
   availablePackages: PurchasesPackage[];
+  packagesByPlan: Record<PlanProductId, PurchasesPackage | null>;
+  trialEligibility: RevenueCatTrialEligibility;
   customerInfo?: CustomerInfo;
   isEntitledToPro: boolean;
   lastError?: string | null;
@@ -32,6 +63,10 @@ interface RevenueCatContextValue {
   purchasePlan: (plan: PlanProductId) => Promise<CustomerInfo | null>;
   restore: () => Promise<CustomerInfo | null>;
   getPackageForPlan: (plan: PlanProductId) => PurchasesPackage | null;
+  presentPaywall: (
+    options?: RevenueCatPaywallOptions,
+  ) => Promise<RevenueCatPaywallResult | null>;
+  presentCustomerCenter: () => Promise<RevenueCatCustomerCenterResult | null>;
 }
 
 const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
@@ -42,6 +77,28 @@ const PACKAGE_MATCHERS: Record<PlanProductId, string[]> = {
 
 const ENTITLEMENT_ID = "pro";
 const PRIMARY_OFFERING_ID = "default";
+
+const getPlanFromIdentifier = (
+  identifier?: string | null,
+): PlanProductId | null => {
+  if (!identifier) return null;
+  const normalized = identifier.toLowerCase();
+  const found = (Object.keys(PACKAGE_MATCHERS) as PlanProductId[]).find(
+    (plan) => PACKAGE_MATCHERS[plan].some((matcher) => normalized.includes(matcher)),
+  );
+  return found ?? null;
+};
+
+const didUserCancel = (error: unknown): boolean => {
+  if (typeof error !== "object" || !error) return false;
+  if ("userCancelled" in error && Boolean((error as Record<string, unknown>).userCancelled)) {
+    return true;
+  }
+  if ("code" in error && (error as Record<string, unknown>).code === "1") {
+    return true;
+  }
+  return false;
+};
 
 export const [RevenueCatProvider, useRevenueCat] =
   createContextHook<RevenueCatContextValue>(() => {
@@ -56,18 +113,18 @@ export const [RevenueCatProvider, useRevenueCat] =
       null,
     );
     const [lastError, setLastError] = useState<string | null>(null);
+    const [trialEligibility, setTrialEligibility] = useState<RevenueCatTrialEligibility>(
+      {},
+    );
+    const [isInitializing, setIsInitializing] = useState(false);
+    const [isPaywallAvailable, setIsPaywallAvailable] = useState(false);
+    const [isCustomerCenterAvailable, setIsCustomerCenterAvailable] = useState(false);
 
     const initialize = useCallback(
       async (appUserId?: string | null) => {
         if (!isSupported || !Purchases) {
           const message = "RevenueCat is unavailable on this platform.";
           setLastError(message);
-          return;
-        }
-
-        const normalizedUserId = appUserId ?? null;
-
-        if (isConfigured && configuredAppUserId === normalizedUserId) {
           return;
         }
 
@@ -78,16 +135,30 @@ export const [RevenueCatProvider, useRevenueCat] =
           throw new Error(message);
         }
 
+        const normalizedUserId = appUserId ?? null;
+
+        if (isConfigured && configuredAppUserId === normalizedUserId) {
+          return;
+        }
+
+        setIsInitializing(true);
+
         try {
           await configureRevenueCat(normalizedUserId ?? undefined);
           setIsConfigured(true);
           setConfiguredAppUserId(normalizedUserId);
+          setIsPaywallAvailable(typeof purchasesWithUI.presentPaywall === "function");
+          setIsCustomerCenterAvailable(
+            typeof purchasesWithUI.presentCustomerCenter === "function",
+          );
           setLastError(null);
         } catch (error) {
           const message =
             (error as Error)?.message ?? "Failed to configure RevenueCat";
           setLastError(message);
           throw error;
+        } finally {
+          setIsInitializing(false);
         }
       },
       [configuredAppUserId, isConfigured, isSupported],
@@ -100,13 +171,10 @@ export const [RevenueCatProvider, useRevenueCat] =
 
     useEffect(() => {
       if (!isSupported || !isConfigured || !Purchases) return;
-
       const listener: CustomerInfoUpdateListener = (info) => {
         queryClient.setQueryData(["revenuecat", "customer-info"], info);
       };
-
       Purchases.addCustomerInfoUpdateListener(listener);
-
       return () => {
         if (typeof Purchases.removeCustomerInfoUpdateListener === "function") {
           Purchases.removeCustomerInfoUpdateListener(listener);
@@ -144,19 +212,6 @@ export const [RevenueCatProvider, useRevenueCat] =
       refetchInterval: 60000,
     });
 
-    useEffect(() => {
-      if (!isSupported || !isConfigured) return;
-      const subscription = AppState.addEventListener("change", (status) => {
-        if (status === "active") {
-          refetchCustomerInfo();
-        }
-      });
-
-      return () => {
-        subscription.remove();
-      };
-    }, [isConfigured, isSupported, refetchCustomerInfo]);
-
     const currentOffering = useMemo(() => {
       if (!offeringsData) return null;
       if (offeringsData.all?.[PRIMARY_OFFERING_ID]) {
@@ -176,28 +231,72 @@ export const [RevenueCatProvider, useRevenueCat] =
       if (currentOffering) {
         return [...currentOffering.availablePackages];
       }
-      if (!offeringsData) return [];
+      if (!offeringsData?.all) return [];
       const fallback: PurchasesPackage[] = [];
-      if (offeringsData.all) {
-        Object.values(offeringsData.all).forEach((offering) => {
-          offering?.availablePackages.forEach((pkg) => fallback.push(pkg));
-        });
-      }
+      Object.values(offeringsData.all).forEach((offering) => {
+        offering?.availablePackages.forEach((pkg) => fallback.push(pkg));
+      });
       return fallback;
     }, [currentOffering, offeringsData]);
 
+    const packagesByPlan = useMemo(() => {
+      const initial: Record<PlanProductId, PurchasesPackage | null> = {
+        weekly: null,
+        monthly: null,
+        lifetime: null,
+      };
+      availablePackages.forEach((pkg) => {
+        const plan = getPlanFromIdentifier(pkg.product.identifier);
+        if (plan && !initial[plan]) {
+          initial[plan] = pkg;
+        }
+      });
+      return initial;
+    }, [availablePackages]);
+
+    useEffect(() => {
+      if (!isSupported || !isConfigured || !availablePackages.length || !Purchases) {
+        return;
+      }
+      const identifiers = Array.from(
+        new Set(
+          availablePackages
+            .map((pkg) => pkg.product.identifier)
+            .filter((identifier): identifier is string => Boolean(identifier)),
+        ),
+      );
+      if (!identifiers.length) return;
+      let isCancelled = false;
+      Purchases.checkTrialOrIntroductoryPriceEligibility(identifiers)
+        .then((result) => {
+          if (!isCancelled) {
+            setTrialEligibility(result);
+          }
+        })
+        .catch(() => {});
+      return () => {
+        isCancelled = true;
+      };
+    }, [availablePackages, isConfigured, isSupported]);
+
+    useEffect(() => {
+      if (!isSupported || !isConfigured) return;
+      const subscription = AppState.addEventListener("change", (status) => {
+        if (status === "active") {
+          refetchCustomerInfo();
+          refetchOfferings();
+        }
+      });
+      return () => {
+        subscription.remove();
+      };
+    }, [isConfigured, isSupported, refetchCustomerInfo, refetchOfferings]);
+
     const getPackageForPlan = useCallback(
       (plan: PlanProductId) => {
-        const matchers = PACKAGE_MATCHERS[plan];
-        return (
-          availablePackages.find((pkg) => {
-            const id = (pkg.product.identifier ?? "").toLowerCase();
-            const alias = (pkg.identifier ?? "").toLowerCase();
-            return matchers.some((m) => id.includes(m) || alias.includes(m));
-          }) ?? null
-        );
+        return packagesByPlan[plan] ?? null;
       },
-      [availablePackages],
+      [packagesByPlan],
     );
 
     const {
@@ -213,6 +312,9 @@ export const [RevenueCatProvider, useRevenueCat] =
         setLastError(null);
       },
       onError: (err) => {
+        if (didUserCancel(err)) {
+          return;
+        }
         setLastError((err as Error).message ?? "Purchase failed");
       },
     });
@@ -229,6 +331,9 @@ export const [RevenueCatProvider, useRevenueCat] =
         setLastError(null);
       },
       onError: (err) => {
+        if (didUserCancel(err)) {
+          return;
+        }
         setLastError((err as Error).message ?? "Restore failed");
       },
     });
@@ -257,12 +362,67 @@ export const [RevenueCatProvider, useRevenueCat] =
     }, [initialize, refetchCustomerInfo, restorePurchasesAsync]);
 
     const refreshOfferings = useCallback(async () => {
+      await initialize();
       await refetchOfferings();
-    }, [refetchOfferings]);
+    }, [initialize, refetchOfferings]);
 
     const refreshCustomerInfo = useCallback(async () => {
+      if (!Purchases) return;
+      await initialize();
+      if (typeof Purchases.invalidateCustomerInfoCache === "function") {
+        await Purchases.invalidateCustomerInfoCache();
+      }
       await refetchCustomerInfo();
-    }, [refetchCustomerInfo]);
+    }, [initialize, refetchCustomerInfo]);
+
+    const presentPaywall = useCallback(
+      async (options?: RevenueCatPaywallOptions) => {
+        if (!isPaywallAvailable || !purchasesWithUI.presentPaywall) {
+          setLastError("RevenueCat paywalls are not available on this platform.");
+          return null;
+        }
+        await initialize();
+        try {
+          const result = await purchasesWithUI.presentPaywall({
+            offeringIdentifier: options?.offeringIdentifier ?? PRIMARY_OFFERING_ID,
+            placementIdentifier: options?.placementIdentifier,
+            displayCloseButton: options?.displayCloseButton ?? true,
+          });
+          if (result?.customerInfo) {
+            queryClient.setQueryData(["revenuecat", "customer-info"], result.customerInfo);
+            setLastError(null);
+          }
+          return result;
+        } catch (error) {
+          const message =
+            (error as Error)?.message ?? "Unable to present RevenueCat paywall";
+          setLastError(message);
+          throw error;
+        }
+      },
+      [initialize, isPaywallAvailable, queryClient],
+    );
+
+    const presentCustomerCenter = useCallback(async () => {
+      if (!isCustomerCenterAvailable || !purchasesWithUI.presentCustomerCenter) {
+        setLastError("Customer Center is not available on this platform.");
+        return null;
+      }
+      await initialize();
+      try {
+        const result = await purchasesWithUI.presentCustomerCenter();
+        if (result?.customerInfo) {
+          queryClient.setQueryData(["revenuecat", "customer-info"], result.customerInfo);
+          setLastError(null);
+        }
+        return result;
+      } catch (error) {
+        const message =
+          (error as Error)?.message ?? "Unable to open Customer Center";
+        setLastError(message);
+        throw error;
+      }
+    }, [initialize, isCustomerCenterAvailable, queryClient]);
 
     const isEntitledToPro = useMemo(
       () => Boolean(customerInfo?.entitlements?.active?.[ENTITLEMENT_ID]),
@@ -272,7 +432,8 @@ export const [RevenueCatProvider, useRevenueCat] =
     const isLoading =
       (isSupported && !isConfigured) ||
       isOfferingsLoading ||
-      isCustomerInfoLoading;
+      isCustomerInfoLoading ||
+      isInitializing;
 
     const isPurchasing = isPurchasePending || isRestorePending;
 
@@ -281,9 +442,13 @@ export const [RevenueCatProvider, useRevenueCat] =
       isConfigured,
       isLoading,
       isPurchasing,
+      isPaywallAvailable,
+      isCustomerCenterAvailable,
       offerings: offeringsData,
       currentOffering,
       availablePackages,
+      packagesByPlan,
+      trialEligibility,
       customerInfo,
       isEntitledToPro,
       lastError,
@@ -293,5 +458,7 @@ export const [RevenueCatProvider, useRevenueCat] =
       purchasePlan,
       restore,
       getPackageForPlan,
+      presentPaywall,
+      presentCustomerCenter,
     };
   });

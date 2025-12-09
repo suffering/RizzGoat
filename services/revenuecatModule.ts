@@ -7,24 +7,18 @@ import { REVENUECAT_API_KEY } from "@/secrets";
 
 let configuredUserId: string | null = null;
 let hasConfigured = false;
+let configurePromise: Promise<void> | null = null;
 
 const canUseRevenueCat = Platform.OS !== "web";
 
 const setDefaultLogLevel = () => {
   if (!LOG_LEVEL || typeof Purchases.setLogLevel !== "function") return;
-
-  const level =
-    LOG_LEVEL.DEBUG ??
-    LOG_LEVEL.INFO ??
-    LOG_LEVEL.WARN ??
-    LOG_LEVEL.ERROR ??
-    4;
-
+  const level = LOG_LEVEL.DEBUG ?? LOG_LEVEL.INFO ?? LOG_LEVEL.WARN ?? LOG_LEVEL.ERROR;
   Purchases.setLogLevel(level);
 };
 
 export const configureRevenueCat = async (
-  appUserId?: string | null
+  appUserId?: string | null,
 ): Promise<void> => {
   if (!canUseRevenueCat) {
     return;
@@ -40,20 +34,21 @@ export const configureRevenueCat = async (
     return;
   }
 
-  setDefaultLogLevel();
-
-  const configuration: PurchasesConfiguration = {
-    apiKey: REVENUECAT_API_KEY,
+  const performConfiguration = async () => {
+    setDefaultLogLevel();
+    const configuration: PurchasesConfiguration = {
+      apiKey: REVENUECAT_API_KEY,
+    };
+    if (normalizedUserId) {
+      configuration.appUserID = normalizedUserId;
+    }
+    await Purchases.configure(configuration);
+    configuredUserId = normalizedUserId;
+    hasConfigured = true;
   };
 
-  if (normalizedUserId) {
-    configuration.appUserID = normalizedUserId;
-  }
-
-  configuredUserId = normalizedUserId;
-  hasConfigured = true;
-
-  await Purchases.configure(configuration);
+  configurePromise = performConfiguration();
+  await configurePromise;
 };
 
 if (canUseRevenueCat) {
