@@ -120,9 +120,10 @@ export const [RevenueCatProvider, useRevenueCat] =
       isLoading: isOfferingsLoading,
     } = useQuery({
       queryKey: ["revenuecat", "offerings"],
-      enabled: isSupported && isConfigured,
+      enabled: isSupported,
       queryFn: async () => {
         if (!Purchases) throw new Error("RevenueCat unavailable");
+        await initialize();
         return Purchases.getOfferings();
       },
       staleTime: 300000,
@@ -134,9 +135,10 @@ export const [RevenueCatProvider, useRevenueCat] =
       isLoading: isCustomerInfoLoading,
     } = useQuery({
       queryKey: ["revenuecat", "customer-info"],
-      enabled: isSupported && isConfigured,
+      enabled: isSupported,
       queryFn: async () => {
         if (!Purchases) throw new Error("RevenueCat unavailable");
+        await initialize();
         return Purchases.getCustomerInfo();
       },
       refetchInterval: 60000,
