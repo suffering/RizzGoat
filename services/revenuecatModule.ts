@@ -5,28 +5,30 @@ import Purchases, {
 } from "react-native-purchases";
 import { REVENUECAT_API_KEY } from "@/secrets";
 
-let configuredUserId: string | null = null;
-let hasConfigured = false;
+const isWebPlatform = Platform.OS === "web";
+let configurationTask: Promise<void> | null = null;
+let lastConfiguredUserId: string | null = null;
 
-const canUseRevenueCat = Platform.OS !== "web";
+const devLog = (...args: unknown[]) => {
+  if (__DEV__) {
+    console.log("[RevenueCatModule]", ...args);
+  }
+};
 
-const setDefaultLogLevel = () => {
-  if (!LOG_LEVEL || typeof Purchases.setLogLevel !== "function") return;
+const applyLogLevel = () => {
+  if (typeof Purchases.setLogLevel !== "function") {
+    return;
+  }
 
-  const level =
-    LOG_LEVEL.DEBUG ??
-    LOG_LEVEL.INFO ??
-    LOG_LEVEL.WARN ??
-    LOG_LEVEL.ERROR ??
-    4;
-
-  Purchases.setLogLevel(level);
+  const targetLevel = __DEV__ ? LOG_LEVEL.DEBUG : LOG_LEVEL.ERROR;
+  Purchases.setLogLevel(targetLevel);
 };
 
 export const configureRevenueCat = async (
-  appUserId?: string | null
+  appUserId?: string | null,
 ): Promise<void> => {
-  if (!canUseRevenueCat) {
+  if (isWebPlatform) {
+    devLog("Skipping RevenueCat configuration on web");
     return;
   }
 
@@ -36,31 +38,28 @@ export const configureRevenueCat = async (
 
   const normalizedUserId = appUserId ?? null;
 
-  if (hasConfigured && configuredUserId === normalizedUserId) {
-    return;
+  if (configurationTask && lastConfiguredUserId === normalizedUserId) {
+    return configurationTask;
   }
 
-  setDefaultLogLevel();
+  configurationTask = (async () => {
+    applyLogLevel();
+    const configuration: PurchasesConfiguration = {
+      apiKey: REVENUECAT_API_KEY,
+    };
 
-  const configuration: PurchasesConfiguration = {
-    apiKey: REVENUECAT_API_KEY,
-  };
+    if (normalizedUserId) {
+      configuration.appUserID = normalizedUserId;
+    }
 
-  if (normalizedUserId) {
-    configuration.appUserID = normalizedUserId;
-  }
+    devLog("Configuring RevenueCat", { user: normalizedUserId ?? "anonymous" });
+    await Purchases.configure(configuration);
+    lastConfiguredUserId = normalizedUserId;
+    devLog("RevenueCat configured");
+  })();
 
-  configuredUserId = normalizedUserId;
-  hasConfigured = true;
-
-  await Purchases.configure(configuration);
+  return configurationTask;
 };
-
-if (canUseRevenueCat) {
-  void configureRevenueCat().catch((error) => {
-    console.error("[RevenueCat] Initial configuration failed", error);
-  });
-}
 
 export { LOG_LEVEL };
 export default Purchases;

@@ -1,13 +1,13 @@
-const readEnv = (key: string): string | undefined => {
-  if (typeof process === "undefined") return undefined;
-  const value = process.env?.[key];
-  return typeof value === "string" && value.length > 0 ? value : undefined;
+type EnvShape = {
+  OPENAI_API_KEY?: string;
+  EXPO_PUBLIC_REVENUECAT_API_KEY?: string;
+  [key: string]: string | undefined;
 };
 
-const FALLBACK_REVENUECAT_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD" as const;
+const env: EnvShape =
+  typeof process !== "undefined" && typeof process.env !== "undefined"
+    ? (process.env as EnvShape)
+    : {};
 
-export const OPENAI_API_KEY: string = readEnv("OPENAI_API_KEY") ?? "";
-export const REVENUECAT_API_KEY: string =
-  readEnv("EXPO_PUBLIC_REVENUECAT_API_KEY") ??
-  readEnv("REVENUECAT_API_KEY") ??
-  FALLBACK_REVENUECAT_KEY;
+export const OPENAI_API_KEY: string = env.OPENAI_API_KEY ?? "";
+export const REVENUECAT_API_KEY: string = env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? "";
