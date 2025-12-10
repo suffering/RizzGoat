@@ -9,7 +9,8 @@ export default ({ config }) => ({
   extra: {
     ...config.extra,
 
-    EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+    EXPO_PUBLIC_REVENUECAT_API_KEY:
+      process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
 
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 
@@ -37,4 +38,5 @@ export default ({ config }) => ({
     },
   },
 });
+
 
