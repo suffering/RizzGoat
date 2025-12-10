@@ -12,7 +12,6 @@ export default {
     newArchEnabled: true,
 
     extra: {
-      // Exposed to the client (expo public env vars)
       EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
       EXPO_PUBLIC_API_URL: process.env.EXPO_PUBLIC_API_URL,
       EXPO_PUBLIC_ENV: process.env.EXPO_PUBLIC_ENV,
