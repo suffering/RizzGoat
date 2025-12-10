@@ -9,13 +9,11 @@ export default ({ config }) => ({
   extra: {
     ...config.extra,
 
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-    EXPO_PUBLIC_REVENUECAT_API_KEY:
-      process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+    // RevenueCat public API key exposed to the client
+    EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
 
-    eas: {
-      projectId: "137d9bd7-8780-446d-b757-812fd1f6d737",
-    },
+    // OpenAI API key (server-side)
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
   },
 
   ios: {
@@ -37,4 +35,5 @@ export default ({ config }) => ({
     },
   },
 });
+
 
