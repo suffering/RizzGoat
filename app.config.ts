@@ -10,7 +10,7 @@ export default ({ config }) => ({
     ...config.extra,
 
     EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
-    
+
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
 
     eas: {
@@ -36,8 +36,5 @@ export default ({ config }) => ({
       backgroundColor: "#ffffff",
     },
   },
-
-  updates: {
-    fallbackToCacheTimeout: 0,
-  },
 });
+
