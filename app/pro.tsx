@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useMemo } from "react";
+import React, { useRef, useEffect, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -113,6 +113,7 @@ export default function ProScreen() {
   const { theme } = useTheme();
   const { isTrialActive, subscribe } = useAppState();
   const {
+    isSupported: isRevenueCatSupported,
     isLoading: isRevenueCatLoading,
     isPurchasing,
     lastError,
@@ -128,6 +129,7 @@ export default function ProScreen() {
   } = useRevenueCat();
 
   const scaleAnim = useRef(new Animated.Value(0)).current;
+  const [selectedPlan, setSelectedPlan] = useState<PlanProductId>("monthly");
   const featuresAnim = useRef(new Animated.Value(0)).current;
   const autoPaywallShown = useRef(false);
 
@@ -174,6 +176,14 @@ export default function ProScreen() {
     return options;
   }, [getPackageForPlan, trialEligibility]);
 
+  useEffect(() => {
+    if (planOptions.length === 0) return;
+    const exists = planOptions.some((x) => x.meta.id === selectedPlan);
+    if (!exists) {
+      setSelectedPlan(planOptions[0].meta.id);
+    }
+  }, [planOptions, selectedPlan]);
+
   const isPlansLoading = isRevenueCatLoading && planOptions.length === 0;
 
   const handleOpenPaywall = async () => {
@@ -207,6 +217,13 @@ export default function ProScreen() {
   };
 
   const handleSubscribe = async (plan: PlanProductId) => {
+    if (!isRevenueCatSupported) {
+      Alert.alert(
+        "Purchases unavailable",
+        "In-app purchases are not supported on web preview. Please test on a device with Expo Go or a native build.",
+      );
+      return;
+    }
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
@@ -245,6 +262,13 @@ export default function ProScreen() {
   };
 
   const handleManageSubscription = async () => {
+    if (!isRevenueCatSupported) {
+      Alert.alert(
+        "Unavailable",
+        "Subscription management is only available on iOS/Android builds.",
+      );
+      return;
+    }
     if (!isCustomerCenterAvailable) {
       Alert.alert(
         "Customer Center unavailable",
@@ -366,28 +390,41 @@ export default function ProScreen() {
                 </TouchableOpacity>
               </View>
             )}
-            {planOptions.map(({ meta, pkg, trialStatus }) => (
-              <TouchableOpacity
-                key={`price-${meta.id}`}
-                onPress={() => handleSubscribe(meta.id)}
-                style={styles.priceRow}
-                activeOpacity={0.9}
-                disabled={isPurchasing}
-                testID={`${meta.testID}-price-row`}
-              >
-                <View style={styles.priceRowLeft}>
-                  <Text style={styles.priceRowLabel}>{pkg.product.title || meta.label}</Text>
-                  <Text style={styles.priceRowDescription}>{meta.description}</Text>
-                </View>
-                <View style={styles.priceRowRight}>
-                  <Text style={styles.priceRowPrice}>{pkg.product.priceString}</Text>
-                  <Text style={styles.priceRowPeriod}>{meta.periodLabel}</Text>
-                  {isTrialEligible(trialStatus) && (
-                    <Text style={styles.priceRowTrial}>Trial available</Text>
-                  )}
-                </View>
-              </TouchableOpacity>
-            ))}
+            {planOptions.map(({ meta, pkg, trialStatus }) => {
+              const isSelected = selectedPlan === meta.id;
+              return (
+                <TouchableOpacity
+                  key={`price-${meta.id}`}
+                  onPress={() => {
+                    setSelectedPlan(meta.id);
+                    if (Platform.OS !== "web") {
+                      Haptics.selectionAsync().catch(() => {});
+                    }
+                  }}
+                  style={[styles.priceRow, isSelected ? styles.priceRowSelected : null]}
+                  activeOpacity={0.9}
+                  disabled={isPurchasing}
+                  testID={`${meta.testID}-price-row`}
+                >
+                  <View style={styles.priceRowLeft}>
+                    <Text style={styles.priceRowLabel}>{pkg.product.title || meta.label}</Text>
+                    <Text style={styles.priceRowDescription}>{meta.description}</Text>
+                  </View>
+                  <View style={styles.priceRowRight}>
+                    <Text style={styles.priceRowPrice}>{pkg.product.priceString}</Text>
+                    <Text style={styles.priceRowPeriod}>{meta.periodLabel}</Text>
+                    {isTrialEligible(trialStatus) && (
+                      <Text style={styles.priceRowTrial}>Trial available</Text>
+                    )}
+                    {isSelected && (
+                      <Text style={styles.priceRowSelectedTag} testID={`${meta.testID}-selected`}>
+                        Selected
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           <View style={styles.ctaSection}>
@@ -397,14 +434,27 @@ export default function ProScreen() {
                 Apple handles the introductory offer. Cancel anytime before it renews.
               </Text>
               <TouchableOpacity
-                onPress={handleOpenPaywall}
+                onPress={async () => {
+                  if (isPaywallAvailable) {
+                    await handleOpenPaywall();
+                    return;
+                  }
+                  await handleSubscribe(selectedPlan);
+                }}
                 activeOpacity={0.9}
                 style={styles.ctaButton}
-                testID="open-paywall-btn"
+                disabled={isPurchasing}
+                testID="primary-upgrade-btn"
               >
-                <Text style={styles.ctaButtonText}>View live paywall</Text>
+                <Text style={styles.ctaButtonText}>
+                  {isPaywallAvailable ? "View live paywall" : `Continue (${selectedPlan})`}
+                </Text>
               </TouchableOpacity>
-              <Text style={styles.ctaHelper}>Prices and promos load directly from RevenueCat.</Text>
+              <Text style={styles.ctaHelper}>
+                {isPaywallAvailable
+                  ? "Prices and promos load directly from RevenueCat."
+                  : "Paywall UI module not installed — purchasing directly via RevenueCat."}
+              </Text>
             </LinearGradient>
           </View>
 
@@ -531,6 +581,16 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "rgba(0,0,0,0.06)",
+  },
+  priceRowSelected: {
+    borderColor: "#FF7A59",
+    shadowColor: "#FF7A59",
+    shadowOpacity: 0.18,
+    shadowRadius: 10,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 2,
   },
   priceRowLeft: { flex: 1, marginRight: 12 },
   priceRowLabel: { fontSize: 16, fontWeight: "700", color: "#0F0F10" },
@@ -539,6 +599,7 @@ const styles = StyleSheet.create({
   priceRowPrice: { fontSize: 20, fontWeight: "800", color: "#0F0F10" },
   priceRowPeriod: { fontSize: 12, color: "rgba(0,0,0,0.5)", marginTop: 2 },
   priceRowTrial: { fontSize: 11, color: "#059669", fontWeight: "600", marginTop: 4 },
+  priceRowSelectedTag: { fontSize: 11, color: "#FF7A59", fontWeight: "800", marginTop: 4 },
   ctaSection: { marginBottom: 24 },
   ctaCard: { borderRadius: 20, padding: 24, alignItems: "center" },
   ctaTitle: { fontSize: 22, fontWeight: "800", color: "#FFFFFF", marginBottom: 6 },
