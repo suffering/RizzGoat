@@ -130,7 +130,7 @@ export const [RevenueCatProvider, useRevenueCat] =
 
         if (!REVENUECAT_API_KEY) {
           const message =
-            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
+            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY (preferred) or EXPO_GO_REVENUECAT_API_KEY environment variable.";
           setLastError(message);
           throw new Error(message);
         }
@@ -144,6 +144,10 @@ export const [RevenueCatProvider, useRevenueCat] =
         setIsInitializing(true);
 
         try {
+          console.log("[RevenueCat] initialize()", {
+            appUserId: normalizedUserId,
+            hasApiKey: Boolean(REVENUECAT_API_KEY),
+          });
           await configureRevenueCat(normalizedUserId ?? undefined);
           setIsConfigured(true);
           setConfiguredAppUserId(normalizedUserId);
@@ -192,7 +196,13 @@ export const [RevenueCatProvider, useRevenueCat] =
       queryFn: async () => {
         if (!Purchases) throw new Error("RevenueCat unavailable");
         await initialize();
-        return Purchases.getOfferings();
+        console.log("[RevenueCat] getOfferings()...");
+        const offerings = await Purchases.getOfferings();
+        console.log("[RevenueCat] getOfferings() result", {
+          current: offerings?.current?.identifier,
+          all: offerings?.all ? Object.keys(offerings.all) : [],
+        });
+        return offerings;
       },
       staleTime: 300000,
     });
@@ -207,7 +217,15 @@ export const [RevenueCatProvider, useRevenueCat] =
       queryFn: async () => {
         if (!Purchases) throw new Error("RevenueCat unavailable");
         await initialize();
-        return Purchases.getCustomerInfo();
+        console.log("[RevenueCat] getCustomerInfo()...");
+        const info = await Purchases.getCustomerInfo();
+        console.log("[RevenueCat] getCustomerInfo() result", {
+          activeEntitlements: info?.entitlements?.active
+            ? Object.keys(info.entitlements.active)
+            : [],
+          activeSubscriptions: info?.activeSubscriptions?.length ?? 0,
+        });
+        return info;
       },
       refetchInterval: 60000,
     });
