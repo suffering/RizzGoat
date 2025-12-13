@@ -20,6 +20,6 @@ module.exports = defineConfig([
     },
   },
   {
-    ignores: ['.rorkai/**']
+    ignores: ['.rorkai/**', 'backend/**']
   }
 ]);
