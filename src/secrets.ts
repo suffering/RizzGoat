@@ -14,11 +14,13 @@ export const OPENAI_API_KEY: string =
   readExtra("OPENAI_API_KEY") ??
   "";
 
+const DEFAULT_REVENUECAT_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
+
 export const REVENUECAT_API_KEY: string =
   process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ??
   process.env.EXPO_GO_REVENUECAT_API_KEY ??
   readExtra("EXPO_PUBLIC_REVENUECAT_API_KEY") ??
-  "";
+  DEFAULT_REVENUECAT_API_KEY;
 
 export const EXPO_GO_REVENUECAT_API_KEY: string = REVENUECAT_API_KEY;
 
