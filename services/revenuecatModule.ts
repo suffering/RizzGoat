@@ -1,9 +1,7 @@
 import { Platform } from "react-native";
-import Purchases, {
-  LOG_LEVEL,
-  PurchasesConfiguration,
-} from "react-native-purchases";
+import Purchases, { LOG_LEVEL, PurchasesConfiguration } from "react-native-purchases";
 import { REVENUECAT_API_KEY } from "@/secrets";
+
 
 let configuredUserId: string | null = null;
 let hasConfigured = false;
