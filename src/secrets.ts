@@ -14,31 +14,16 @@ export const OPENAI_API_KEY: string =
   readExtra("OPENAI_API_KEY") ??
   "";
 
-const DEFAULT_REVENUECAT_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
-
 export const REVENUECAT_API_KEY: string =
   process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ??
   process.env.EXPO_GO_REVENUECAT_API_KEY ??
   readExtra("EXPO_PUBLIC_REVENUECAT_API_KEY") ??
-  DEFAULT_REVENUECAT_API_KEY;
+  "";
 
 export const EXPO_GO_REVENUECAT_API_KEY: string = REVENUECAT_API_KEY;
 
 if (!REVENUECAT_API_KEY) {
   console.warn(
-    "[RevenueCat] Missing EXPO_PUBLIC_REVENUECAT_API_KEY (preferred) or EXPO_GO_REVENUECAT_API_KEY env var."
+    "[RevenueCat] Missing EXPO_PUBLIC_REVENUECAT_API_KEY (preferred) or EXPO_GO_REVENUECAT_API_KEY env var.",
   );
-} else {
-  console.log("[RevenueCat] API key loaded:", {
-    source:
-      process.env.EXPO_PUBLIC_REVENUECAT_API_KEY
-        ? "process.env.EXPO_PUBLIC_REVENUECAT_API_KEY"
-        : process.env.EXPO_GO_REVENUECAT_API_KEY
-          ? "process.env.EXPO_GO_REVENUECAT_API_KEY"
-          : readExtra("EXPO_PUBLIC_REVENUECAT_API_KEY")
-            ? "Constants.expoConfig.extra.EXPO_PUBLIC_REVENUECAT_API_KEY"
-            : "unknown",
-    length: REVENUECAT_API_KEY.length,
-    prefix: REVENUECAT_API_KEY.slice(0, 6),
-  });
 }
