@@ -2,35 +2,45 @@ import "dotenv/config";
 import type { ConfigContext, ExpoConfig } from "expo/config";
 
 export default ({ config }: ConfigContext): ExpoConfig => ({
-...config,
+  ...config,
 
-name: "RizzGoat",
-slug: "rizzgoat-flirting-self-improvement",
+  name: "RizzGoat",
+  slug: "rizzgoat-flirting-self-improvement",
 
-extra: {
-  ...config.extra,
-  EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-},
+  plugins: [
+    [
+      "react-native-purchases",
+      {
+        apiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+      },
+    ],
+  ],
 
-ios: {
-  ...config.ios,
-  bundleIdentifier: "app.rork.rizzgoat-flirting-self-improvement",
-  supportsTablet: true,
-  infoPlist: {
-    NSPhotoLibraryUsageDescription: "Allow RizzGoat to access your photos",
-    NSCameraUsageDescription: "Allow RizzGoat to access your camera",
-    NSMicrophoneUsageDescription: "Allow RizzGoat to access your microphone",
+  extra: {
+    ...config.extra,
+    EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+    eas: {
+      projectId: "137d9bd7-8780-446d-b757-812fd1f6d737",
+    },
   },
-},
 
-android: {
-  ...config.android,
-  adaptiveIcon: {
-    foregroundImage: "./assets/images/adaptive-icon.png",
-    backgroundColor: "#ffffff",
+  ios: {
+    ...config.ios,
+    bundleIdentifier: "app.rork.rizzgoat-flirting-self-improvement",
+    supportsTablet: true,
+    infoPlist: {
+      NSPhotoLibraryUsageDescription: "Allow RizzGoat to access your photos",
+      NSCameraUsageDescription: "Allow RizzGoat to access your camera",
+      NSMicrophoneUsageDescription: "Allow RizzGoat to access your microphone",
+    },
   },
-},
+
+  android: {
+    ...config.android,
+    adaptiveIcon: {
+      foregroundImage: "./assets/images/adaptive-icon.png",
+      backgroundColor: "#ffffff",
+    },
+  },
 });
-
-
