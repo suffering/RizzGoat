@@ -6,22 +6,23 @@
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "automatic",
-
     "extra": {
       "EXPO_PUBLIC_REVENUECAT_API_KEY": "appl_AQJGtguOlHTEmVneRvmaeabXazD",
       "eas": {
         "projectId": "137d9bd7-8780-446d-b757-812fd1f6d737"
       }
     },
-
     "ios": {
       "bundleIdentifier": "app.rork.rizzgoat-flirting-self-improvement",
       "supportsTablet": true
     },
-
     "plugins": [
-      ["expo-router"],
-      ["expo-image-picker"]
+      [
+        "expo-router"
+      ],
+      [
+        "expo-image-picker"
+      ]
     ]
   }
 }
