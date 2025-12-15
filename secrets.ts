@@ -1,13 +1,30 @@
 import Constants from "expo-constants";
 
-const extra = Constants.expoConfig?.extra ?? {};
+type ExpoExtra = Record<string, unknown>;
 
-export const REVENUECAT_API_KEY =
-  (extra.EXPO_PUBLIC_REVENUECAT_API_KEY as string) ?? "";
+const extra: ExpoExtra =
+  (Constants.expoConfig?.extra as ExpoExtra | undefined) ??
+  ((Constants as unknown as { manifest?: { extra?: ExpoExtra } })?.manifest?.extra ??
+    {});
 
-export const OPENAI_API_KEY =
-  (extra.OPENAI_API_KEY as string) ?? "";
+const fromProcessEnv = (key: string): string | undefined => {
+  try {
+    const value = (process.env as Record<string, string | undefined>)[key];
+    return typeof value === "string" ? value : undefined;
+  } catch {
+    return undefined;
+  }
+};
 
-if (!REVENUECAT_API_KEY) {
-  throw new Error("RevenueCat API key missing from Expo config");
-}
+const fromExtra = (key: string): string | undefined => {
+  const value = extra?.[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+export const REVENUECAT_API_KEY: string =
+  fromProcessEnv("EXPO_PUBLIC_REVENUECAT_API_KEY") ??
+  fromExtra("EXPO_PUBLIC_REVENUECAT_API_KEY") ??
+  "";
+
+export const OPENAI_API_KEY: string =
+  fromProcessEnv("OPENAI_API_KEY") ?? fromExtra("OPENAI_API_KEY") ?? "";
