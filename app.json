@@ -5,66 +5,23 @@
     "version": "2.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "myapp",
     "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
 
     "extra": {
-      "EXPO_PUBLIC_API_URL": "https://rizzgoat-1976.onrender.com",
-      "EXPO_PUBLIC_ENV": "production",
       "EXPO_PUBLIC_REVENUECAT_API_KEY": "appl_AQJGtguOlHTEmVneRvmaeabXazD",
       "eas": {
         "projectId": "137d9bd7-8780-446d-b757-812fd1f6d737"
       }
     },
 
-    "splash": {
-      "image": "./assets/images/splash-icon.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
-    },
-
     "ios": {
-      "supportsTablet": true,
       "bundleIdentifier": "app.rork.rizzgoat-flirting-self-improvement",
-      "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow RizzGoat to access your photos",
-        "NSCameraUsageDescription": "Allow RizzGoat to access your camera",
-        "NSMicrophoneUsageDescription": "Allow RizzGoat to access your microphone"
-      }
-    },
-
-    "android": {
-      "package": "app.rork.rizzgoat-flirting-self-improvement",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/images/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
-      }
+      "supportsTablet": true
     },
 
     "plugins": [
-      [
-        "react-native-purchases",
-        {
-          "apiKey": "appl_AQJGtguOlHTEmVneRvmaeabXazD"
-        }
-      ],
-      [
-        "expo-router",
-        {
-          "origin": "https://rork.com/"
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
-        }
-      ]
-    ],
-
-    "experiments": {
-      "typedRoutes": true
-    }
+      ["expo-router"],
+      ["expo-image-picker"]
+    ]
   }
 }
