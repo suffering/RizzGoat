@@ -14,31 +14,15 @@
     },
     "ios": {
       "bundleIdentifier": "app.rork.rizzgoat-flirting-self-improvement",
-      "supportsTablet": true,
-      "infoPlist": {
-        "NSPhotoLibraryUsageDescription": "Allow $(PRODUCT_NAME) to access your photos",
-        "NSCameraUsageDescription": "Allow $(PRODUCT_NAME) to access your camera",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to access your microphone"
-      }
+      "supportsTablet": true
     },
     "plugins": [
       [
         "expo-router"
       ],
       [
-        "expo-image-picker",
-        {
-          "photosPermission": "The app accesses your photos to let you share them with your friends."
-        }
+        "expo-image-picker"
       ]
-    ],
-    "android": {
-      "permissions": [
-        "android.permission.VIBRATE",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE"
-      ]
-    }
+    ]
   }
 }
