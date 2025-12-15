@@ -91,10 +91,12 @@ const getPlanFromIdentifier = (
 
 const didUserCancel = (error: unknown): boolean => {
   if (typeof error !== "object" || !error) return false;
-  if ("userCancelled" in error && Boolean((error as Record<string, unknown>).userCancelled)) {
-    return true;
-  }
-  if ("code" in error && (error as Record<string, unknown>).code === "1") {
+  const anyErr = error as Record<string, unknown>;
+  if (Boolean(anyErr.userCancelled)) return true;
+  const code = anyErr.code;
+  if (code === "1" || code === 1) return true;
+  if (typeof code === "string" && code.toLowerCase().includes("cancel")) return true;
+  if (typeof anyErr.message === "string" && anyErr.message.toLowerCase().includes("cancel")) {
     return true;
   }
   return false;
@@ -130,7 +132,7 @@ export const [RevenueCatProvider, useRevenueCat] =
 
         if (!REVENUECAT_API_KEY) {
           const message =
-            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY (preferred) or EXPO_GO_REVENUECAT_API_KEY environment variable.";
+            "Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.";
           setLastError(message);
           throw new Error(message);
         }
@@ -145,10 +147,22 @@ export const [RevenueCatProvider, useRevenueCat] =
 
         try {
           console.log("[RevenueCat] initialize()", {
-            appUserId: normalizedUserId,
-            hasApiKey: Boolean(REVENUECAT_API_KEY),
-          });
+          platform: Platform.OS,
+          appUserId: normalizedUserId,
+          hasApiKey: Boolean(REVENUECAT_API_KEY),
+          apiKeyLength: REVENUECAT_API_KEY ? REVENUECAT_API_KEY.length : 0,
+        });
           await configureRevenueCat(normalizedUserId ?? undefined);
+
+          try {
+            if (typeof Purchases.setAttributes === "function") {
+              await Purchases.setAttributes({ app_build: "expo" });
+            }
+          } catch (e) {
+            console.log("[RevenueCat] setAttributes skipped", {
+              message: (e as Error)?.message,
+            });
+          }
           setIsConfigured(true);
           setConfiguredAppUserId(normalizedUserId);
           setIsPaywallAvailable(typeof purchasesWithUI.presentPaywall === "function");

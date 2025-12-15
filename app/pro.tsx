@@ -99,10 +99,12 @@ const isTrialEligible = (status?: IntroEligibility["status"]): boolean => {
 
 const isUserCancelledError = (error: unknown): boolean => {
   if (typeof error !== "object" || !error) return false;
-  if ("userCancelled" in error && Boolean((error as Record<string, unknown>).userCancelled)) {
-    return true;
-  }
-  if ("code" in error && (error as Record<string, unknown>).code === "1") {
+  const anyErr = error as Record<string, unknown>;
+  if (Boolean(anyErr.userCancelled)) return true;
+  const code = anyErr.code;
+  if (code === "1" || code === 1) return true;
+  if (typeof code === "string" && code.toLowerCase().includes("cancel")) return true;
+  if (typeof anyErr.message === "string" && anyErr.message.toLowerCase().includes("cancel")) {
     return true;
   }
   return false;
@@ -431,7 +433,7 @@ export default function ProScreen() {
             <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
               <Text style={styles.ctaTitle}>Start with a free trial</Text>
               <Text style={styles.ctaSubtitle}>
-                Apple handles the introductory offer. Cancel anytime before it renews.
+                Apple handles the introductory offer automatically when eligible. Cancel anytime before it renews.
               </Text>
               <TouchableOpacity
                 onPress={async () => {

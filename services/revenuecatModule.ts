@@ -26,9 +26,7 @@ export const configureRevenueCat = async (
   }
 
   if (!REVENUECAT_API_KEY) {
-    throw new Error(
-      "Missing EXPO_PUBLIC_REVENUECAT_API_KEY (preferred) or EXPO_GO_REVENUECAT_API_KEY environment variable.",
-    );
+    throw new Error("Missing EXPO_PUBLIC_REVENUECAT_API_KEY environment variable.");
   }
 
   const normalizedUserId = appUserId ?? null;
