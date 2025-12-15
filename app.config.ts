@@ -10,12 +10,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   extra: {
     ...config.extra,
 
-    EXPO_PUBLIC_REVENUECAT_API_KEY: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
-    OPENAI_API_KEY: process.env.OPENAI_API_KEY,
-
     eas: {
       projectId: "137d9bd7-8780-446d-b757-812fd1f6d737",
     },
+
+    EXPO_PUBLIC_REVENUECAT_API_KEY:
+      process.env.EXPO_PUBLIC_REVENUECAT_API_KEY,
+
+    OPENAI_API_KEY:
+      process.env.OPENAI_API_KEY,
   },
 
   ios: {
