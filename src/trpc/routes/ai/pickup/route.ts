@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { publicProcedure } from "@/src/trpc/create-context";
-import { OPENAI_API_KEY } from "@/secrets";
+import { OPENAI_API_KEY } from "@/config/secrets";
 
 const TEXT_MODEL = "gpt-4o-mini" as const;
 
