@@ -16,7 +16,7 @@ interface UserProfile {
   completedOnboarding: boolean;
 }
 
-type Plan = 'weekly' | 'monthly' | 'annual' | null;
+type Plan = 'weekly' | 'monthly' | 'lifetime' | null;
 
 export const [AppStateProvider, useAppState] = createContextHook(() => {
   const [favorites, setFavorites] = useState<Favorite[]>([]);

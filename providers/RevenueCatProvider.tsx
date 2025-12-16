@@ -22,7 +22,6 @@ interface Offering {
   availablePackages: PurchasesPackage[];
   weekly?: PurchasesPackage;
   monthly?: PurchasesPackage;
-  annual?: PurchasesPackage;
   lifetime?: PurchasesPackage;
 }
 
@@ -41,9 +40,9 @@ interface CustomerInfo {
 const REVENUECAT_API_KEY = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY || "";
 
 const FALLBACK_PRICES = {
-  weekly: { price: 6.99, priceString: "$6.99" },
-  monthly: { price: 19.99, priceString: "$19.99" },
-  annual: { price: 119.99, priceString: "$119.99" },
+  weekly: { price: 4.99, priceString: "$4.99" },
+  monthly: { price: 9.99, priceString: "$9.99" },
+  lifetime: { price: 29.99, priceString: "$29.99" },
 };
 
 export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
@@ -169,7 +168,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     },
   });
 
-  const getPackagePrice = useCallback((packageType: "weekly" | "monthly" | "annual") => {
+  const getPackagePrice = useCallback((packageType: "weekly" | "monthly" | "lifetime") => {
     const offering = offeringsQuery.data;
     
     if (offering) {
@@ -190,7 +189,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     };
   }, [offeringsQuery.data]);
 
-  const getPackage = useCallback((packageType: "weekly" | "monthly" | "annual"): PurchasesPackage | null => {
+  const getPackage = useCallback((packageType: "weekly" | "monthly" | "lifetime"): PurchasesPackage | null => {
     const offering = offeringsQuery.data;
     if (offering) {
       return offering[packageType] || null;

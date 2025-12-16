@@ -80,7 +80,7 @@ export default function ProScreen() {
     }
   };
 
-  const handleSubscribe = async (p: "weekly" | "monthly" | "annual") => {
+  const handleSubscribe = async (p: "weekly" | "monthly" | "lifetime") => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -134,7 +134,7 @@ export default function ProScreen() {
 
   const weeklyPrice = getPackagePrice("weekly");
   const monthlyPrice = getPackagePrice("monthly");
-  const annualPrice = getPackagePrice("annual");
+  const lifetimePrice = getPackagePrice("lifetime");
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]} testID="pro-screen">
@@ -211,7 +211,7 @@ export default function ProScreen() {
             <View style={styles.ctaSection}>
               <LinearGradient colors={["#E3222B", "#FF7A59"]} style={styles.ctaCard}>
                 <Text style={styles.ctaTitle}>3-Day Free Trial</Text>
-                <Text style={styles.ctaSubtitle}>Then {weeklyPrice.priceString}/week, {monthlyPrice.priceString}/month, or {annualPrice.priceString}/year</Text>
+                <Text style={styles.ctaSubtitle}>Then {weeklyPrice.priceString}/week, {monthlyPrice.priceString}/month, or {lifetimePrice.priceString} lifetime</Text>
                 <TouchableOpacity onPress={handleStartTrial} activeOpacity={0.9} style={styles.ctaButton} testID="start-trial-btn">
                   <Text style={styles.ctaButtonText}>Start Free Trial</Text>
                 </TouchableOpacity>
@@ -247,17 +247,17 @@ export default function ProScreen() {
                 </LinearGradient>
               </TouchableOpacity>
 
-              <TouchableOpacity onPress={() => handleSubscribe("annual")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-annual" disabled={isPurchasing}>
+              <TouchableOpacity onPress={() => handleSubscribe("lifetime")} style={[styles.planCard, styles.bestValueCard]} activeOpacity={0.9} testID="plan-lifetime" disabled={isPurchasing}>
                 <View style={styles.bestValueBadge}>
                   <Zap size={16} color="#FFFFFF" />
                   <Text style={styles.bestValueText}>BEST VALUE</Text>
                 </View>
                 <View style={styles.planHeader}>
-                  <Text style={styles.planName}>Annual</Text>
-                  <Text style={styles.saveBadge}>Save more</Text>
+                  <Text style={styles.planName}>Lifetime</Text>
+                  <Text style={styles.saveBadge}>One-time</Text>
                 </View>
-                <Text style={styles.planPrice}>{isRevenueCatLoading ? "..." : annualPrice.priceString}</Text>
-                <Text style={styles.planPeriod}>per year</Text>
+                <Text style={styles.planPrice}>{isRevenueCatLoading ? "..." : lifetimePrice.priceString}</Text>
+                <Text style={styles.planPeriod}>forever</Text>
                 <LinearGradient colors={["#10B981", "#34D399"]} style={[styles.planButton, isPurchasing && styles.disabledButton]}>
                   <Text style={styles.planButtonText}>{isPurchasing ? "Processing..." : "Continue"}</Text>
                 </LinearGradient>
@@ -267,8 +267,8 @@ export default function ProScreen() {
 
           <Text style={styles.terms}>
             • 3-day free trial then chosen plan applies{"\n"}
-            • Cancel anytime in Settings{"\n"}
-            • Prices in USD
+            • Cancel subscriptions anytime in Settings{"\n"}
+            • Lifetime plan is a one-time purchase
           </Text>
 
           {Platform.OS !== "web" && (
