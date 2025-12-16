@@ -9,7 +9,11 @@ import { AppStateProvider } from "@/providers/AppStateProvider";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { trpc, trpcClient } from "@/lib/trpc";
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch((e) => {
+  console.log("[SplashScreen] preventAutoHideAsync failed", {
+    message: (e as Error)?.message,
+  });
+});
 
 const queryClient = new QueryClient();
 
