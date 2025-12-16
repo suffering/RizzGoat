@@ -22,6 +22,7 @@ interface Offering {
   availablePackages: PurchasesPackage[];
   weekly?: PurchasesPackage;
   monthly?: PurchasesPackage;
+  annual?: PurchasesPackage;
   lifetime?: PurchasesPackage;
 }
 
@@ -172,7 +173,9 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     const offering = offeringsQuery.data;
     
     if (offering) {
-      const pkg = offering[packageType];
+      // Lifetime is configured under $rc_annual in RevenueCat
+      const rcKey = packageType === "lifetime" ? "annual" : packageType;
+      const pkg = offering[rcKey as keyof Offering] as PurchasesPackage | undefined;
       if (pkg) {
         return {
           price: pkg.product.price,
@@ -192,7 +195,9 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   const getPackage = useCallback((packageType: "weekly" | "monthly" | "lifetime"): PurchasesPackage | null => {
     const offering = offeringsQuery.data;
     if (offering) {
-      return offering[packageType] || null;
+      // Lifetime is configured under $rc_annual in RevenueCat
+      const rcKey = packageType === "lifetime" ? "annual" : packageType;
+      return (offering[rcKey as keyof Offering] as PurchasesPackage | undefined) || null;
     }
     return null;
   }, [offeringsQuery.data]);
