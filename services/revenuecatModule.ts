@@ -2,15 +2,13 @@ import { Platform } from "react-native";
 import type PurchasesSDK from "react-native-purchases";
 import { REVENUECAT_API_KEY } from "@/secrets";
 
-type PurchasesStatic = typeof PurchasesSDK;
-
 let configuredUserId: string | null = null;
 let hasConfigured = false;
 let configurePromise: Promise<void> | null = null;
 
 const tag = "[RevenueCat]";
 
-type PurchasesInstance = PurchasesStatic;
+type PurchasesInstance = typeof PurchasesSDK;
 
 type PurchasesModuleLike = {
   default?: PurchasesInstance;

@@ -3,12 +3,12 @@ import { AppState, Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import type {
-CustomerInfo,
-CustomerInfoUpdateListener,
-IntroEligibility,
-PurchasesOffering,
-PurchasesOfferings,
-PurchasesPackage,
+  CustomerInfo,
+  CustomerInfoUpdateListener,
+  IntroEligibility,
+  PurchasesOffering,
+  PurchasesOfferings,
+  PurchasesPackage,
 } from "react-native-purchases";
 import { REVENUECAT_API_KEY } from "@/secrets";
 import { configureRevenueCat, getPurchases } from "@/services/revenuecatModule";
@@ -260,7 +260,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatC
   const currentOffering = useMemo(() => {
     if (!offeringsData) return null;
     if (offeringsData.all?.[PRIMARY_OFFERING_ID]) {
-      return offeringsData.all[PRIMARY_OFFERING_ID];
+      return offeringsData.all[PRIMARY_OFFERING_ID] ?? null;
     }
     if (offeringsData.current) return offeringsData.current;
     if (offeringsData.all) {
