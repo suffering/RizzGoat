@@ -5,6 +5,7 @@ import React, { useEffect } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { AppStateProvider } from "@/providers/AppStateProvider";
+import { RevenueCatProvider } from "@/providers/RevenueCatProvider";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { trpc, trpcClient } from "@/lib/trpc";
 
@@ -54,7 +55,9 @@ export default function RootLayout() {
           <GestureHandlerRootView style={{ flex: 1 }}>
             <ThemeProvider>
               <AppStateProvider>
-                <RootLayoutNav />
+                <RevenueCatProvider>
+                  <RootLayoutNav />
+                </RevenueCatProvider>
               </AppStateProvider>
             </ThemeProvider>
           </GestureHandlerRootView>
