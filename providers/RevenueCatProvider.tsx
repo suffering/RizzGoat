@@ -26,6 +26,10 @@ interface Offering {
   lifetime?: PurchasesPackage;
 }
 
+interface OfferingsResponse {
+  current: Offering | null;
+}
+
 interface CustomerInfo {
   entitlements: {
     active: Record<string, {
@@ -85,7 +89,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
 
   const offeringsQuery = useQuery({
     queryKey: ["revenuecat-offerings", !!Purchases],
-    queryFn: async (): Promise<Offering | null> => {
+    queryFn: async (): Promise<OfferingsResponse | null> => {
       if (Platform.OS === "web" || !Purchases) {
         console.log("RevenueCat: Returning null offerings (web or no Purchases)");
         return null;
@@ -95,22 +99,32 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
         console.log("RevenueCat: Fetching offerings...");
         const offerings = await Purchases.getOfferings();
         console.log("RevenueCat: Raw offerings:", JSON.stringify(offerings, null, 2));
-        
-        if (offerings.current) {
-          console.log("RevenueCat: Current offering:", offerings.current.identifier);
-          console.log("RevenueCat: Available packages count:", offerings.current.availablePackages?.length || 0);
-          
-          if (offerings.current.availablePackages) {
-            offerings.current.availablePackages.forEach((pkg: PurchasesPackage, idx: number) => {
-              console.log(`RevenueCat: Package ${idx}:`, pkg.identifier, pkg.packageType, pkg.product.priceString);
+
+        const current = (offerings?.current ?? null) as Offering | null;
+
+        if (current) {
+          console.log("RevenueCat: Current offering:", current.identifier);
+          console.log(
+            "RevenueCat: Available packages count:",
+            current.availablePackages?.length || 0,
+          );
+
+          if (current.availablePackages?.length) {
+            current.availablePackages.forEach((pkg: PurchasesPackage, idx: number) => {
+              console.log(
+                `RevenueCat: Package ${idx}:`,
+                pkg.identifier,
+                pkg.packageType,
+                pkg.product.priceString,
+              );
             });
           }
-          
-          return offerings.current as Offering;
+
+          return { current };
         }
-        
+
         console.log("RevenueCat: No current offering found");
-        return null;
+        return { current: null };
       } catch (error) {
         console.log("RevenueCat: Error fetching offerings", error);
         return null;
@@ -181,7 +195,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   });
 
   const findPackageByType = useCallback((packageType: "weekly" | "monthly" | "lifetime"): PurchasesPackage | null => {
-    const offering = offeringsQuery.data;
+    const offering = offeringsQuery.data?.current;
     if (!offering) return null;
 
     const packages = offering.availablePackages || [];
@@ -264,7 +278,9 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   return {
     isConfigured,
     isLoading: offeringsQuery.isLoading || customerInfoQuery.isLoading,
-    offerings: offeringsQuery.data,
+    offerings: offeringsQuery.data?.current ?? null,
+    offeringsResponse: offeringsQuery.data,
+    availablePackages: offeringsQuery.data?.current?.availablePackages ?? [],
     customerInfo: customerInfoQuery.data,
     
     getPackagePrice,
