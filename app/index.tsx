@@ -44,10 +44,6 @@ export default function HomeScreen() {
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
   useEffect(() => {
-    if (!showOnboarding && !isPro) {
-      router.replace('/pro' as any);
-      return;
-    }
     if (showOnboarding) return;
     
     // Initialize floating icons
@@ -166,7 +162,7 @@ export default function HomeScreen() {
         }),
       ])
     ).start();
-  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding]);
+  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding, floatingIcons]);
   
   if (showOnboarding) {
     return <OnboardingScreen />;
