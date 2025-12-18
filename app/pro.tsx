@@ -15,7 +15,7 @@ import { X, Check, Sparkles, Zap, Crown, Crown as CrownIcon } from "lucide-react
 import { LinearGradient } from "expo-linear-gradient";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
-import { useRevenueCat } from "@/providers/RevenueCatProvider";
+import { PurchasesPackage, useRevenueCat } from "@/providers/RevenueCatProvider";
 import * as Haptics from "expo-haptics";
 
 const FEATURES = [
@@ -79,7 +79,7 @@ export default function ProScreen() {
     }
   };
 
-  const handleSubscribe = async (pkg: any) => {
+  const handleSubscribe = async (pkg: PurchasesPackage | null) => {
     try {
       if (Platform.OS !== "web") {
         await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -136,7 +136,8 @@ export default function ProScreen() {
     }
   };
 
-  const packages = availablePackages ?? [];
+  const packages = (availablePackages ?? []) as PurchasesPackage[];
+
 
   const getPlanMeta = (packageType: string, identifier: string) => {
     const type = (packageType || "").toLowerCase();
@@ -300,7 +301,7 @@ export default function ProScreen() {
                   </Text>
                 </View>
               ) : packages.length ? (
-                packages.map((pkg: any, idx: number) => {
+                packages.map((pkg: PurchasesPackage, idx: number) => {
                   const meta = getPlanMeta(pkg?.packageType, pkg?.identifier);
                   const title = meta.title || pkg?.product?.title || "Plan";
                   const price = pkg?.product?.priceString ?? "";

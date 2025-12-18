@@ -3,7 +3,7 @@ import { Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
-interface PurchasesPackage {
+export interface PurchasesPackage {
   identifier: string;
   packageType: string;
   product: {
@@ -16,7 +16,7 @@ interface PurchasesPackage {
   };
 }
 
-interface Offering {
+export interface Offering {
   identifier: string;
   serverDescription: string;
   availablePackages: PurchasesPackage[];
@@ -26,11 +26,11 @@ interface Offering {
   lifetime?: PurchasesPackage;
 }
 
-interface OfferingsResponse {
+export interface OfferingsResponse {
   current: Offering | null;
 }
 
-interface CustomerInfo {
+export interface CustomerInfo {
   entitlements: {
     active: Record<string, {
       identifier: string;
@@ -88,7 +88,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   }, []);
 
   const offeringsQuery = useQuery({
-    queryKey: ["revenuecat-offerings", !!Purchases],
+    queryKey: ["revenuecat-offerings", Purchases],
     queryFn: async (): Promise<OfferingsResponse | null> => {
       if (Platform.OS === "web" || !Purchases) {
         console.log("RevenueCat: Returning null offerings (web or no Purchases)");
@@ -136,7 +136,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   });
 
   const customerInfoQuery = useQuery({
-    queryKey: ["revenuecat-customer-info", !!Purchases],
+    queryKey: ["revenuecat-customer-info", Purchases],
     queryFn: async (): Promise<CustomerInfo | null> => {
       if (Platform.OS === "web" || !Purchases) {
         return null;
@@ -168,7 +168,8 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     },
     onSuccess: (customerInfo) => {
       console.log("RevenueCat: Purchase successful");
-      queryClient.setQueryData(["revenuecat-customer-info"], customerInfo);
+      queryClient.setQueryData(["revenuecat-customer-info", Purchases], customerInfo);
+      queryClient.invalidateQueries({ queryKey: ["revenuecat-offerings"] });
     },
     onError: (error: any) => {
       console.log("RevenueCat: Purchase failed", error);
@@ -190,7 +191,8 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     },
     onSuccess: (customerInfo) => {
       console.log("RevenueCat: Restore successful");
-      queryClient.setQueryData(["revenuecat-customer-info"], customerInfo);
+      queryClient.setQueryData(["revenuecat-customer-info", Purchases], customerInfo);
+      queryClient.invalidateQueries({ queryKey: ["revenuecat-offerings"] });
     },
   });
 
