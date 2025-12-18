@@ -14,13 +14,25 @@ export function getRevenueCatApiKey(): string | undefined {
   const fromExtra = extra?.EXPO_PUBLIC_REVENUECAT_API_KEY;
   const fromEnv = process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
 
-  const key = (typeof fromEnv === "string" && fromEnv.length > 0
-    ? fromEnv
-    : typeof fromExtra === "string" && fromExtra.length > 0
-      ? fromExtra
+  const key = (typeof fromExtra === "string" && fromExtra.length > 0
+    ? fromExtra
+    : typeof fromEnv === "string" && fromEnv.length > 0
+      ? fromEnv
       : undefined) as string | undefined;
 
   return key;
+}
+
+export function isRevenueCatApiKeyCompatibleForPlatform(
+  apiKey: string,
+  platform: typeof Platform.OS
+): boolean {
+  const key = apiKey.trim();
+  if (key.length === 0) return false;
+
+  if (platform === "ios") return key.startsWith("appl_");
+  if (platform === "android") return key.startsWith("goog_");
+  return true;
 }
 
 export type PurchasesLike = {

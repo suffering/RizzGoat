@@ -4,6 +4,7 @@ import createContextHook from "@nkzw/create-context-hook";
 import {
   getPurchasesModuleSafely,
   getRevenueCatApiKey,
+  isRevenueCatApiKeyCompatibleForPlatform,
   isUserCancelledRevenueCatError,
   type PurchasesLike,
 } from "@/services/revenuecat";
@@ -41,16 +42,13 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
   const apiKey = useMemo(() => getRevenueCatApiKey(), []);
 
   const currentOffering: RevenueCatOffering | null = useMemo(() => {
-    const current = offerings?.current ?? null;
-    if (current) return current;
-    const fallback = offerings?.all?.default;
-    return fallback ?? null;
+    return offerings?.current ?? null;
   }, [offerings]);
 
   const availablePackages: unknown[] = useMemo(() => {
-    const pkgs = offerings?.current?.availablePackages;
+    const pkgs = currentOffering?.availablePackages;
     return Array.isArray(pkgs) ? pkgs : [];
-  }, [offerings]);
+  }, [currentOffering]);
 
   const isEntitledToPro = useMemo(() => {
     const active = customerInfo?.entitlements?.active;
@@ -74,6 +72,15 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
 
       if (!apiKey) {
         console.log("[RevenueCat] Missing EXPO_PUBLIC_REVENUECAT_API_KEY. Skipping configuration.");
+        configuredRef.current = false;
+        setIsConfigured(false);
+        return false;
+      }
+
+      if (!isRevenueCatApiKeyCompatibleForPlatform(apiKey, Platform.OS)) {
+        console.log(
+          `[RevenueCat] API key prefix does not match platform (${Platform.OS}). Expected ${Platform.OS === "ios" ? "appl_" : Platform.OS === "android" ? "goog_" : "(any)"}. Skipping configuration.`
+        );
         configuredRef.current = false;
         setIsConfigured(false);
         return false;
