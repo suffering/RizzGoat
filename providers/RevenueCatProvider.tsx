@@ -94,11 +94,22 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
       try {
         console.log("RevenueCat: Fetching offerings...");
         const offerings = await Purchases.getOfferings();
-        console.log("RevenueCat: Offerings received", JSON.stringify(offerings, null, 2));
+        console.log("RevenueCat: Raw offerings:", JSON.stringify(offerings, null, 2));
         
         if (offerings.current) {
+          console.log("RevenueCat: Current offering:", offerings.current.identifier);
+          console.log("RevenueCat: Available packages count:", offerings.current.availablePackages?.length || 0);
+          
+          if (offerings.current.availablePackages) {
+            offerings.current.availablePackages.forEach((pkg: PurchasesPackage, idx: number) => {
+              console.log(`RevenueCat: Package ${idx}:`, pkg.identifier, pkg.packageType, pkg.product.priceString);
+            });
+          }
+          
           return offerings.current as Offering;
         }
+        
+        console.log("RevenueCat: No current offering found");
         return null;
       } catch (error) {
         console.log("RevenueCat: Error fetching offerings", error);
@@ -169,20 +180,60 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
     },
   });
 
-  const getPackagePrice = useCallback((packageType: "weekly" | "monthly" | "lifetime") => {
+  const findPackageByType = useCallback((packageType: "weekly" | "monthly" | "lifetime"): PurchasesPackage | null => {
     const offering = offeringsQuery.data;
+    if (!offering) return null;
+
+    const packages = offering.availablePackages || [];
+    console.log("RevenueCat: Searching for package type:", packageType, "in", packages.length, "packages");
+
+    // Map our types to RevenueCat package type identifiers
+    const rcPackageTypes: Record<string, string[]> = {
+      weekly: ["$rc_weekly", "WEEKLY", "weekly"],
+      monthly: ["$rc_monthly", "MONTHLY", "monthly"],
+      lifetime: ["$rc_lifetime", "LIFETIME", "lifetime", "$rc_annual", "ANNUAL", "annual"],
+    };
+
+    const targetTypes = rcPackageTypes[packageType] || [];
     
-    if (offering) {
-      // Lifetime is configured under $rc_annual in RevenueCat
-      const rcKey = packageType === "lifetime" ? "annual" : packageType;
-      const pkg = offering[rcKey as keyof Offering] as PurchasesPackage | undefined;
-      if (pkg) {
-        return {
-          price: pkg.product.price,
-          priceString: pkg.product.priceString,
-          currencyCode: pkg.product.currencyCode,
-        };
+    // Search through availablePackages
+    for (const pkg of packages) {
+      console.log("RevenueCat: Checking package:", pkg.identifier, pkg.packageType);
+      
+      // Match by packageType or identifier
+      if (targetTypes.includes(pkg.packageType) || targetTypes.includes(pkg.identifier)) {
+        console.log("RevenueCat: Found package match:", pkg.identifier);
+        return pkg;
       }
+      
+      // Also check product identifier for lifetime
+      if (packageType === "lifetime" && pkg.product.identifier.toLowerCase().includes("lifetime")) {
+        console.log("RevenueCat: Found lifetime by product identifier:", pkg.product.identifier);
+        return pkg;
+      }
+    }
+
+    // Fallback to shortcut accessors
+    const shortcutKey = packageType === "lifetime" ? "annual" : packageType;
+    const shortcutPkg = offering[shortcutKey as keyof Offering] as PurchasesPackage | undefined;
+    if (shortcutPkg) {
+      console.log("RevenueCat: Found via shortcut:", shortcutKey);
+      return shortcutPkg;
+    }
+
+    console.log("RevenueCat: No package found for type:", packageType);
+    return null;
+  }, [offeringsQuery.data]);
+
+  const getPackagePrice = useCallback((packageType: "weekly" | "monthly" | "lifetime") => {
+    const pkg = findPackageByType(packageType);
+    
+    if (pkg) {
+      return {
+        price: pkg.product.price,
+        priceString: pkg.product.priceString,
+        currencyCode: pkg.product.currencyCode,
+      };
     }
     
     return {
@@ -190,17 +241,11 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook(() => {
       priceString: FALLBACK_PRICES[packageType].priceString,
       currencyCode: "USD",
     };
-  }, [offeringsQuery.data]);
+  }, [findPackageByType]);
 
   const getPackage = useCallback((packageType: "weekly" | "monthly" | "lifetime"): PurchasesPackage | null => {
-    const offering = offeringsQuery.data;
-    if (offering) {
-      // Lifetime is configured under $rc_annual in RevenueCat
-      const rcKey = packageType === "lifetime" ? "annual" : packageType;
-      return (offering[rcKey as keyof Offering] as PurchasesPackage | undefined) || null;
-    }
-    return null;
-  }, [offeringsQuery.data]);
+    return findPackageByType(packageType);
+  }, [findPackageByType]);
 
   const hasActiveEntitlement = useCallback((entitlementId: string = "pro"): boolean => {
     const customerInfo = customerInfoQuery.data;
