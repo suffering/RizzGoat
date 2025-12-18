@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
 
@@ -156,7 +156,10 @@ export const [AppStateProvider, useAppState] = createContextHook(() => {
     setShowOnboarding(true);
     setUserProfile(null);
     try {
-      await AsyncStorage.removeItem("userProfile");
+      await Promise.all([
+        AsyncStorage.removeItem("userProfile"),
+        AsyncStorage.removeItem("didShowProAfterOnboarding_v1"),
+      ]);
     } catch (error) {
       console.log("Error resetting onboarding:", error);
     }

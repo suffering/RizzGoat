@@ -17,8 +17,10 @@ import { useRouter } from "expo-router";
 import { Menu, Camera, MessageCircle, Sparkles, Zap, Heart } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
+import { useRevenueCat } from "@/providers/RevenueCatProvider";
 import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 const { width: screenWidth } = Dimensions.get('window');
 
@@ -34,6 +36,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { showOnboarding, isPro } = useAppState();
+  const { isEntitledToPro, isConfigured } = useRevenueCat();
+  const prevShowOnboarding = useRef<boolean>(showOnboarding);
   
   const logoScale = useRef(new Animated.Value(0)).current;
   const cardOpacity = useRef(new Animated.Value(0)).current;
@@ -164,6 +168,41 @@ export default function HomeScreen() {
     ).start();
   }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding, floatingIcons]);
   
+  useEffect(() => {
+    const wasOnboarding = prevShowOnboarding.current;
+    prevShowOnboarding.current = showOnboarding;
+
+    if (wasOnboarding && !showOnboarding) {
+      (async () => {
+        try {
+          const stored = await AsyncStorage.getItem("didShowProAfterOnboarding_v1");
+          const alreadyShown = stored === "true";
+          if (alreadyShown) {
+            console.log("[ProGate] already shown after onboarding; skipping");
+            return;
+          }
+
+          const shouldShowPaywall = !isEntitledToPro;
+          console.log("[ProGate] onboarding complete", {
+            isConfigured,
+            isEntitledToPro,
+            shouldShowPaywall,
+          });
+
+          if (shouldShowPaywall) {
+            await AsyncStorage.setItem("didShowProAfterOnboarding_v1", "true");
+            router.push("/pro" as any);
+          } else {
+            await AsyncStorage.setItem("didShowProAfterOnboarding_v1", "true");
+          }
+        } catch (e) {
+          console.log("[ProGate] error gating after onboarding", e);
+          router.push("/pro" as any);
+        }
+      })();
+    }
+  }, [isConfigured, isEntitledToPro, router, showOnboarding]);
+
   if (showOnboarding) {
     return <OnboardingScreen />;
   }
@@ -172,8 +211,8 @@ export default function HomeScreen() {
     if (Platform.OS !== "web") {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     }
-    if (!isPro) {
-      router.push('/pro' as any);
+    if (!isPro && !isEntitledToPro) {
+      router.push("/pro" as any);
       return;
     }
     router.push(route as any);
