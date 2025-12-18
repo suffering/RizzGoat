@@ -1,4 +1,5 @@
 import Constants from "expo-constants";
+import { Platform } from "react-native";
 
 type ExpoExtra = Record<string, unknown>;
 
@@ -31,6 +32,10 @@ export type PurchasesLike = {
 };
 
 export async function getPurchasesModuleSafely(): Promise<PurchasesLike | null> {
+  if (Platform.OS === "web") {
+    return null;
+  }
+
   try {
     const mod = (await import("react-native-purchases")) as any;
     const purchases = (mod?.default ?? mod) as PurchasesLike;
