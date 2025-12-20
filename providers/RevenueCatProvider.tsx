@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { AppState, AppStateStatus, Platform } from "react-native";
-import Constants from "expo-constants";
 import Purchases, {
   CustomerInfo,
   LOG_LEVEL,
@@ -29,26 +28,7 @@ type RevenueCatState = {
   restorePurchases: () => Promise<{ customerInfo: CustomerInfo | null }>;
 };
 
-const FALLBACK_REVENUECAT_IOS_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
-
-type RevenueCatApiKeySource = "env" | "fallback" | "missing";
-
-function getRevenueCatApiKey(): { apiKey: string | null; source: RevenueCatApiKeySource } {
-  const raw =
-    (Constants.expoConfig?.extra as Record<string, unknown> | undefined)?.
-      EXPO_PUBLIC_REVENUECAT_API_KEY ??
-    process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
-
-  if (typeof raw === "string") {
-    const trimmed = raw.trim();
-    if (trimmed) return { apiKey: trimmed, source: "env" };
-  }
-
-  const fallback = FALLBACK_REVENUECAT_IOS_API_KEY.trim();
-  if (fallback) return { apiKey: fallback, source: "fallback" };
-
-  return { apiKey: null, source: "missing" };
-}
+const REVENUECAT_IOS_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
 
 function getIsEntitledToPro(info: CustomerInfo | null): boolean {
   return info?.entitlements?.active?.pro != null;
@@ -107,13 +87,13 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatS
         return;
       }
 
-      const { apiKey, source } = getRevenueCatApiKey();
+      const apiKey = REVENUECAT_IOS_API_KEY.trim();
       if (!apiKey) {
-        console.log("[RevenueCat] missing EXPO_PUBLIC_REVENUECAT_API_KEY; skipping configure");
+        console.log("[RevenueCat] missing hardcoded api key; skipping configure");
         setIsConfigured(false);
         return;
       }
-      console.log("[RevenueCat] using api key source", { source });
+      console.log("[RevenueCat] using hardcoded api key");
 
       const hasNativeModule =
         typeof Purchases?.configure === "function" &&
