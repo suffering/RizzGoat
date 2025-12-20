@@ -29,16 +29,25 @@ type RevenueCatState = {
   restorePurchases: () => Promise<{ customerInfo: CustomerInfo | null }>;
 };
 
-function getRevenueCatApiKey(): string | null {
+const FALLBACK_REVENUECAT_IOS_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
+
+type RevenueCatApiKeySource = "env" | "fallback" | "missing";
+
+function getRevenueCatApiKey(): { apiKey: string | null; source: RevenueCatApiKeySource } {
   const raw =
     (Constants.expoConfig?.extra as Record<string, unknown> | undefined)?.
       EXPO_PUBLIC_REVENUECAT_API_KEY ??
     process.env.EXPO_PUBLIC_REVENUECAT_API_KEY;
 
-  if (typeof raw !== "string") return null;
-  const trimmed = raw.trim();
-  if (!trimmed) return null;
-  return trimmed;
+  if (typeof raw === "string") {
+    const trimmed = raw.trim();
+    if (trimmed) return { apiKey: trimmed, source: "env" };
+  }
+
+  const fallback = FALLBACK_REVENUECAT_IOS_API_KEY.trim();
+  if (fallback) return { apiKey: fallback, source: "fallback" };
+
+  return { apiKey: null, source: "missing" };
 }
 
 function getIsEntitledToPro(info: CustomerInfo | null): boolean {
@@ -92,18 +101,19 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatS
       if (configureOnceRef.current) return;
       configureOnceRef.current = true;
 
-      const apiKey = getRevenueCatApiKey();
-      if (!apiKey) {
-        console.log("[RevenueCat] missing EXPO_PUBLIC_REVENUECAT_API_KEY; skipping configure");
-        setIsConfigured(false);
-        return;
-      }
-
       if (Platform.OS === "web") {
         console.log("[RevenueCat] web platform detected; skipping configure");
         setIsConfigured(false);
         return;
       }
+
+      const { apiKey, source } = getRevenueCatApiKey();
+      if (!apiKey) {
+        console.log("[RevenueCat] missing EXPO_PUBLIC_REVENUECAT_API_KEY; skipping configure");
+        setIsConfigured(false);
+        return;
+      }
+      console.log("[RevenueCat] using api key source", { source });
 
       const hasNativeModule =
         typeof Purchases?.configure === "function" &&
