@@ -20,6 +20,12 @@ module.exports = defineConfig([
     },
   },
   {
+    files: ['backend/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'import/no-unresolved': 'off',
+    },
+  },
+  {
     ignores: ['.rorkai/**']
   }
 ]);

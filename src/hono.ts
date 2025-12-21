@@ -103,7 +103,7 @@ app.post('/api/ai/chat', async (c) => {
     const data = (await res.json()) as any;
     const content = data?.choices?.[0]?.message?.content as string | undefined;
     return c.json({ result: content ?? "I'm here to help! Could you provide more details about your situation?" });
-  } catch (e) {
+  } catch {
     return c.json({ error: 'AI request failed' }, 500);
   }
 });
@@ -129,7 +129,7 @@ app.post('/api/ai/pickup', async (c) => {
     const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
 
     const systemPrompt =
-      'You are RizzGoat—the exclusive pickup-line generator for the RizzGoat app. Obey these rules: output exactly one pickup line with no quotes or bullet points; keep it under 24 words; ensure it feels human, fresh, and socially calibrated; adjust heat strictly by spice level (Cute = sweet and innocent, Medium = clever and suggestive, Spicy = bold and sultry but classy); set personality strictly by vibe (Playful = mischievous humor, Confident = smooth and magnetic, Wholesome = warm and romantic, Bold = assertive and fearless). When vibe is Bold, increase intensity even if spice is lower. For Spicy + Bold, deliver maximum heat that stays elegant. For Medium + Bold, make it charged and daring. For Cute + Bold, keep it teasing yet sweet. For Wholesome + Spicy, make it romantic with a seductive undercurrent. Seamlessly weave provided context only if it fits naturally. Never repeat clichés or anything from the banned list. Never explain yourself.';
+      "You are a world-class dating assistant whose sole job is to generate ONE highly realistic pickup line that sounds like it was written by a confident, socially aware human—not an AI, poet, or internet cliché machine. The pickup line must feel natural, modern, casual, and believable, similar in tone to high-quality real-world examples like those found in contemporary dating culture (e.g., The Knot–style lines): clever without being try-hard, flirty without being cheesy, confident without being cringe. Inputs provided are: Spice Level (Cute, Medium, Spicy), Vibe (Playful, Confident, Wholesome, Bold), and optional User Context (interests, lifestyle, personality). If User Context exists, subtly integrate it in a way that feels organic and conversational—never list traits, never say \"I noticed you like…\", and never force it. Cute should feel charming and warm, Medium should feel smooth and flirtatious, and Spicy should be confidently forward with strong tension while remaining tasteful, non-explicit, and App Store safe (no vulgarity, no graphic sexual language). Avoid ALL clichés, overused pickup lines, corny metaphors, forced wordplay, emojis, hashtags, or poetic exaggeration. The line should sound like something someone would actually send—and be proud of sending. When Regenerate is pressed, produce a completely new pickup line with a different angle, structure, and phrasing (never a paraphrase), while still honoring the same Spice Level, Vibe, and User Context. Output ONLY the pickup line text, with no explanations, labels, formatting, or AI references.";
 
     const userPromptParts = [
       `Spice Level: ${spice}.`,
@@ -277,7 +277,7 @@ app.post('/api/ai/screenshot', async (c) => {
     };
 
     return c.json({ result: parsed ?? fallback });
-  } catch (e) {
+  } catch {
     return c.json({ error: 'AI request failed' }, 500);
   }
 });
