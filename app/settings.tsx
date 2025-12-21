@@ -5,7 +5,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Switch,
   Linking,
   Alert,
   Platform,
@@ -15,10 +14,8 @@ import { useRouter } from "expo-router";
 import {
   X,
   Users,
-  MessageSquare,
   Star,
   Crown,
-  Bell,
   Shield,
   FileText,
 } from "lucide-react-native";
@@ -93,29 +90,6 @@ export default function SettingsScreen() {
           icon: Star,
           title: "Rate Us",
           action: handleRateUs,
-          showArrow: true,
-        },
-      ],
-    },
-    {
-      title: "Preferences",
-      items: [
-        {
-          icon: Bell,
-          title: "Notifications",
-          action: () => {},
-          showSwitch: true,
-          switchValue: true,
-        },
-      ],
-    },
-    {
-      title: "Support",
-      items: [
-        {
-          icon: MessageSquare,
-          title: "Message Us",
-          action: () => Alert.alert("Support", "support@rizzgoat.app"),
           showArrow: true,
         },
       ],
@@ -215,14 +189,6 @@ export default function SettingsScreen() {
                       </View>
                       {item.showArrow && (
                         <Text style={{ color: theme.textSecondary }}>›</Text>
-                      )}
-                      {item.showSwitch && (
-                        <Switch
-                          value={item.switchValue}
-                          onValueChange={item.action}
-                          trackColor={{ false: theme.border, true: theme.primary }}
-                          thumbColor="#FFFFFF"
-                        />
                       )}
                     </TouchableOpacity>
                   );
