@@ -231,11 +231,7 @@ export default function SettingsScreen() {
             </View>
           ))}
 
-          <View style={styles.footer}>
-            <Text style={[styles.version, { color: theme.textSecondary }]}>
-              RizzGoat v1.0.0
-            </Text>
-          </View>
+          <View style={styles.footer} />
         </ScrollView>
       </SafeAreaView>
     </View>
