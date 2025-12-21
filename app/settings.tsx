@@ -126,13 +126,13 @@ export default function SettingsScreen() {
         {
           icon: Shield,
           title: "Privacy Policy",
-          action: () => Linking.openURL("https://rizzgoat.app/privacy"),
+          action: () => Linking.openURL("https://rizzgoat.com/privacypolicy"),
           showArrow: true,
         },
         {
           icon: FileText,
           title: "Terms of Service",
-          action: () => Linking.openURL("https://rizzgoat.app/terms"),
+          action: () => Linking.openURL("https://rizzgoat.com/tos"),
           showArrow: true,
         },
       ],
