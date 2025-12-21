@@ -537,8 +537,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 10,
+    paddingTop: 6,
+    paddingBottom: 6,
   },
   headerLeft: {
     flex: 1,
@@ -582,8 +582,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 32,
+    marginTop: 0,
+    marginBottom: 22,
   },
   pulseContainer: {
     alignItems: "center",
@@ -596,12 +596,12 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logoImage: {
-    width: 700,
-    height: 280,
+    width: 640,
+    height: 230,
   },
   tagline: {
     fontSize: 22,
-    marginTop: 16,
+    marginTop: 10,
     fontWeight: "600",
     textAlign: "center",
   },
