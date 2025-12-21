@@ -8,6 +8,7 @@ import Purchases, {
   PurchasesPackage,
   PurchasesError,
   PURCHASES_ERROR_CODE,
+  PRORATION_MODE,
 } from "react-native-purchases";
 import createContextHook from "@nkzw/create-context-hook";
 
@@ -18,10 +19,14 @@ type RevenueCatState = {
   availablePackages: PurchasesPackage[];
   customerInfo: CustomerInfo | null;
   isEntitledToPro: boolean;
+  activeProProductId: string | null;
   isLoading: boolean;
   lastErrorMessage: string | null;
   refresh: () => Promise<void>;
-  purchasePackage: (pkg: PurchasesPackage) => Promise<{
+  purchasePackage: (
+    pkg: PurchasesPackage,
+    options?: { upgradeFromProductId?: string | null }
+  ) => Promise<{
     customerInfo: CustomerInfo | null;
     cancelled: boolean;
   }>;
@@ -32,6 +37,28 @@ const REVENUECAT_IOS_API_KEY = "appl_AQJGtguOlHTEmVneRvmaeabXazD";
 
 function getIsEntitledToPro(info: CustomerInfo | null): boolean {
   return info?.entitlements?.active?.pro != null;
+}
+
+function getActiveProProductId(info: CustomerInfo | null): string | null {
+  const entitlement = (info?.entitlements?.active as any)?.pro as
+    | { productIdentifier?: string | null }
+    | undefined;
+  const fromEntitlement = entitlement?.productIdentifier ?? null;
+  if (fromEntitlement) return fromEntitlement;
+
+  const activeSubs = (info as any)?.activeSubscriptions as string[] | undefined;
+  const normalized = Array.isArray(activeSubs) ? activeSubs : [];
+  const knownOrder: Record<string, number> = {
+    "rizzgoat.weekly": 1,
+    "rizzgoat.monthly": 2,
+    "rizzgoat.lifetime": 3,
+  };
+
+  const best = normalized
+    .filter((p) => knownOrder[p] != null)
+    .sort((a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0))[0];
+
+  return best ?? (normalized[0] ?? null);
 }
 
 function isUserCancelled(e: unknown): boolean {
@@ -178,15 +205,39 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatS
       return getIsEntitledToPro(customerInfo);
     }, [customerInfo]);
 
+    const activeProProductId = useMemo<string | null>(() => {
+      if (!getIsEntitledToPro(customerInfo)) return null;
+      return getActiveProProductId(customerInfo);
+    }, [customerInfo]);
+
     const purchasePackage = useCallback(
-      async (pkg: PurchasesPackage) => {
+      async (
+        pkg: PurchasesPackage,
+        options?: { upgradeFromProductId?: string | null }
+      ) => {
         if (!isConfigured) {
           return { customerInfo: customerInfo ?? null, cancelled: false };
         }
 
         setIsLoading(true);
         try {
-          const result = await Purchases.purchasePackage(pkg);
+          const upgradeFromProductId = options?.upgradeFromProductId ?? null;
+
+          console.log("[RevenueCat] purchase start", {
+            productId: pkg?.product?.identifier,
+            upgradeFromProductId,
+          });
+
+          const result = upgradeFromProductId
+            ? await (Purchases.purchasePackage as any)(pkg, {
+                oldProductIdentifier: upgradeFromProductId,
+                prorationMode:
+                  (PRORATION_MODE as any)?.IMMEDIATE_AND_CHARGE_PRORATED_PRICE ??
+                  (PRORATION_MODE as any)?.IMMEDIATE_WITH_TIME_PRORATION ??
+                  1,
+              })
+            : await Purchases.purchasePackage(pkg);
+
           const ci = result?.customerInfo ?? null;
           setCustomerInfo(ci);
           setLastErrorMessage(null);
@@ -194,6 +245,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatS
           console.log("[RevenueCat] purchase success", {
             productId: pkg?.product?.identifier,
             isEntitledToPro: getIsEntitledToPro(ci),
+            activeProProductId: getActiveProProductId(ci),
           });
 
           return { customerInfo: ci, cancelled: false };
@@ -243,6 +295,7 @@ export const [RevenueCatProvider, useRevenueCat] = createContextHook<RevenueCatS
       availablePackages,
       customerInfo,
       isEntitledToPro,
+      activeProProductId,
       isLoading,
       lastErrorMessage,
       refresh,

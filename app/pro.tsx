@@ -1,8 +1,10 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   Platform,
+  Animated,
+  Easing,
   ScrollView,
   StyleSheet,
   Text,
@@ -50,6 +52,7 @@ export default function ProScreen() {
   const {
     isConfigured,
     isEntitledToPro,
+    activeProProductId,
     availablePackages,
     isLoading,
     lastErrorMessage,
@@ -63,6 +66,72 @@ export default function ProScreen() {
     pkgs.sort((a, b) => sortByKnownOrder(a.product.identifier, b.product.identifier));
     return pkgs;
   }, [availablePackages]);
+
+  const currentPlanRank = useMemo<number>(() => {
+    const order: Record<string, number> = {
+      "rizzgoat.weekly": 1,
+      "rizzgoat.monthly": 2,
+      "rizzgoat.lifetime": 3,
+    };
+    if (!activeProProductId) return 0;
+    return order[activeProProductId] ?? 0;
+  }, [activeProProductId]);
+
+  const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+  const [isPurchasingId, setIsPurchasingId] = useState<string | null>(null);
+  const successScale = useRef(new Animated.Value(0)).current;
+  const successOpacity = useRef(new Animated.Value(0)).current;
+  const successGlow = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (!selectedProductId) {
+      setSelectedProductId(activeProProductId ?? sortedPackages[0]?.product.identifier ?? null);
+    }
+  }, [activeProProductId, selectedProductId, sortedPackages]);
+
+  const playSuccessAnimation = useCallback(async () => {
+    successScale.setValue(0.85);
+    successOpacity.setValue(0);
+    successGlow.setValue(0);
+
+    Animated.parallel([
+      Animated.timing(successOpacity, {
+        toValue: 1,
+        duration: 140,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+      Animated.spring(successScale, {
+        toValue: 1,
+        friction: 6,
+        tension: 120,
+        useNativeDriver: true,
+      }),
+      Animated.timing(successGlow, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(successOpacity, {
+          toValue: 0,
+          duration: 220,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+        Animated.timing(successGlow, {
+          toValue: 0,
+          duration: 260,
+          easing: Easing.in(Easing.cubic),
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }, 1100);
+  }, [successGlow, successOpacity, successScale]);
 
   const close = useCallback(() => {
     if ((router as any).canGoBack && (router as any).canGoBack()) {
@@ -86,47 +155,98 @@ export default function ProScreen() {
     }
   }, [restorePurchases]);
 
-  const onPurchase = useCallback(
-    async (productId: string, pkgIndex: number) => {
-      const pkg = sortedPackages[pkgIndex];
-      if (!pkg) {
-        Alert.alert("Purchase unavailable", "This plan isn't available right now.");
-        return;
-      }
+  const onPurchaseSelected = useCallback(async () => {
+    const productId = selectedProductId;
+    if (!productId) {
+      Alert.alert("Purchase unavailable", "Please select a plan first.");
+      return;
+    }
 
+    const pkg = sortedPackages.find((p) => p.product.identifier === productId);
+    if (!pkg) {
+      Alert.alert("Purchase unavailable", "This plan isn't available right now.");
+      return;
+    }
+
+    if (!isConfigured) {
+      Alert.alert("Purchases unavailable", "We can't connect to purchases right now.");
+      return;
+    }
+
+    if (isLoading || isPurchasingId) return;
+
+    const order: Record<string, number> = {
+      "rizzgoat.weekly": 1,
+      "rizzgoat.monthly": 2,
+      "rizzgoat.lifetime": 3,
+    };
+    const selectedRank = order[productId] ?? 0;
+
+    const isCurrent = activeProProductId != null && activeProProductId === productId;
+    const isDowngrade = currentPlanRank > 0 && selectedRank > 0 && selectedRank < currentPlanRank;
+
+    if (isCurrent) {
+      return;
+    }
+
+    if (isDowngrade) {
+      Alert.alert(
+        "Downgrades",
+        "Downgrades are managed via the App Store subscription settings."
+      );
+      return;
+    }
+
+    if (Platform.OS !== "web") {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    setIsPurchasingId(productId);
+
+    console.log("[Pro] purchase pressed", {
+      selectedProductId: productId,
+      activeProProductId,
+      isEntitledToPro,
+    });
+
+    const res = await purchasePackage(pkg, {
+      upgradeFromProductId: activeProProductId,
+    });
+
+    setIsPurchasingId(null);
+
+    if (res.cancelled) {
+      return;
+    }
+
+    const nowPro = res.customerInfo?.entitlements?.active?.pro != null;
+    if (nowPro) {
       if (Platform.OS !== "web") {
-        await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+        await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-
-      console.log("[Pro] purchase pressed", {
-        productId,
-        identifier: pkg.product.identifier,
-      });
-
-      const res = await purchasePackage(pkg);
-      if (res.cancelled) {
-        return;
+      playSuccessAnimation();
+    } else {
+      await refresh();
+      if (!isEntitledToPro) {
+        Alert.alert(
+          "Almost there",
+          "Your purchase went through, but Pro hasn't synced yet. Please try Restore Purchases or wait a moment."
+        );
       }
-
-      const nowPro = res.customerInfo?.entitlements?.active?.pro != null;
-      if (nowPro) {
-        if (Platform.OS !== "web") {
-          await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-        Alert.alert("You're Pro", "Unlocked successfully.", [{ text: "Continue", onPress: close }]);
-      } else {
-        await refresh();
-        const stillNotPro = !isEntitledToPro;
-        if (stillNotPro) {
-          Alert.alert(
-            "Almost there",
-            "Your purchase went through, but Pro hasn't synced yet. Please try Restore Purchases or wait a moment."
-          );
-        }
-      }
-    },
-    [close, isEntitledToPro, purchasePackage, refresh, sortedPackages]
-  );
+    }
+  }, [
+    activeProProductId,
+    currentPlanRank,
+    isConfigured,
+    isEntitledToPro,
+    isLoading,
+    isPurchasingId,
+    playSuccessAnimation,
+    purchasePackage,
+    refresh,
+    selectedProductId,
+    sortedPackages,
+  ]);
 
   return (
     <View style={styles.container} testID="pro-screen">
@@ -194,8 +314,7 @@ export default function ProScreen() {
             ))}
           </View>
 
-          {!isEntitledToPro && (
-            <View style={styles.plansSection} testID="pro-plans">
+          <View style={styles.plansSection} testID="pro-plans">
               <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Choose your plan</Text>
                 {isLoading ? (
@@ -239,50 +358,69 @@ export default function ProScreen() {
                 </View>
               ) : null}
 
-              {sortedPackages.map((pkg, index) => {
+              {sortedPackages.map((pkg) => {
                 const meta = getPackageMeta(pkg.product.identifier);
                 const price = pkg.product.priceString ?? "";
                 const isFeatured = meta.badge === "Popular";
+
+                const order: Record<string, number> = {
+                  "rizzgoat.weekly": 1,
+                  "rizzgoat.monthly": 2,
+                  "rizzgoat.lifetime": 3,
+                };
+
+                const rank = order[pkg.product.identifier] ?? 0;
+                const isCurrent = activeProProductId != null && activeProProductId === pkg.product.identifier;
+                const isDowngrade = currentPlanRank > 0 && rank > 0 && rank < currentPlanRank;
+                const isSelected = selectedProductId === pkg.product.identifier;
+
+                const isDisabled = !isConfigured || isLoading || isPurchasingId != null || isCurrent || isDowngrade;
+
+                const title = isCurrent ? `${meta.title} – Current` : meta.title;
 
                 return (
                   <TouchableOpacity
                     key={pkg.identifier}
                     testID={`pro-plan-${pkg.product.identifier}`}
-                    onPress={() => onPurchase(pkg.product.identifier, index)}
-                    activeOpacity={0.9}
-                    disabled={!isConfigured || isLoading}
+                    onPress={() => {
+                      if (isDisabled) return;
+                      setSelectedProductId(pkg.product.identifier);
+                    }}
+                    activeOpacity={0.92}
+                    disabled={isDisabled}
                     style={styles.planTouchable}
                   >
                     <LinearGradient
                       colors={
-                        isFeatured
-                          ? ["rgba(227, 34, 43, 0.28)", "rgba(255, 122, 89, 0.16)"]
-                          : ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.03)"]
+                        isCurrent
+                          ? ["rgba(124,255,178,0.14)", "rgba(124,255,178,0.06)"]
+                          : isFeatured
+                            ? ["rgba(227, 34, 43, 0.28)", "rgba(255, 122, 89, 0.16)"]
+                            : isSelected
+                              ? ["rgba(255,255,255,0.10)", "rgba(255,255,255,0.05)"]
+                              : ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.03)"]
                       }
                       style={[
                         styles.planCard,
                         isFeatured && styles.planCardFeatured,
+                        isSelected && styles.planCardSelected,
+                        isCurrent && styles.planCardCurrent,
+                        isDisabled && styles.planCardDisabled,
                       ]}
                     >
                       <View style={styles.planTopRow}>
                         <View style={styles.planLeft}>
-                          <Text style={styles.planTitle}>{meta.title}</Text>
+                          <Text style={styles.planTitle}>{title}</Text>
                           <Text style={styles.planSubtitle}>{meta.subtitle}</Text>
+
+                          {isDowngrade ? (
+                            <Text style={styles.planNote}>Downgrades managed via App Store.</Text>
+                          ) : null}
                         </View>
                         <View style={styles.planRight}>
-                          {meta.badge ? (
-                            <View
-                              style={
-                                isFeatured ? styles.badgeFeatured : styles.badge
-                              }
-                            >
-                              <Text
-                                style={
-                                  isFeatured
-                                    ? styles.badgeFeaturedText
-                                    : styles.badgeText
-                                }
-                              >
+                          {meta.badge && !isCurrent ? (
+                            <View style={isFeatured ? styles.badgeFeatured : styles.badge}>
+                              <Text style={isFeatured ? styles.badgeFeaturedText : styles.badgeText}>
                                 {meta.badge}
                               </Text>
                             </View>
@@ -292,26 +430,88 @@ export default function ProScreen() {
                       </View>
 
                       <View style={styles.planCtaRow}>
-                        <Text style={styles.planCtaText}>
-                          Continue with {meta.title}
-                        </Text>
+                        {isCurrent ? (
+                          <View style={styles.currentPill}>
+                            <ShieldCheck size={14} color="#0A0A0A" />
+                            <Text style={styles.currentPillText}>Active</Text>
+                          </View>
+                        ) : isDowngrade ? (
+                          <Text style={styles.planCtaTextMuted}>Manage in App Store</Text>
+                        ) : (
+                          <Text style={styles.planCtaText}>
+                            {isSelected ? "Selected" : `Select ${meta.title}`}
+                          </Text>
+                        )}
                       </View>
                     </LinearGradient>
                   </TouchableOpacity>
                 );
               })}
 
-              <View style={styles.actionsRow}>
+              <View style={styles.purchaseBar} testID="pro-purchase-bar">
+                <TouchableOpacity
+                  testID="pro-cta"
+                  onPress={onPurchaseSelected}
+                  style={styles.primaryCtaWrap}
+                  activeOpacity={0.9}
+                  disabled={!isConfigured || isLoading || isPurchasingId != null || !selectedProductId}
+                >
+                  <LinearGradient
+                    colors={isPurchasingId ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.08)"] : ["#E3222B", "#FF7A59"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.primaryCta}
+                  >
+                    {isPurchasingId ? (
+                      <View style={styles.primaryCtaInner}>
+                        <ActivityIndicator color="#FFFFFF" />
+                        <Text style={styles.primaryCtaText}>Processing…</Text>
+                      </View>
+                    ) : (
+                      <Text style={styles.primaryCtaText}>
+                        {isEntitledToPro ? "Upgrade" : "Continue"}
+                      </Text>
+                    )}
+
+                    <Animated.View
+                      pointerEvents="none"
+                      style={[
+                        styles.successOverlay,
+                        {
+                          opacity: successOpacity,
+                          transform: [{ scale: successScale }],
+                        },
+                      ]}
+                    >
+                      <Animated.View
+                        style={[
+                          styles.successGlow,
+                          {
+                            opacity: successGlow,
+                            transform: [{ scale: successGlow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.1] }) }],
+                          },
+                        ]}
+                      />
+                      <View style={styles.successPill}>
+                        <Check size={18} color="#0A0A0A" />
+                        <Text style={styles.successText}>Unlocked</Text>
+                      </View>
+                    </Animated.View>
+                  </LinearGradient>
+                </TouchableOpacity>
+
                 <TouchableOpacity
                   testID="pro-restore"
                   onPress={onRestore}
                   style={styles.secondaryButton}
                   activeOpacity={0.85}
-                  disabled={!isConfigured || isLoading}
+                  disabled={!isConfigured || isLoading || isPurchasingId != null}
                 >
-                  <Text style={styles.secondaryButtonText}>Restore Purchases</Text>
+                  <Text style={styles.secondaryButtonText}>Restore</Text>
                 </TouchableOpacity>
+              </View>
 
+              <View style={styles.actionsRow}>
                 <TouchableOpacity
                   testID="pro-close-secondary"
                   onPress={close}
@@ -326,41 +526,14 @@ export default function ProScreen() {
                 Payment will be charged to your Apple ID account. Subscription automatically renews unless canceled at least 24 hours before the end of the current period.
               </Text>
             </View>
-          )}
 
           {isEntitledToPro ? (
             <View style={styles.proSection} testID="pro-manage-section">
               <View style={styles.noticePro}>
-                <Text style={styles.noticeTitle}>You&apos;re all set</Text>
+                <Text style={styles.noticeTitle}>Your subscription</Text>
                 <Text style={styles.noticeText}>
-                  Pro is active on this Apple ID.
+                  {activeProProductId ? `Current plan: ${getPackageMeta(activeProProductId).title}` : "Pro is active."}
                 </Text>
-                <View style={styles.actionsRowSingle}>
-                  <TouchableOpacity
-                    testID="pro-restore-pro"
-                    onPress={onRestore}
-                    style={styles.secondaryButton}
-                    activeOpacity={0.85}
-                    disabled={!isConfigured || isLoading}
-                  >
-                    <Text style={styles.secondaryButtonText}>Restore Purchases</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    testID="pro-continue"
-                    onPress={close}
-                    style={styles.primaryButton}
-                    activeOpacity={0.9}
-                  >
-                    <LinearGradient
-                      colors={["#E3222B", "#FF7A59"]}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={styles.primaryButtonGradient}
-                    >
-                      <Text style={styles.primaryButtonText}>Continue</Text>
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
               </View>
             </View>
           ) : null}
@@ -573,6 +746,15 @@ const styles = StyleSheet.create({
   planCardFeatured: {
     borderColor: "rgba(227, 34, 43, 0.35)",
   },
+  planCardSelected: {
+    borderColor: "rgba(255,255,255,0.22)",
+  },
+  planCardCurrent: {
+    borderColor: "rgba(124,255,178,0.35)",
+  },
+  planCardDisabled: {
+    opacity: 0.55,
+  },
   planTopRow: {
     flexDirection: "row",
     alignItems: "flex-start",
@@ -596,6 +778,12 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.68)",
     fontSize: 13,
     fontWeight: "600",
+  },
+  planNote: {
+    marginTop: 8,
+    color: "rgba(255,255,255,0.55)",
+    fontSize: 12,
+    fontWeight: "700",
   },
   planPrice: {
     color: "#FFFFFF",
@@ -639,6 +827,87 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.85)",
     fontSize: 13,
     fontWeight: "800",
+  },
+  planCtaTextMuted: {
+    color: "rgba(255,255,255,0.62)",
+    fontSize: 13,
+    fontWeight: "800",
+  },
+  currentPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(124,255,178,0.85)",
+    alignSelf: "flex-start",
+  },
+  currentPillText: {
+    color: "#0A0A0A",
+    fontSize: 12,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  purchaseBar: {
+    marginTop: 14,
+    flexDirection: "row",
+    gap: 10,
+    alignItems: "center",
+  },
+  primaryCtaWrap: {
+    flex: 1,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  primaryCta: {
+    paddingVertical: 14,
+    paddingHorizontal: 14,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 50,
+  },
+  primaryCtaInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  primaryCtaText: {
+    color: "#FFFFFF",
+    fontSize: 14,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  successOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  successGlow: {
+    position: "absolute",
+    top: -24,
+    left: -24,
+    right: -24,
+    bottom: -24,
+    borderRadius: 20,
+    backgroundColor: "rgba(124,255,178,0.20)",
+  },
+  successPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 999,
+    backgroundColor: "rgba(124,255,178,0.95)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  successText: {
+    color: "#0A0A0A",
+    fontSize: 13,
+    fontWeight: "900",
   },
   actionsRow: {
     marginTop: 14,
