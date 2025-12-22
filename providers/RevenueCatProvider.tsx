@@ -54,6 +54,10 @@ function getActiveProProductId(info: CustomerInfo | null): string | null {
   const activeSubs = (info as any)?.activeSubscriptions as string[] | undefined;
   const normalized = Array.isArray(activeSubs) ? activeSubs : [];
 
+  if (fromEntitlement === "rizzgoat.lifetime" || normalized.includes("rizzgoat.lifetime")) {
+    return "rizzgoat.lifetime";
+  }
+
   const bestFromSubs = normalized
     .filter((p) => knownOrder[p] != null)
     .sort((a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0))[0];

@@ -79,15 +79,30 @@ export default function ProScreen() {
 
   const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
   const [isPurchasingId, setIsPurchasingId] = useState<string | null>(null);
+  const prevActiveProProductIdRef = useRef<string | null>(null);
   const successScale = useRef(new Animated.Value(0)).current;
   const successOpacity = useRef(new Animated.Value(0)).current;
   const successGlow = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const prev = prevActiveProProductIdRef.current;
+    prevActiveProProductIdRef.current = activeProProductId;
+
     if (!selectedProductId) {
       setSelectedProductId(activeProProductId ?? sortedPackages[0]?.product.identifier ?? null);
+      return;
     }
-  }, [activeProProductId, selectedProductId, sortedPackages]);
+
+    if (isPurchasingId) return;
+
+    if (activeProProductId && selectedProductId === prev) {
+      setSelectedProductId(activeProProductId);
+    }
+  }, [activeProProductId, isPurchasingId, refresh, selectedProductId, sortedPackages]);
 
   const playSuccessAnimation = useCallback(async () => {
     successScale.setValue(0.85);
@@ -213,42 +228,37 @@ export default function ProScreen() {
       upgradeFromProductId: activeProProductId,
     });
 
-    setIsPurchasingId(null);
-
     if (res.cancelled) {
+      setIsPurchasingId(null);
       return;
     }
 
     const nowPro = res.customerInfo?.entitlements?.active?.pro != null;
+    const postPurchaseProductId =
+      (((res.customerInfo?.entitlements?.active as any)?.pro as any)?.productIdentifier as
+        | string
+        | null
+        | undefined) ?? null;
+
+    console.log("[Pro] purchase result", {
+      selectedProductId: productId,
+      nowPro,
+      postPurchaseProductId,
+    });
+
+    await refresh();
+    setIsPurchasingId(null);
+
     if (nowPro) {
-      const newActiveProductId =
-        ((res.customerInfo?.entitlements?.active as any)?.pro as any)?.productIdentifier ??
-        null;
-
-      console.log("[Pro] purchase synced", {
-        selectedProductId: productId,
-        newActiveProductId,
-      });
-
       if (Platform.OS !== "web") {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
-
-      if (typeof newActiveProductId === "string" && newActiveProductId.length > 0) {
-        setSelectedProductId(newActiveProductId);
-      } else {
-        setSelectedProductId(productId);
-      }
-
       playSuccessAnimation();
     } else {
-      await refresh();
-      if (!isEntitledToPro) {
-        Alert.alert(
-          "Almost there",
-          "Your purchase went through, but Pro hasn't synced yet. Please try Restore Purchases or wait a moment."
-        );
-      }
+      Alert.alert(
+        "Almost there",
+        "Your purchase went through, but Pro hasn't synced yet. Please try Restore Purchases or wait a moment."
+      );
     }
   }, [
     activeProProductId,
