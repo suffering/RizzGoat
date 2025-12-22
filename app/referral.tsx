@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -7,248 +7,408 @@ import {
   ScrollView,
   Animated,
   Share,
+  ActivityIndicator,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
-import { X, Users, Gift, Zap, ArrowLeft, Share2 } from "lucide-react-native";
+import { useRouter, useFocusEffect } from "expo-router";
+import { Check, Copy, Crown, RefreshCw, Share2, Users, X } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import * as Clipboard from "expo-clipboard";
+import { useQuery } from "@tanstack/react-query";
 import { useTheme } from "@/providers/ThemeProvider";
-import { useAppState } from "@/providers/AppStateProvider";
+import { useRevenueCat } from "@/providers/RevenueCatProvider";
+
+type ReferralCodeResponse = {
+  referralCode?: string;
+  code?: string;
+};
+
+type ReferralStatusResponse = {
+  referralCount?: number;
+  count?: number;
+  successfulInstalls?: number;
+  installs?: number;
+  goal?: number;
+  target?: number;
+  rewardUnlocked?: boolean;
+  proUnlocked?: boolean;
+};
+
+function normalizeBaseUrl(value: string | null | undefined): string | null {
+  const trimmed = value?.trim();
+  if (!trimmed) return null;
+  if (!/^https?:\/\//i.test(trimmed)) return null;
+  return trimmed.replace(/\/+$/, "");
+}
+
+function parseReferralCode(data: unknown): string | null {
+  const d = data as ReferralCodeResponse | null;
+  const code = d?.referralCode ?? d?.code ?? null;
+  return typeof code === "string" && code.trim().length > 0 ? code.trim() : null;
+}
+
+function parseStatus(data: unknown): { count: number; goal: number; unlocked: boolean } {
+  const d = data as ReferralStatusResponse | null;
+  const rawCount = d?.successfulInstalls ?? d?.referralCount ?? d?.count ?? d?.installs ?? 0;
+  const rawGoal = d?.goal ?? d?.target ?? 5;
+
+  const count = Number.isFinite(Number(rawCount)) ? Math.max(0, Number(rawCount)) : 0;
+  const goal = Number.isFinite(Number(rawGoal)) ? Math.max(1, Number(rawGoal)) : 5;
+
+  const unlockedFromBackend = d?.rewardUnlocked ?? d?.proUnlocked;
+  const unlocked = Boolean(unlockedFromBackend) || count >= goal;
+
+  return { count, goal, unlocked };
+}
+
+async function fetchJson(url: string): Promise<unknown> {
+  console.log("[Referral] fetch", url);
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      Accept: "application/json",
+    },
+  });
+
+  const text = await res.text();
+  let json: unknown = null;
+  try {
+    json = text ? JSON.parse(text) : null;
+  } catch {
+    json = { raw: text };
+  }
+
+  if (!res.ok) {
+    console.log("[Referral] fetch error", {
+      url,
+      status: res.status,
+      body: json,
+    });
+    throw new Error("Referral request failed");
+  }
+
+  return json;
+}
 
 export default function ReferralScreen() {
   const router = useRouter();
   const { theme } = useTheme();
-  const { referralCount } = useAppState();
+  const revenueCat = useRevenueCat();
 
-  const handleBackNavigation = () => {
+  const baseUrl = useMemo<string | null>(() => {
+    const envValue = (process.env as any)?.REFERRAL_API_BASE_URL as string | undefined;
+    return normalizeBaseUrl(envValue);
+  }, []);
+
+  const codeQuery = useQuery({
+    queryKey: ["referral", "code", baseUrl],
+    enabled: Boolean(baseUrl),
+    queryFn: async () => {
+      if (!baseUrl) throw new Error("Missing referral base URL");
+      return fetchJson(`${baseUrl}/referral/code`);
+    },
+    staleTime: 1000 * 60 * 5,
+  });
+
+  const statusQuery = useQuery({
+    queryKey: ["referral", "status", baseUrl],
+    enabled: Boolean(baseUrl),
+    queryFn: async () => {
+      if (!baseUrl) throw new Error("Missing referral base URL");
+      return fetchJson(`${baseUrl}/referral/status`);
+    },
+    refetchInterval: 1000 * 20,
+  });
+
+  const codeRefetch = codeQuery.refetch;
+  const statusRefetch = statusQuery.refetch;
+
+  const referralCode = useMemo<string | null>(() => parseReferralCode(codeQuery.data), [codeQuery.data]);
+  const status = useMemo(() => parseStatus(statusQuery.data), [statusQuery.data]);
+
+  const inviteLink = useMemo<string>(() => {
+    if (!referralCode) return "";
+    return `https://rizzgoat.com/invite/${referralCode}`;
+  }, [referralCode]);
+
+  const progress = useMemo<number>(() => {
+    if (!status.goal) return 0;
+    return Math.min(1, status.count / status.goal);
+  }, [status.count, status.goal]);
+
+  const handleBackNavigation = useCallback(() => {
     if ((router as any).canGoBack && (router as any).canGoBack()) {
       router.back();
     } else {
       router.replace("/");
     }
-  };
+  }, [router]);
 
-  const handleClose = () => {
-    router.replace("/");
-  };
-  
-  const progressAnim = useRef(new Animated.Value(0)).current;
-  const numberFlipAnim = useRef(new Animated.Value(0)).current;
+  useFocusEffect(
+    useCallback(() => {
+      console.log("[Referral] focused; refreshing status + RevenueCat");
+      statusRefetch();
+      revenueCat.refresh();
+    }, [revenueCat, statusRefetch])
+  );
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(progressAnim, {
-        toValue: referralCount / 5,
-        duration: 1000,
-        useNativeDriver: false,
-      }),
-      Animated.spring(numberFlipAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 40,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [referralCount, progressAnim, numberFlipAnim]);
-
-  const handleReferFriend = async () => {
-    try {
-      await Share.share({
-        message: "Check out RizzGoat - the ultimate dating app assistant! Use my code RIZZ2024 for a free month of Pro. Download: https://rizzgoat.app",
-      });
-    } catch (error) {
-      console.log("Share error:", error);
+    if (status.unlocked) {
+      console.log("[Referral] unlocked per backend; refreshing RevenueCat");
+      revenueCat.refresh();
     }
-  };
+  }, [revenueCat, status.unlocked]);
 
-  const benefits = [
-    { icon: Zap, title: "Unlimited Pickup Lines", description: "No daily limits" },
-    { icon: Gift, title: "Advanced AI Analysis", description: "Deeper conversation insights" },
-    { icon: Users, title: "Priority Support", description: "Get help faster" },
-  ];
-  const benefitsTitleText = "What You\u2019ll Unlock";
+  const progressAnim = useRef(new Animated.Value(0)).current;
+  const successAnim = useRef(new Animated.Value(0)).current;
 
-  const creditsEarned = referralCount * 25;
-  const cashEarned = referralCount * 5;
-  const cashTotalDisplay = "$" + cashEarned.toFixed(0);
+  useEffect(() => {
+    Animated.timing(progressAnim, {
+      toValue: progress,
+      duration: 700,
+      useNativeDriver: false,
+    }).start();
+  }, [progress, progressAnim]);
+
+  useEffect(() => {
+    Animated.timing(successAnim, {
+      toValue: status.unlocked ? 1 : 0,
+      duration: status.unlocked ? 550 : 250,
+      useNativeDriver: true,
+    }).start();
+  }, [status.unlocked, successAnim]);
+
+  const [copiedAt, setCopiedAt] = useState<number | null>(null);
+  const justCopied = useMemo(() => {
+    if (!copiedAt) return false;
+    return Date.now() - copiedAt < 1400;
+  }, [copiedAt]);
+
+  const handleCopyInvite = useCallback(async () => {
+    if (!inviteLink) return;
+    try {
+      console.log("[Referral] copy invite");
+      await Clipboard.setStringAsync(inviteLink);
+      setCopiedAt(Date.now());
+    } catch (e) {
+      console.log("[Referral] Clipboard error", e);
+    }
+  }, [inviteLink]);
+
+  const handleShareInvite = useCallback(async () => {
+    if (!inviteLink) return;
+    try {
+      console.log("[Referral] share invite");
+      await Share.share({
+        message: `Join me on RizzGoat: ${inviteLink}`,
+      });
+    } catch (e) {
+      console.log("[Referral] Share error", e);
+    }
+  }, [inviteLink]);
+
+  const handleRefresh = useCallback(async () => {
+    console.log("[Referral] manual refresh");
+    await Promise.allSettled([codeRefetch(), statusRefetch(), revenueCat.refresh()]);
+  }, [codeRefetch, revenueCat, statusRefetch]);
+
+  const isLoading = codeQuery.isLoading || statusQuery.isLoading;
+  const hasError = Boolean(codeQuery.error) || Boolean(statusQuery.error);
+
+  const showSuccessState = status.unlocked && revenueCat.isEntitledToPro;
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <LinearGradient
-        colors={["#E3222B", "#FF7A59"]}
-        style={styles.gradient}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={["rgba(227, 34, 43, 0.65)", "rgba(0, 0, 0, 0)"]}
+        style={styles.topGlow}
+        start={{ x: 0.15, y: 0 }}
+        end={{ x: 0.9, y: 1 }}
       />
-      
+
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackNavigation} style={styles.closeButton}>
-            <X size={24} color="#FFFFFF" />
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Referral</Text>
+          <TouchableOpacity
+            onPress={handleBackNavigation}
+            style={[styles.headerIconButton, { backgroundColor: theme.card }]}
+            testID="referral-close"
+          >
+            <X size={20} color={theme.text} />
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.heroSection}>
-            <Animated.View
-              style={[
-                styles.iconContainer,
-                { transform: [{ scale: numberFlipAnim }] },
-              ]}
-            >
-              <Users size={48} color="#FFFFFF" />
-            </Animated.View>
-            <Text style={styles.title}>Unlock Our Most Advanced Rizz</Text>
-            <Text style={styles.subtitle}>
-              Invite 5 friends and get Pro features forever
-            </Text>
-          </View>
-
-          <View style={styles.referralCard}>
-            <LinearGradient
-              colors={["#6B1BFB", "#F54FB0"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.referralCardGradient}
-            >
-              <View style={styles.referralCardTopBar}>
-                <TouchableOpacity
-                  onPress={handleBackNavigation}
-                  style={styles.referralTopButton}
-                  testID="referral-card-back"
-                >
-                  <ArrowLeft size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  onPress={handleClose}
-                  style={styles.referralTopButton}
-                  testID="referral-card-close"
-                >
-                  <X size={18} color="#FFFFFF" />
-                </TouchableOpacity>
-              </View>
-              <Text style={styles.referralCardHeadline}>
-                Earn Legendary Rizz Rewards
+        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+          {!baseUrl ? (
+            <View style={[styles.alertCard, { backgroundColor: theme.card }]}>
+              <Text style={[styles.alertTitle, { color: theme.text }]}>Referral unavailable</Text>
+              <Text style={[styles.alertBody, { color: theme.textSecondary }]}>
+                Referral is not configured for this build.
               </Text>
-              <Text style={styles.referralCardCopy}>
-                Drop your link to claim 50 free credits for every friend.
-              </Text>
-              <Text style={styles.referralCardCopy}>
-                Pocket a $5 cash bonus the moment they upgrade.
-              </Text>
-              <TouchableOpacity
-                onPress={handleReferFriend}
-                activeOpacity={0.9}
-                style={styles.shareButtonWrapper}
-                testID="referral-card-share"
-              >
-                <LinearGradient
-                  colors={["#FFFFFF", "rgba(255, 255, 255, 0.75)"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                  style={styles.shareButton}
-                >
-                  <View style={styles.shareButtonContent}>
-                    <Share2 size={18} color="#5416A5" />
-                    <Text style={styles.shareButtonText}>Share Link</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-              <LinearGradient
-                colors={["rgba(255, 255, 255, 0.18)", "rgba(255, 255, 255, 0.04)"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.earningsCard}
-              >
-                <View style={styles.earningsHeader}>
-                  <Text style={styles.earningsLabel}>Current Earnings</Text>
-                  <Text style={styles.earningsLivePill}>LIVE</Text>
-                </View>
-                <Text style={styles.earningsTotal}>{cashTotalDisplay}</Text>
-                <View style={styles.earningsDivider} />
-                <View style={styles.earningsBreakdownRow}>
-                  <View style={[styles.breakdownItem, styles.breakdownItemSpacing]}>
-                    <Text style={styles.breakdownLabel}>Free Credits</Text>
-                    <Text style={styles.breakdownValue}>{creditsEarned}</Text>
-                  </View>
-                  <View style={styles.breakdownItem}>
-                    <Text style={styles.breakdownLabel}>Cash Bonus</Text>
-                    <Text style={styles.breakdownValue}>{cashTotalDisplay}</Text>
-                  </View>
-                </View>
-              </LinearGradient>
-            </LinearGradient>
-          </View>
-
-          <View style={styles.progressSection}>
-            <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Your Progress</Text>
-              <Animated.Text
-                style={[
-                  styles.progressCount,
-                  { transform: [{ scale: numberFlipAnim }] },
-                ]}
-              >
-                {referralCount}/5
-              </Animated.Text>
             </View>
-            <View style={styles.progressBar}>
-              <Animated.View
-                style={[
-                  styles.progressFill,
-                  {
-                    width: progressAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0%", "100%"],
-                    }),
-                  },
-                ]}
-              />
-              {[...Array(5)].map((_, index) => (
-                <View
-                  key={index}
+          ) : (
+            <>
+              <View style={[styles.heroCard, { backgroundColor: theme.card }]} testID="referral-hero">
+                <View style={styles.heroTopRow}>
+                  <View style={[styles.heroIcon, { backgroundColor: "rgba(227, 34, 43, 0.14)" }]}>
+                    <Users size={20} color="#E3222B" />
+                  </View>
+                  <TouchableOpacity
+                    onPress={handleRefresh}
+                    style={[styles.headerIconButton, { backgroundColor: theme.background }]}
+                    testID="referral-refresh"
+                  >
+                    <RefreshCw size={18} color={theme.textSecondary} />
+                  </TouchableOpacity>
+                </View>
+
+                <Text style={[styles.heroTitle, { color: theme.text }]}>
+                  Invite 5 friends to unlock Pro for life
+                </Text>
+                <Text style={[styles.heroSubtitle, { color: theme.textSecondary }]}>
+                  Your link tracks installs automatically.
+                </Text>
+
+                <View style={[styles.progressCard, { backgroundColor: theme.background }]}>
+                  <View style={styles.progressHeader}>
+                    <Text style={[styles.progressLabel, { color: theme.textSecondary }]}>Progress</Text>
+                    <Text style={[styles.progressValue, { color: theme.text }]} testID="referral-progress-text">
+                      {Math.min(status.count, status.goal)} / {status.goal}
+                    </Text>
+                  </View>
+
+                  <View style={styles.progressBar} testID="referral-progress-bar">
+                    <View style={styles.progressTrack} />
+                    <Animated.View
+                      style={[
+                        styles.progressFill,
+                        {
+                          width: progressAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: ["0%", "100%"],
+                          }),
+                        },
+                      ]}
+                    />
+                  </View>
+
+                  <Text style={[styles.progressHint, { color: theme.textSecondary }]}>
+                    {status.unlocked ? "Reward unlocked" : `${Math.max(0, status.goal - status.count)} more to go`}
+                  </Text>
+                </View>
+
+                <Animated.View
                   style={[
-                    styles.progressDot,
-                    { left: `${index * 25}%` },
-                    index < referralCount && styles.progressDotActive,
+                    styles.successRow,
+                    {
+                      opacity: successAnim,
+                      transform: [
+                        {
+                          translateY: successAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [10, 0],
+                          }),
+                        },
+                        {
+                          scale: successAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0.98, 1],
+                          }),
+                        },
+                      ],
+                    },
                   ]}
-                />
-              ))}
-            </View>
-            <Text style={styles.progressDescription}>
-              {5 - referralCount} more friends to unlock Pro
-            </Text>
-          </View>
+                  pointerEvents={status.unlocked ? "auto" : "none"}
+                >
+                  <View style={styles.successChip} testID="referral-unlocked-chip">
+                    <Check size={16} color="#0B0B0B" />
+                    <Text style={styles.successChipText}>
+                      {showSuccessState ? "Pro for life unlocked" : "Unlocked — syncing Pro"}
+                    </Text>
+                  </View>
 
-          <View style={styles.benefitsSection}>
-            <Text style={styles.benefitsTitle}>{benefitsTitleText}</Text>
-            {benefits.map((benefit, index) => (
-              <View key={index} style={styles.benefitCard}>
-                <View style={styles.benefitIcon}>
-                  <benefit.icon size={24} color="#E3222B" />
+                  <TouchableOpacity
+                    onPress={() => router.push("/pro" as any)}
+                    style={[styles.proButton, { backgroundColor: theme.background }]}
+                    testID="referral-view-pro"
+                  >
+                    <Crown size={16} color="#E3222B" />
+                    <Text style={[styles.proButtonText, { color: theme.text }]}>View Pro</Text>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
+
+              <View style={[styles.linkCard, { backgroundColor: theme.card }]} testID="referral-link-card">
+                <Text style={[styles.sectionTitle, { color: theme.textSecondary }]}>Your invite link</Text>
+
+                <View style={[styles.linkBox, { backgroundColor: theme.background }]}>
+                  {isLoading ? (
+                    <View style={styles.linkLoadingRow}>
+                      <ActivityIndicator color={theme.textSecondary} />
+                      <Text style={[styles.linkLoadingText, { color: theme.textSecondary }]}>Loading…</Text>
+                    </View>
+                  ) : referralCode ? (
+                    <Text style={[styles.linkText, { color: theme.text }]} selectable>
+                      {inviteLink}
+                    </Text>
+                  ) : (
+                    <Text style={[styles.linkText, { color: theme.textSecondary }]}>
+                      Unable to load your invite link.
+                    </Text>
+                  )}
                 </View>
-                <View style={styles.benefitContent}>
-                  <Text style={styles.benefitTitle}>{benefit.title}</Text>
-                  <Text style={styles.benefitDescription}>{benefit.description}</Text>
+
+                {hasError ? (
+                  <Text style={[styles.errorText, { color: "rgba(227, 34, 43, 0.95)" }]}>
+                    Could not load referral details. Tap refresh.
+                  </Text>
+                ) : null}
+
+                <View style={styles.actionsRow}>
+                  <TouchableOpacity
+                    onPress={handleCopyInvite}
+                    disabled={!inviteLink}
+                    style={[
+                      styles.actionButton,
+                      { backgroundColor: inviteLink ? theme.background : "rgba(255,255,255,0.05)" },
+                    ]}
+                    activeOpacity={0.85}
+                    testID="referral-copy"
+                  >
+                    <Copy size={18} color={inviteLink ? theme.text : theme.textSecondary} />
+                    <Text
+                      style={[
+                        styles.actionButtonText,
+                        { color: inviteLink ? theme.text : theme.textSecondary },
+                      ]}
+                    >
+                      {justCopied ? "Copied" : "Copy Invite Link"}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    onPress={handleShareInvite}
+                    disabled={!inviteLink}
+                    style={[styles.actionButtonPrimary, { opacity: inviteLink ? 1 : 0.5 }]}
+                    activeOpacity={0.9}
+                    testID="referral-share"
+                  >
+                    <Share2 size={18} color="#0B0B0B" />
+                    <Text style={styles.actionButtonPrimaryText}>Share</Text>
+                  </TouchableOpacity>
                 </View>
               </View>
-            ))}
-          </View>
 
-          <TouchableOpacity
-            onPress={handleReferFriend}
-            style={styles.referButton}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.referButtonText}>Refer a Friend</Text>
-          </TouchableOpacity>
+              <View style={[styles.noteCard, { backgroundColor: theme.card }]}>
+                <Text style={[styles.noteTitle, { color: theme.text }]}>Reward</Text>
+                <Text style={[styles.noteBody, { color: theme.textSecondary }]}>
+                  Invite 5 friends to unlock Pro for life.
+                </Text>
+              </View>
+            </>
+          )}
 
-          <Text style={styles.terms}>
-            Friends must sign up using your referral link and verify their account
-          </Text>
+          <View style={styles.bottomSpacer} />
         </ScrollView>
       </SafeAreaView>
     </View>
@@ -259,284 +419,257 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  gradient: {
+  topGlow: {
     position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
-    top: 0,
-    height: 400,
+    height: 320,
   },
   safeArea: {
     flex: 1,
   },
   header: {
-    alignItems: "flex-end",
-    paddingHorizontal: 20,
-    paddingVertical: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 18,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
-  closeButton: {
-    padding: 8,
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "900",
+    letterSpacing: 0.2,
+  },
+  headerIconButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
   scrollContent: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingHorizontal: 18,
+    paddingBottom: 36,
   },
-  heroSection: {
-    alignItems: "center",
-    marginBottom: 40,
-  },
-  iconContainer: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "rgba(255, 255, 255, 0.9)",
-    textAlign: "center",
-  },
-  referralCard: {
-    borderRadius: 28,
-    overflow: "hidden",
-    marginBottom: 32,
-    shadowColor: "#2C0B44",
-    shadowOpacity: 0.35,
-    shadowOffset: { width: 0, height: 16 },
-    shadowRadius: 30,
-    elevation: 18,
-  },
-  referralCardGradient: {
-    padding: 20,
-  },
-  referralCardTopBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 16,
-  },
-  referralTopButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 16,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  referralCardHeadline: {
-    fontSize: 22,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 8,
-  },
-  referralCardCopy: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.88)",
-    textAlign: "center",
-    marginBottom: 4,
-  },
-  shareButtonWrapper: {
-    borderRadius: 999,
-    overflow: "hidden",
-    marginTop: 20,
-    marginBottom: 20,
-  },
-  shareButton: {
-    paddingVertical: 16,
-    paddingHorizontal: 24,
-  },
-  shareButtonContent: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  shareButtonText: {
-    fontSize: 16,
-    fontWeight: "700",
-    color: "#33104A",
-    marginLeft: 10,
-  },
-  earningsCard: {
-    borderRadius: 20,
-    padding: 20,
+  heroCard: {
+    borderRadius: 18,
+    padding: 16,
     borderWidth: 1,
-    borderColor: "rgba(255, 255, 255, 0.28)",
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    borderColor: "rgba(255,255,255,0.06)",
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 12 },
+    shadowRadius: 28,
+    elevation: 10,
   },
-  earningsHeader: {
+  heroTopRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 8,
-  },
-  earningsLabel: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.75)",
-    letterSpacing: 0.8,
-  },
-  earningsLivePill: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 999,
-    fontSize: 12,
-    fontWeight: "700",
-    color: "#6B1BFB",
-    backgroundColor: "#FFFFFF",
-  },
-  earningsTotal: {
-    fontSize: 34,
-    fontWeight: "800",
-    color: "#FFFFFF",
-    textAlign: "center",
-    marginBottom: 12,
-  },
-  earningsDivider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: "rgba(255, 255, 255, 0.35)",
-    marginBottom: 12,
-  },
-  earningsBreakdownRow: {
-    flexDirection: "row",
     justifyContent: "space-between",
+    marginBottom: 10,
   },
-  breakdownItem: {
-    flex: 1,
-    backgroundColor: "rgba(255, 255, 255, 0.12)",
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 14,
+  heroIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
   },
-  breakdownItemSpacing: {
-    marginRight: 12,
-  },
-  breakdownLabel: {
-    fontSize: 12,
-    color: "rgba(255, 255, 255, 0.7)",
-    marginBottom: 4,
-  },
-  breakdownValue: {
+  heroTitle: {
     fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
+    fontWeight: "800",
+    lineHeight: 24,
+    marginBottom: 6,
   },
-  progressSection: {
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 20,
-    padding: 24,
-    marginBottom: 32,
+  heroSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  progressCard: {
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
   },
   progressHeader: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 16,
+    justifyContent: "space-between",
+    marginBottom: 10,
   },
-  progressTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
+  progressLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    letterSpacing: 0.6,
+    textTransform: "uppercase",
   },
-  progressCount: {
-    fontSize: 24,
+  progressValue: {
+    fontSize: 14,
     fontWeight: "800",
-    color: "#E3222B",
   },
   progressBar: {
-    height: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.1)",
-    borderRadius: 4,
+    height: 10,
+    borderRadius: 999,
+    overflow: "hidden",
     position: "relative",
-    marginBottom: 12,
+    marginBottom: 10,
+  },
+  progressTrack: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255,255,255,0.08)",
   },
   progressFill: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    backgroundColor: "#E3222B",
-    borderRadius: 4,
-  },
-  progressDot: {
-    position: "absolute",
-    width: 16,
-    height: 16,
-    borderRadius: 8,
-    backgroundColor: "rgba(0, 0, 0, 0.2)",
-    top: -4,
-    transform: [{ translateX: -8 }],
-  },
-  progressDotActive: {
+    ...StyleSheet.absoluteFillObject,
+    width: "0%",
     backgroundColor: "#E3222B",
   },
-  progressDescription: {
-    fontSize: 14,
-    color: "rgba(0, 0, 0, 0.6)",
-    textAlign: "center",
+  progressHint: {
+    fontSize: 13,
+    lineHeight: 18,
   },
-  benefitsSection: {
-    marginBottom: 32,
-  },
-  benefitsTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFFFFF",
-    marginBottom: 16,
-  },
-  benefitCard: {
+  successRow: {
     flexDirection: "row",
-    backgroundColor: "rgba(255, 255, 255, 0.95)",
-    borderRadius: 14,
-    padding: 16,
-    marginBottom: 12,
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 12,
   },
-  benefitIcon: {
-    width: 44,
-    height: 44,
+  successChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.92)",
+    borderRadius: 999,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+  },
+  successChipText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: "800",
+    color: "#0B0B0B",
+  },
+  proButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 12,
     borderRadius: 12,
-    backgroundColor: "rgba(227, 34, 43, 0.1)",
-    justifyContent: "center",
-    alignItems: "center",
-    marginRight: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
   },
-  benefitContent: {
-    flex: 1,
+  proButtonText: {
+    marginLeft: 8,
+    fontSize: 13,
+    fontWeight: "800",
   },
-  benefitTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-    marginBottom: 4,
+  linkCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    marginBottom: 14,
   },
-  benefitDescription: {
-    fontSize: 14,
-    color: "rgba(0, 0, 0, 0.6)",
-  },
-  referButton: {
-    backgroundColor: "#FFFFFF",
-    paddingVertical: 18,
-    borderRadius: 14,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  referButtonText: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#E3222B",
-  },
-  terms: {
+  sectionTitle: {
     fontSize: 12,
-    color: "rgba(255, 255, 255, 0.8)",
-    textAlign: "center",
+    fontWeight: "800",
+    letterSpacing: 0.8,
+    textTransform: "uppercase",
+    marginBottom: 10,
+  },
+  linkBox: {
+    borderRadius: 14,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  linkText: {
+    fontSize: 14,
+    fontWeight: "600",
+    lineHeight: 20,
+  },
+  linkLoadingRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  linkLoadingText: {
+    marginLeft: 10,
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  errorText: {
+    marginTop: 10,
+    fontSize: 12,
+    fontWeight: "700",
+  },
+  actionsRow: {
+    flexDirection: "row",
+    marginTop: 14,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    marginRight: 10,
+  },
+  actionButtonText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "800",
+  },
+  actionButtonPrimary: {
+    width: 120,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 12,
+    borderRadius: 14,
+    backgroundColor: "#E3222B",
+  },
+  actionButtonPrimaryText: {
+    marginLeft: 8,
+    fontSize: 14,
+    fontWeight: "900",
+    color: "#0B0B0B",
+  },
+  noteCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  noteTitle: {
+    fontSize: 15,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+  noteBody: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  alertCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  alertTitle: {
+    fontSize: 16,
+    fontWeight: "900",
+    marginBottom: 6,
+  },
+  alertBody: {
+    fontSize: 13,
+    lineHeight: 18,
+  },
+  bottomSpacer: {
+    height: 22,
   },
 });
