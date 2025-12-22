@@ -221,9 +221,25 @@ export default function ProScreen() {
 
     const nowPro = res.customerInfo?.entitlements?.active?.pro != null;
     if (nowPro) {
+      const newActiveProductId =
+        ((res.customerInfo?.entitlements?.active as any)?.pro as any)?.productIdentifier ??
+        null;
+
+      console.log("[Pro] purchase synced", {
+        selectedProductId: productId,
+        newActiveProductId,
+      });
+
       if (Platform.OS !== "web") {
         await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
+
+      if (typeof newActiveProductId === "string" && newActiveProductId.length > 0) {
+        setSelectedProductId(newActiveProductId);
+      } else {
+        setSelectedProductId(productId);
+      }
+
       playSuccessAnimation();
     } else {
       await refresh();

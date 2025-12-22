@@ -40,25 +40,35 @@ function getIsEntitledToPro(info: CustomerInfo | null): boolean {
 }
 
 function getActiveProProductId(info: CustomerInfo | null): string | null {
-  const entitlement = (info?.entitlements?.active as any)?.pro as
-    | { productIdentifier?: string | null }
-    | undefined;
-  const fromEntitlement = entitlement?.productIdentifier ?? null;
-  if (fromEntitlement) return fromEntitlement;
-
-  const activeSubs = (info as any)?.activeSubscriptions as string[] | undefined;
-  const normalized = Array.isArray(activeSubs) ? activeSubs : [];
   const knownOrder: Record<string, number> = {
     "rizzgoat.weekly": 1,
     "rizzgoat.monthly": 2,
     "rizzgoat.lifetime": 3,
   };
 
-  const best = normalized
+  const entitlement = (info?.entitlements?.active as any)?.pro as
+    | { productIdentifier?: string | null }
+    | undefined;
+  const fromEntitlement = entitlement?.productIdentifier ?? null;
+
+  const activeSubs = (info as any)?.activeSubscriptions as string[] | undefined;
+  const normalized = Array.isArray(activeSubs) ? activeSubs : [];
+
+  const bestFromSubs = normalized
     .filter((p) => knownOrder[p] != null)
     .sort((a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0))[0];
 
-  return best ?? (normalized[0] ?? null);
+  const candidates = [fromEntitlement, bestFromSubs].filter(
+    (v): v is string => typeof v === "string" && v.length > 0
+  );
+
+  if (candidates.length === 0) return normalized[0] ?? null;
+
+  const best = [...candidates].sort(
+    (a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0)
+  )[0];
+
+  return best ?? null;
 }
 
 function isUserCancelled(e: unknown): boolean {
