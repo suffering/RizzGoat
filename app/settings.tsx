@@ -6,9 +6,9 @@ import {
   TouchableOpacity,
   ScrollView,
   Linking,
-  Alert,
   Platform,
 } from "react-native";
+import * as StoreReview from "expo-store-review";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
@@ -38,26 +38,21 @@ export default function SettingsScreen() {
   const { theme } = useTheme();
 
   const handleRateUs = React.useCallback(async () => {
-    const appStoreUrl = "https://apps.apple.com/app/id0000000000";
-    const playStoreUrl = "https://play.google.com/store/apps/details?id=com.rizzgoat.app";
-    const webUrl = "https://rizzgoat.app";
-    const storeUrl = Platform.select({
-      ios: appStoreUrl,
-      android: playStoreUrl,
-      default: webUrl,
-    }) ?? webUrl;
-    console.log("[Settings] Rate Us pressed", { storeUrl });
+    console.log("[Settings] Rate Us pressed", { platform: Platform.OS });
+
+    if (Platform.OS !== "ios") {
+      return;
+    }
+
     try {
-      const supported = await Linking.canOpenURL(storeUrl);
-      if (!supported) {
-        console.log("[Settings] Rate Us unsupported URL", { storeUrl });
-        Alert.alert("Rate Us", "Unable to open the store page right now.");
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (!isAvailable) {
         return;
       }
-      await Linking.openURL(storeUrl);
+
+      await StoreReview.requestReview();
     } catch (error) {
-      console.log("[Settings] Rate Us error", error);
-      Alert.alert("Rate Us", "Something went wrong. Please try again later.");
+      console.log("[Settings] Rate Us requestReview error (ignored)", error);
     }
   }, []);
 
