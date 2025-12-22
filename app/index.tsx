@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   Text,
@@ -47,12 +47,6 @@ export default function HomeScreen() {
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const floatingIcons = useRef<FloatingIcon[]>([]).current;
 
-  const scrollContentRef = useRef<View>(null);
-  const screenshotCardMeasureRef = useRef<View>(null);
-  const laserY = useRef<Animated.Value>(new Animated.Value(0)).current;
-  const [laserMaxY, setLaserMaxY] = useState<number>(0);
-
-  const laserAnimDurationMs = 5200 as const;
 
   useEffect(() => {
     if (showOnboarding) return;
@@ -175,67 +169,6 @@ export default function HomeScreen() {
     ).start();
   }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding, floatingIcons]);
 
-  const measureLaserBounds = useMemo(() => {
-    return () => {
-      if (!scrollContentRef.current || !screenshotCardMeasureRef.current) return;
-
-      try {
-        screenshotCardMeasureRef.current.measureLayout(
-          scrollContentRef.current,
-          (_x: number, y: number) => {
-            const next = Number.isFinite(y) ? Math.max(0, y) : 0;
-            console.log("[Home] laser bounds measured", { y, next });
-            setLaserMaxY(next);
-          },
-          () => {
-            console.log("[Home] laser bounds measureLayout error");
-          }
-        );
-      } catch (e) {
-        console.log("[Home] laser bounds measureLayout threw", e);
-      }
-    };
-  }, []);
-
-  useEffect(() => {
-    if (showOnboarding) return;
-
-    const t = setTimeout(() => {
-      measureLaserBounds();
-    }, 50);
-
-    return () => clearTimeout(t);
-  }, [measureLaserBounds, showOnboarding]);
-
-  useEffect(() => {
-    if (showOnboarding) return;
-    if (!laserMaxY || laserMaxY <= 0) return;
-
-    laserY.stopAnimation();
-    laserY.setValue(0);
-
-    const anim = Animated.loop(
-      Animated.sequence([
-        Animated.timing(laserY, {
-          toValue: laserMaxY,
-          duration: laserAnimDurationMs,
-          useNativeDriver: true,
-        }),
-        Animated.timing(laserY, {
-          toValue: 0,
-          duration: laserAnimDurationMs,
-          useNativeDriver: true,
-        }),
-      ]),
-      { resetBeforeIteration: true }
-    );
-
-    anim.start();
-
-    return () => {
-      anim.stop();
-    };
-  }, [laserAnimDurationMs, laserMaxY, laserY, showOnboarding]);
   
   useEffect(() => {
     const wasOnboarding = prevShowOnboarding.current;
@@ -386,33 +319,7 @@ export default function HomeScreen() {
           bounces={false}
           overScrollMode="never"
         >
-          <View ref={scrollContentRef} style={styles.scrollInner} onLayout={measureLaserBounds} testID="home_scroll_inner">
-            <Animated.View
-              testID="home_laser_scan"
-              pointerEvents="none"
-              style={[
-                styles.laserScan,
-                {
-                  opacity: laserMaxY > 0 ? 1 : 0,
-                  transform: [{ translateY: laserY }],
-                },
-              ]}
-            >
-              <LinearGradient
-                colors={['rgba(227,34,43,0)', 'rgba(227,34,43,0.95)', 'rgba(255,122,89,0.35)', 'rgba(227,34,43,0.95)', 'rgba(227,34,43,0)']}
-                locations={[0, 0.38, 0.5, 0.62, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.laserScanCore}
-              />
-              <LinearGradient
-                colors={['rgba(227,34,43,0)', 'rgba(227,34,43,0.28)', 'rgba(227,34,43,0)']}
-                locations={[0, 0.5, 1]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.laserScanGlow}
-              />
-            </Animated.View>
+          <View style={styles.scrollInner} testID="home_scroll_inner">
 
             <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
             <Animated.View style={[styles.pulseContainer, { transform: [{ scale: pulseAnim }] }]}>
@@ -442,7 +349,7 @@ export default function HomeScreen() {
               },
             ]}
           >
-            <View ref={screenshotCardMeasureRef} collapsable={false} testID="home_screenshot_card_measure">
+            <View testID="home_screenshot_card_measure">
               <TouchableOpacity
               testID="home_card_screenshot"
               activeOpacity={0.8}
@@ -638,8 +545,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 6,
-    paddingBottom: 6,
+    paddingTop: 2,
+    paddingBottom: 4,
   },
   headerLeft: {
     flex: 1,
@@ -687,7 +594,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginTop: 0,
-    marginBottom: 22,
+    marginBottom: 14,
   },
   pulseContainer: {
     alignItems: "center",
@@ -705,7 +612,7 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 22,
-    marginTop: 10,
+    marginTop: 6,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -721,7 +628,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    gap: 20,
+    gap: 16,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -809,27 +716,5 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     opacity: 0.8,
-  },
-  laserScan: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 2,
-    zIndex: 0,
-  },
-  laserScanCore: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    top: 0,
-    height: 1,
-  },
-  laserScanGlow: {
-    position: "absolute",
-    left: -40,
-    right: -40,
-    top: -10,
-    height: 22,
   },
 });
