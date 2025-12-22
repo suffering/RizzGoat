@@ -4,6 +4,15 @@ import { OPENAI_API_KEY } from "@/config/secrets";
 
 const TEXT_MODEL = "gpt-4o-mini" as const;
 
+const NO_HYPHEN_CHARS = /[-‐‑‒–—―]/g;
+
+function stripHyphens(line: string): string {
+  return line
+    .replace(NO_HYPHEN_CHARS, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function getOpenAIKey(): string {
   const envKey = (process.env.OPENAI_API_KEY ?? "").trim();
   if (envKey.length > 0) {
@@ -73,12 +82,13 @@ export default publicProcedure
         const data = (await res.json()) as any;
         const content = data?.choices?.[0]?.message?.content as string | undefined;
         const cleaned = (content ?? "").trim().replace(/^"|"$/g, "");
-        if (!cleaned) continue;
-        const normalized = cleaned.toLowerCase();
+        const noHyphens = stripHyphens(cleaned);
+        if (!noHyphens) continue;
+        const normalized = noHyphens.toLowerCase();
         const isCliche = CLICHE_BAN.some((c) => normalized.includes(c));
-        const tooLong = cleaned.split(/\s+/).length > 20;
+        const tooLong = noHyphens.split(/\s+/).length > 20;
         if (isCliche || tooLong) continue;
-        return cleaned as string;
+        return noHyphens as string;
       }
 
       if (res.status === 429 || res.status >= 500) {

@@ -38,6 +38,14 @@ const sanitizeContext = (value: unknown): string => {
   return trimmed.slice(0, 240);
 };
 
+const NO_HYPHEN_CHARS = /[-‐‑‒–—―]/g;
+
+const stripHyphens = (line: string): string =>
+  line
+    .replace(NO_HYPHEN_CHARS, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
 const hasCliche = (line: string): boolean => {
   const normalized = line.toLowerCase();
   return CLICHE_PHRASES.some((phrase) => normalized.includes(phrase));
@@ -113,13 +121,14 @@ r.post("/", async (req: any, res: any) => {
 
       const line = (data?.choices?.[0]?.message?.content as string | undefined)?.trim() ?? "";
       const cleaned = line.replace(/^["'“”`]+|["'“”`]+$/g, "").replace(/\s+/g, " ").trim();
+      const noHyphens = stripHyphens(cleaned);
 
-      if (cleaned.length === 0 || cleaned.split(" ").length > 24 || hasCliche(cleaned)) {
-        console.warn("[pickup-route] retrying due to invalid line", { cleaned });
+      if (noHyphens.length === 0 || noHyphens.split(" ").length > 24 || hasCliche(noHyphens)) {
+        console.warn("[pickup-route] retrying due to invalid line", { cleaned, noHyphens });
         continue;
       }
 
-      return res.json({ result: cleaned });
+      return res.json({ result: noHyphens });
     } catch (error) {
       console.error("[pickup-route] attempt failed", error);
     }
