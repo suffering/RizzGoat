@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginTop: -40,
-    marginBottom: -20,
+    marginBottom: 30,
   },
   pulseContainer: {
     alignItems: "center",
@@ -584,14 +584,14 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 22,
-    marginTop: -20,
+    marginTop: 10,
     fontWeight: "600",
     textAlign: "center",
   },
   taglineAccent: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: -4,
+    marginTop: 4,
     gap: 6,
   },
   taglineAccentText: {
@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: -30,
+    marginTop: 30,
     gap: 14,
   },
   cardWrapper: {
