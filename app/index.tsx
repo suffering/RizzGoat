@@ -233,34 +233,6 @@ export default function HomeScreen() {
       <Animated.View 
         style={[
           styles.floatingElement,
-          styles.floatingElement1,
-          {
-            transform: [
-              {
-                translateY: floatingAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, -20],
-                }),
-              },
-              {
-                rotate: floatingAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0deg', '5deg'],
-                }),
-              },
-            ],
-          },
-        ]}
-      >
-        <LinearGradient
-          colors={['rgba(227, 34, 43, 0.1)', 'rgba(255, 122, 89, 0.05)']}
-          style={styles.floatingGradient}
-        />
-      </Animated.View>
-      
-      <Animated.View 
-        style={[
-          styles.floatingElement,
           styles.floatingElement2,
           {
             transform: [
@@ -593,8 +565,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: -10,
-    marginBottom: 0,
+    marginTop: -40,
+    marginBottom: -20,
   },
   pulseContainer: {
     alignItems: "center",
@@ -612,14 +584,14 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 22,
-    marginTop: -12,
+    marginTop: -20,
     fontWeight: "600",
     textAlign: "center",
   },
   taglineAccent: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 0,
+    marginTop: -4,
     gap: 6,
   },
   taglineAccentText: {
@@ -628,7 +600,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: -6,
+    marginTop: -30,
     gap: 14,
   },
   cardWrapper: {
