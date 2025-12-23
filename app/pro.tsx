@@ -57,7 +57,6 @@ export default function ProScreen() {
     isLoading,
     lastErrorMessage,
     purchasePackage,
-    restorePurchases,
     refresh,
   } = useRevenueCat();
 
@@ -155,20 +154,6 @@ export default function ProScreen() {
       router.replace("/");
     }
   }, [router]);
-
-  const onRestore = useCallback(async () => {
-    if (Platform.OS !== "web") {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    }
-
-    const res = await restorePurchases();
-    const pro = res.customerInfo?.entitlements?.active?.pro != null;
-    if (pro) {
-      Alert.alert("Restored", "You're Pro again.");
-    } else {
-      Alert.alert("No purchases found", "We couldn't find any active purchases for this Apple ID.");
-    }
-  }, [restorePurchases]);
 
   const onPurchaseSelected = useCallback(async () => {
     const productId = selectedProductId;
@@ -474,68 +459,56 @@ export default function ProScreen() {
                 );
               })}
 
-              <View style={styles.purchaseBar} testID="pro-purchase-bar">
-                <TouchableOpacity
-                  testID="pro-cta"
-                  onPress={onPurchaseSelected}
-                  style={styles.primaryCtaWrap}
-                  activeOpacity={0.9}
-                  disabled={!isConfigured || isLoading || isPurchasingId != null || !selectedProductId}
+              <TouchableOpacity
+                testID="pro-cta"
+                onPress={onPurchaseSelected}
+                style={styles.primaryCtaWrap}
+                activeOpacity={0.9}
+                disabled={!isConfigured || isLoading || isPurchasingId != null || !selectedProductId}
+              >
+                <LinearGradient
+                  colors={isPurchasingId ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.08)"] : ["#E3222B", "#FF7A59"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 1 }}
+                  style={styles.primaryCta}
                 >
-                  <LinearGradient
-                    colors={isPurchasingId ? ["rgba(255,255,255,0.12)", "rgba(255,255,255,0.08)"] : ["#E3222B", "#FF7A59"]}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 1 }}
-                    style={styles.primaryCta}
-                  >
-                    {isPurchasingId ? (
-                      <View style={styles.primaryCtaInner}>
-                        <ActivityIndicator color="#FFFFFF" />
-                        <Text style={styles.primaryCtaText}>Processing…</Text>
-                      </View>
-                    ) : (
-                      <Text style={styles.primaryCtaText}>
-                        {isEntitledToPro ? "Upgrade" : "Continue"}
-                      </Text>
-                    )}
+                  {isPurchasingId ? (
+                    <View style={styles.primaryCtaInner}>
+                      <ActivityIndicator color="#FFFFFF" />
+                      <Text style={styles.primaryCtaText}>Processing…</Text>
+                    </View>
+                  ) : (
+                    <Text style={styles.primaryCtaText}>
+                      {isEntitledToPro ? "Upgrade" : "Continue"}
+                    </Text>
+                  )}
 
+                  <Animated.View
+                    pointerEvents="none"
+                    style={[
+                      styles.successOverlay,
+                      {
+                        opacity: successOpacity,
+                        transform: [{ scale: successScale }],
+                      },
+                    ]}
+                  >
                     <Animated.View
-                      pointerEvents="none"
                       style={[
-                        styles.successOverlay,
+                        styles.successGlow,
                         {
-                          opacity: successOpacity,
-                          transform: [{ scale: successScale }],
+                          opacity: successGlow,
+                          transform: [{ scale: successGlow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.1] }) }],
                         },
                       ]}
-                    >
-                      <Animated.View
-                        style={[
-                          styles.successGlow,
-                          {
-                            opacity: successGlow,
-                            transform: [{ scale: successGlow.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.1] }) }],
-                          },
-                        ]}
-                      />
-                      <View style={styles.successPill}>
-                        <Check size={18} color="#0A0A0A" />
-                        <Text style={styles.successText}>Unlocked</Text>
-                      </View>
-                    </Animated.View>
-                  </LinearGradient>
-                </TouchableOpacity>
-
-                <TouchableOpacity
-                  testID="pro-restore"
-                  onPress={onRestore}
-                  style={styles.secondaryButton}
-                  activeOpacity={0.85}
-                  disabled={!isConfigured || isLoading || isPurchasingId != null}
-                >
-                  <Text style={styles.secondaryButtonText}>Restore</Text>
-                </TouchableOpacity>
-              </View>
+                    />
+                    <View style={styles.successPill}>
+                      <Check size={18} color="#0A0A0A" />
+                      <Text style={styles.successText}>Unlocked</Text>
+                    </View>
+                  </Animated.View>
+                </LinearGradient>
+              </TouchableOpacity>
 
               <View style={styles.actionsRow}>
                 <TouchableOpacity
@@ -875,14 +848,8 @@ const styles = StyleSheet.create({
     fontWeight: "900",
     letterSpacing: 0.2,
   },
-  purchaseBar: {
-    marginTop: 14,
-    flexDirection: "row",
-    gap: 10,
-    alignItems: "center",
-  },
   primaryCtaWrap: {
-    flex: 1,
+    marginTop: 14,
     borderRadius: 16,
     overflow: "hidden",
   },
