@@ -545,8 +545,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 2,
-    paddingBottom: 4,
+    paddingTop: 0,
+    paddingBottom: 2,
   },
   headerLeft: {
     flex: 1,
@@ -594,7 +594,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginTop: 0,
-    marginBottom: 14,
+    marginBottom: 6,
   },
   pulseContainer: {
     alignItems: "center",
@@ -612,14 +612,14 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 22,
-    marginTop: 6,
+    marginTop: 2,
     fontWeight: "600",
     textAlign: "center",
   },
   taglineAccent: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 4,
     gap: 6,
   },
   taglineAccentText: {
@@ -628,7 +628,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    gap: 16,
+    marginTop: -6,
+    gap: 14,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -694,7 +695,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 18,
     paddingHorizontal: 20,
   },
   footerCard: {
