@@ -9,7 +9,6 @@ import {
   Platform,
   StatusBar,
   Image,
-  Dimensions,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -22,15 +21,7 @@ import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const { width: screenWidth } = Dimensions.get('window');
 
-interface FloatingIcon {
-  id: number;
-  x: Animated.Value;
-  y: Animated.Value;
-  opacity: Animated.Value;
-  scale: Animated.Value;
-}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -45,65 +36,12 @@ export default function HomeScreen() {
   const scrollY = useRef(new Animated.Value(0)).current;
   const floatingAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(1)).current;
-  const floatingIcons = useRef<FloatingIcon[]>([]).current;
+
 
 
   useEffect(() => {
     if (showOnboarding) return;
     
-    // Initialize floating icons
-    if (floatingIcons.length === 0) {
-      for (let i = 0; i < 10; i++) {
-        floatingIcons.push({
-          id: i,
-          x: new Animated.Value(Math.random() * screenWidth),
-          y: new Animated.Value(600),
-          opacity: new Animated.Value(0),
-          scale: new Animated.Value(0.3 + Math.random() * 0.4),
-        });
-      }
-    }
-
-    // Animate floating icons
-    floatingIcons.forEach((icon, index) => {
-      const delay = index * 300;
-      const duration = 4000 + Math.random() * 2000;
-      
-      const animateIcon = () => {
-        icon.x.setValue(Math.random() * screenWidth);
-        icon.y.setValue(600);
-        icon.opacity.setValue(0);
-        
-        Animated.parallel([
-          Animated.timing(icon.y, {
-            toValue: -100,
-            duration: duration,
-            useNativeDriver: true,
-          }),
-          Animated.sequence([
-            Animated.timing(icon.opacity, {
-              toValue: 0.6,
-              duration: duration * 0.2,
-              useNativeDriver: true,
-            }),
-            Animated.timing(icon.opacity, {
-              toValue: 0.6,
-              duration: duration * 0.6,
-              useNativeDriver: true,
-            }),
-            Animated.timing(icon.opacity, {
-              toValue: 0,
-              duration: duration * 0.2,
-              useNativeDriver: true,
-            }),
-          ]),
-        ]).start(() => {
-          setTimeout(animateIcon, Math.random() * 2000);
-        });
-      };
-      
-      setTimeout(animateIcon, delay);
-    });
     
     // Logo bounce animation
     Animated.sequence([
@@ -167,7 +105,7 @@ export default function HomeScreen() {
         }),
       ])
     ).start();
-  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding, floatingIcons]);
+  }, [logoScale, cardOpacity, cardTranslateY, floatingAnim, pulseAnim, showOnboarding]);
 
   
   useEffect(() => {
@@ -448,30 +386,7 @@ export default function HomeScreen() {
         </ScrollView>
       </SafeAreaView>
       
-      {/* Floating Goat Icons */}
-      {!showOnboarding && floatingIcons.map((icon) => (
-        <Animated.View
-          key={icon.id}
-          pointerEvents="none"
-          style={[
-            styles.floatingIcon,
-            {
-              transform: [
-                { translateX: icon.x },
-                { translateY: icon.y },
-                { scale: icon.scale },
-              ],
-              opacity: icon.opacity,
-            },
-          ]}
-        >
-          <Image
-            source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/2cefmmmkms69ivsdi900x' }}
-            style={styles.floatingIconImage}
-            resizeMode="contain"
-          />
-        </Animated.View>
-      ))}
+
     </View>
   );
 }
@@ -680,14 +595,5 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
   },
-  floatingIcon: {
-    position: 'absolute',
-    bottom: 0,
-    zIndex: 1,
-  },
-  floatingIconImage: {
-    width: 40,
-    height: 40,
-    opacity: 0.8,
-  },
+
 });
