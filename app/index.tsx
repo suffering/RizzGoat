@@ -593,8 +593,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 0,
-    marginBottom: 6,
+    marginTop: -10,
+    marginBottom: 0,
   },
   pulseContainer: {
     alignItems: "center",
@@ -612,14 +612,14 @@ const styles = StyleSheet.create({
   },
   tagline: {
     fontSize: 22,
-    marginTop: 2,
+    marginTop: -12,
     fontWeight: "600",
     textAlign: "center",
   },
   taglineAccent: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 0,
     gap: 6,
   },
   taglineAccentText: {
