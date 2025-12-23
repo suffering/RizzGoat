@@ -20,6 +20,7 @@ import { useRevenueCat } from "@/providers/RevenueCatProvider";
 import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as StoreReview from "expo-store-review";
 
 
 
@@ -143,6 +144,25 @@ export default function HomeScreen() {
     }
   }, [isConfigured, isEntitledToPro, router, showOnboarding]);
 
+  const handleRateUs = React.useCallback(async () => {
+    console.log("[HomeScreen] Rate Us pressed", { platform: Platform.OS });
+
+    if (Platform.OS !== "ios") {
+      return;
+    }
+
+    try {
+      const isAvailable = await StoreReview.isAvailableAsync();
+      if (!isAvailable) {
+        return;
+      }
+
+      await StoreReview.requestReview();
+    } catch (error) {
+      console.log("[HomeScreen] Rate Us requestReview error (ignored)", error);
+    }
+  }, []);
+
   if (showOnboarding) {
     return <OnboardingScreen />;
   }
@@ -210,6 +230,7 @@ export default function HomeScreen() {
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity 
+              onPress={handleRateUs}
               style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
             >
               <Heart size={20} color={theme.text} />
