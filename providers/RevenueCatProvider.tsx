@@ -58,21 +58,15 @@ function getActiveProProductId(info: CustomerInfo | null): string | null {
     return "rizzgoat.lifetime";
   }
 
+  if (typeof fromEntitlement === "string" && fromEntitlement.length > 0) {
+    return fromEntitlement;
+  }
+
   const bestFromSubs = normalized
     .filter((p) => knownOrder[p] != null)
     .sort((a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0))[0];
 
-  const candidates = [fromEntitlement, bestFromSubs].filter(
-    (v): v is string => typeof v === "string" && v.length > 0
-  );
-
-  if (candidates.length === 0) return normalized[0] ?? null;
-
-  const best = [...candidates].sort(
-    (a, b) => (knownOrder[b] ?? 0) - (knownOrder[a] ?? 0)
-  )[0];
-
-  return best ?? null;
+  return bestFromSubs ?? normalized[0] ?? null;
 }
 
 function isUserCancelled(e: unknown): boolean {
