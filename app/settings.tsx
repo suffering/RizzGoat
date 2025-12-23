@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import {
   X,
-  Users,
   Star,
   Crown,
   Shield,
@@ -68,13 +67,6 @@ export default function SettingsScreen() {
           action: () => router.push("/pro" as any),
           showArrow: true,
           highlight: true,
-        },
-        {
-          icon: Users,
-          title: "Refer a Friend",
-          subtitle: "Get Pro features for free",
-          action: () => router.push("/referral"),
-          showArrow: true,
         },
       ],
     },
