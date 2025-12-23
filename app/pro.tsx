@@ -25,6 +25,56 @@ type PaywallPackage = {
   badge?: string;
 };
 
+type PlanVisual = {
+  gradient: [string, string, ...string[]];
+  border: string;
+  glow: string;
+  titleColor: string;
+  priceColor: string;
+  accentText: string;
+};
+
+function getPlanVisual(productId: string): PlanVisual {
+  switch (productId) {
+    case "rizzgoat.weekly":
+      return {
+        gradient: ["rgba(255, 66, 66, 0.34)", "rgba(255, 170, 64, 0.16)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(255, 92, 66, 0.42)",
+        glow: "rgba(255, 92, 66, 0.28)",
+        titleColor: "rgba(255,255,255,0.96)",
+        priceColor: "#FFFFFF",
+        accentText: "rgba(255, 193, 140, 0.95)",
+      };
+    case "rizzgoat.monthly":
+      return {
+        gradient: ["rgba(166, 78, 255, 0.34)", "rgba(255, 92, 170, 0.18)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(194, 120, 255, 0.44)",
+        glow: "rgba(194, 120, 255, 0.28)",
+        titleColor: "rgba(255,255,255,0.98)",
+        priceColor: "#FFFFFF",
+        accentText: "rgba(255, 175, 225, 0.95)",
+      };
+    case "rizzgoat.lifetime":
+      return {
+        gradient: ["rgba(255, 210, 92, 0.32)", "rgba(255, 140, 60, 0.16)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(255, 210, 92, 0.48)",
+        glow: "rgba(255, 210, 92, 0.26)",
+        titleColor: "rgba(255,255,255,0.98)",
+        priceColor: "#FFFFFF",
+        accentText: "rgba(255, 220, 130, 0.98)",
+      };
+    default:
+      return {
+        gradient: ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(255,255,255,0.12)",
+        glow: "rgba(255,255,255,0.10)",
+        titleColor: "rgba(255,255,255,0.95)",
+        priceColor: "#FFFFFF",
+        accentText: "rgba(255,255,255,0.80)",
+      };
+  }
+}
+
 function getPackageMeta(productId: string | null | undefined): PaywallPackage {
   switch (productId) {
     case "rizzgoat.weekly":
@@ -373,6 +423,7 @@ export default function ProScreen() {
                 const meta = getPackageMeta(pkg.product.identifier);
                 const price = pkg.product.priceString ?? "";
                 const isFeatured = meta.badge === "Popular";
+                const visual = getPlanVisual(pkg.product.identifier);
 
                 const order: Record<string, number> = {
                   "rizzgoat.weekly": 1,
@@ -399,30 +450,49 @@ export default function ProScreen() {
                     }}
                     activeOpacity={0.92}
                     disabled={isDisabled}
-                    style={styles.planTouchable}
+                    style={[
+                      styles.planTouchable,
+                      (isSelected || isCurrent) && styles.planTouchableSelected,
+                    ]}
                   >
                     <LinearGradient
                       colors={
                         isCurrent
-                          ? ["rgba(124,255,178,0.14)", "rgba(124,255,178,0.06)"]
-                          : isFeatured
-                            ? ["rgba(227, 34, 43, 0.28)", "rgba(255, 122, 89, 0.16)"]
-                            : isSelected
-                              ? ["rgba(255,255,255,0.10)", "rgba(255,255,255,0.05)"]
-                              : ["rgba(255,255,255,0.06)", "rgba(255,255,255,0.03)"]
+                          ? ([
+                              "rgba(124,255,178,0.20)",
+                              "rgba(124,255,178,0.10)",
+                              "rgba(255,255,255,0.03)",
+                            ] as const)
+                          : visual.gradient
                       }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
                       style={[
                         styles.planCard,
+                        styles.planCardShadow,
                         isFeatured && styles.planCardFeatured,
+                        { borderColor: visual.border },
                         isSelected && styles.planCardSelected,
                         isCurrent && styles.planCardCurrent,
+                        (isSelected || isCurrent) && styles.planCardElevated,
                         isDisabled && styles.planCardDisabled,
                       ]}
                     >
+                      <View
+                        pointerEvents="none"
+                        style={[
+                          styles.planGlow,
+                          {
+                            backgroundColor: isCurrent ? "rgba(124,255,178,0.20)" : visual.glow,
+                            opacity: isSelected || isCurrent ? 1 : 0.55,
+                          },
+                        ]}
+                      />
+
                       <View style={styles.planTopRow}>
                         <View style={styles.planLeft}>
-                          <Text style={styles.planTitle}>{title}</Text>
-                          <Text style={styles.planSubtitle}>{meta.subtitle}</Text>
+                          <Text style={[styles.planTitle, { color: visual.titleColor }]}>{title}</Text>
+                          <Text style={[styles.planSubtitle, { color: "rgba(255,255,255,0.74)" }]}>{meta.subtitle}</Text>
 
                           {isDowngrade ? (
                             <Text style={styles.planNote}>Downgrades managed via App Store.</Text>
@@ -430,13 +500,25 @@ export default function ProScreen() {
                         </View>
                         <View style={styles.planRight}>
                           {meta.badge && !isCurrent ? (
-                            <View style={isFeatured ? styles.badgeFeatured : styles.badge}>
-                              <Text style={isFeatured ? styles.badgeFeaturedText : styles.badgeText}>
+                            <View
+                              style={
+                                isFeatured
+                                  ? [styles.badgeFeatured, { borderColor: "rgba(255, 92, 170, 0.45)" }]
+                                  : [styles.badge, { borderColor: "rgba(255,255,255,0.14)" }]
+                              }
+                            >
+                              <Text
+                                style={
+                                  isFeatured
+                                    ? [styles.badgeFeaturedText, { color: visual.accentText }]
+                                    : [styles.badgeText, { color: "rgba(255,255,255,0.90)" }]
+                                }
+                              >
                                 {meta.badge}
                               </Text>
                             </View>
                           ) : null}
-                          <Text style={styles.planPrice}>{price}</Text>
+                          <Text style={[styles.planPrice, { color: visual.priceColor }]}>{price}</Text>
                         </View>
                       </View>
 
@@ -736,14 +818,39 @@ const styles = StyleSheet.create({
   planTouchable: {
     marginTop: 10,
   },
+  planTouchableSelected: {
+    transform: [{ scale: 1.01 }],
+  },
   planCard: {
     borderRadius: 18,
     padding: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.10)",
+    overflow: "hidden",
+  },
+  planCardShadow: {
+    shadowColor: "#000",
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
+  },
+  planCardElevated: {
+    shadowOpacity: 0.62,
+    shadowRadius: 22,
+    shadowOffset: { width: 0, height: 14 },
+    elevation: 16,
+  },
+  planGlow: {
+    position: "absolute",
+    top: -18,
+    left: -18,
+    right: -18,
+    bottom: -18,
+    borderRadius: 26,
   },
   planCardFeatured: {
-    borderColor: "rgba(227, 34, 43, 0.35)",
+    borderWidth: 1,
   },
   planCardSelected: {
     borderColor: "rgba(255,255,255,0.22)",
