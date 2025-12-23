@@ -307,6 +307,25 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
+          <Animated.View style={[styles.pulseContainer, { transform: [{ scale: pulseAnim }] }]}>
+            <View style={styles.logoImageContainer}>
+              <Image 
+                source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
+                style={styles.logoImage}
+                resizeMode="contain"
+              />
+            </View>
+          </Animated.View>
+          <Text style={[styles.tagline, { color: theme.textSecondary }]}>
+            Level up your dating game
+          </Text>
+          <View style={styles.taglineAccent}>
+            <Zap size={16} color={theme.primary} />
+            <Text style={[styles.taglineAccentText, { color: theme.primary }]}>AI-Powered</Text>
+          </View>
+        </Animated.View>
+
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { backgroundColor: '#000000' }]}
           showsVerticalScrollIndicator={false}
@@ -320,35 +339,15 @@ export default function HomeScreen() {
           overScrollMode="never"
         >
           <View style={styles.scrollInner} testID="home_scroll_inner">
-
-            <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-            <Animated.View style={[styles.pulseContainer, { transform: [{ scale: pulseAnim }] }]}>
-              <View style={styles.logoImageContainer}>
-                <Image 
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
-              </View>
-            </Animated.View>
-            <Text style={[styles.tagline, { color: theme.textSecondary }]}>
-              Level up your dating game
-            </Text>
-            <View style={styles.taglineAccent}>
-              <Zap size={16} color={theme.primary} />
-              <Text style={[styles.taglineAccentText, { color: theme.primary }]}>AI-Powered</Text>
-            </View>
-          </Animated.View>
-
-          <Animated.View
-            style={[
-              styles.cardsContainer,
-              {
-                opacity: cardOpacity,
-                transform: [{ translateY: cardTranslateY }],
-              },
-            ]}
-          >
+            <Animated.View
+              style={[
+                styles.cardsContainer,
+                {
+                  opacity: cardOpacity,
+                  transform: [{ translateY: cardTranslateY }],
+                },
+              ]}
+            >
             <View testID="home_screenshot_card_measure">
               <TouchableOpacity
               testID="home_card_screenshot"
@@ -545,8 +544,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 2,
-    paddingBottom: 4,
+    paddingTop: 0,
+    paddingBottom: 2,
   },
   headerLeft: {
     flex: 1,
@@ -585,6 +584,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
+    paddingTop: 6,
     paddingBottom: 40,
     backgroundColor: '#000000',
   },
@@ -593,8 +593,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: 0,
-    marginBottom: 14,
+    marginTop: 2,
+    marginBottom: 10,
   },
   pulseContainer: {
     alignItems: "center",
