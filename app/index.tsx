@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: "center",
     marginTop: -50,
-    marginBottom: 8,
+    marginBottom: -12,
   },
   pulseContainer: {
     alignItems: "center",
