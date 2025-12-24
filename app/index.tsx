@@ -298,7 +298,7 @@ export default function HomeScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Camera size={28} color="#FFFFFF" />
+                    <Camera size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={styles.cardBadge}>
                     <Text style={styles.cardBadgeText}>HOT</Text>
@@ -335,7 +335,7 @@ export default function HomeScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <Sparkles size={28} color="#FFFFFF" />
+                    <Sparkles size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={[styles.cardBadge, { backgroundColor: '#FF7A59' }]}>
                     <Text style={styles.cardBadgeText}>NEW</Text>
@@ -371,7 +371,7 @@ export default function HomeScreen() {
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 1 }}
                   >
-                    <MessageCircle size={28} color="#FFFFFF" />
+                    <MessageCircle size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={[styles.cardBadge, { backgroundColor: '#8B5CF6' }]}>
                     <Text style={styles.cardBadgeText}>AI</Text>
@@ -515,8 +515,8 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logoImage: {
-    width: 480,
-    height: 172,
+    width: 540,
+    height: 194,
   },
   tagline: {
     fontSize: 22,
@@ -537,7 +537,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     paddingHorizontal: 20,
     marginTop: 16,
-    gap: 12,
+    gap: 10,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -548,18 +548,18 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    padding: 20,
+    padding: 18,
     borderWidth: 1,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   cardIcon: {
-    width: 52,
-    height: 52,
+    width: 48,
+    height: 48,
     borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
@@ -585,13 +585,13 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   cardTitle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: "800",
-    lineHeight: 24,
+    lineHeight: 23,
   },
   cardDescription: {
-    fontSize: 14,
-    lineHeight: 20,
+    fontSize: 13,
+    lineHeight: 19,
     opacity: 0.8,
   },
   cardFooter: {
