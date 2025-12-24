@@ -38,30 +38,30 @@ function getPlanVisual(productId: string): PlanVisual {
   switch (productId) {
     case "rizzgoat.weekly":
       return {
-        gradient: ["rgba(255, 66, 66, 0.34)", "rgba(255, 170, 64, 0.16)", "rgba(255,255,255,0.03)"] as const,
-        border: "rgba(255, 92, 66, 0.42)",
-        glow: "rgba(255, 92, 66, 0.28)",
-        titleColor: "rgba(255,255,255,0.96)",
+        gradient: ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(255,255,255,0.12)",
+        glow: "rgba(255,255,255,0.10)",
+        titleColor: "rgba(255,255,255,0.95)",
         priceColor: "#FFFFFF",
-        accentText: "rgba(255, 193, 140, 0.95)",
+        accentText: "rgba(255,255,255,0.80)",
       };
     case "rizzgoat.monthly":
       return {
-        gradient: ["rgba(166, 78, 255, 0.34)", "rgba(255, 92, 170, 0.18)", "rgba(255,255,255,0.03)"] as const,
-        border: "rgba(194, 120, 255, 0.44)",
-        glow: "rgba(194, 120, 255, 0.28)",
-        titleColor: "rgba(255,255,255,0.98)",
+        gradient: ["rgba(255,255,255,0.08)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(255,255,255,0.12)",
+        glow: "rgba(255,255,255,0.10)",
+        titleColor: "rgba(255,255,255,0.95)",
         priceColor: "#FFFFFF",
-        accentText: "rgba(255, 175, 225, 0.95)",
+        accentText: "rgba(255,255,255,0.80)",
       };
     case "rizzgoat.lifetime":
       return {
-        gradient: ["rgba(255, 210, 92, 0.32)", "rgba(255, 140, 60, 0.16)", "rgba(255,255,255,0.03)"] as const,
-        border: "rgba(255, 210, 92, 0.48)",
-        glow: "rgba(255, 210, 92, 0.26)",
+        gradient: ["rgba(227, 34, 43, 0.38)", "rgba(255, 122, 89, 0.18)", "rgba(255,255,255,0.03)"] as const,
+        border: "rgba(227, 34, 43, 0.52)",
+        glow: "rgba(227, 34, 43, 0.32)",
         titleColor: "rgba(255,255,255,0.98)",
         priceColor: "#FFFFFF",
-        accentText: "rgba(255, 220, 130, 0.98)",
+        accentText: "rgba(255, 193, 140, 0.95)",
       };
     default:
       return {
@@ -78,11 +78,11 @@ function getPlanVisual(productId: string): PlanVisual {
 function getPackageMeta(productId: string | null | undefined): PaywallPackage {
   switch (productId) {
     case "rizzgoat.weekly":
-      return { id: "weekly", title: "Weekly", subtitle: "Flexible • Cancel anytime", badge: "Starter" };
+      return { id: "weekly", title: "Weekly", subtitle: "Flexible • Cancel anytime" };
     case "rizzgoat.monthly":
-      return { id: "monthly", title: "Monthly", subtitle: "Best value for most", badge: "Popular" };
+      return { id: "monthly", title: "Monthly", subtitle: "Best value for most" };
     case "rizzgoat.lifetime":
-      return { id: "lifetime", title: "Lifetime", subtitle: "One-time purchase", badge: "Best" };
+      return { id: "lifetime", title: "Lifetime", subtitle: "One-time purchase", badge: "Best Value" };
     default:
       return { id: "unknown", title: "Pro", subtitle: "Unlock everything" };
   }
@@ -422,7 +422,7 @@ export default function ProScreen() {
               {sortedPackages.map((pkg) => {
                 const meta = getPackageMeta(pkg.product.identifier);
                 const price = pkg.product.priceString ?? "";
-                const isFeatured = meta.badge === "Popular";
+                const isLifetime = pkg.product.identifier === "rizzgoat.lifetime";
                 const visual = getPlanVisual(pkg.product.identifier);
 
                 const order: Record<string, number> = {
@@ -470,9 +470,9 @@ export default function ProScreen() {
                       style={[
                         styles.planCard,
                         styles.planCardShadow,
-                        isFeatured && styles.planCardFeatured,
+                        isLifetime && styles.planCardFeatured,
                         { borderColor: visual.border },
-                        isSelected && styles.planCardSelected,
+                        isSelected && !isCurrent && styles.planCardSelected,
                         isCurrent && styles.planCardCurrent,
                         (isSelected || isCurrent) && styles.planCardElevated,
                         isDisabled && styles.planCardDisabled,
@@ -500,20 +500,8 @@ export default function ProScreen() {
                         </View>
                         <View style={styles.planRight}>
                           {meta.badge && !isCurrent ? (
-                            <View
-                              style={
-                                isFeatured
-                                  ? [styles.badgeFeatured, { borderColor: "rgba(255, 92, 170, 0.45)" }]
-                                  : [styles.badge, { borderColor: "rgba(255,255,255,0.14)" }]
-                              }
-                            >
-                              <Text
-                                style={
-                                  isFeatured
-                                    ? [styles.badgeFeaturedText, { color: visual.accentText }]
-                                    : [styles.badgeText, { color: "rgba(255,255,255,0.90)" }]
-                                }
-                              >
+                            <View style={styles.badgeFeatured}>
+                              <Text style={styles.badgeFeaturedText}>
                                 {meta.badge}
                               </Text>
                             </View>
@@ -591,17 +579,6 @@ export default function ProScreen() {
                   </Animated.View>
                 </LinearGradient>
               </TouchableOpacity>
-
-              <View style={styles.actionsRow}>
-                <TouchableOpacity
-                  testID="pro-close-secondary"
-                  onPress={close}
-                  style={styles.ghostButton}
-                  activeOpacity={0.85}
-                >
-                  <Text style={styles.ghostButtonText}>Not now</Text>
-                </TouchableOpacity>
-              </View>
 
               <Text style={styles.legal}>
                 Payment will be charged to your Apple ID account. Subscription automatically renews unless canceled at least 24 hours before the end of the current period.
@@ -848,12 +825,15 @@ const styles = StyleSheet.create({
     right: -18,
     bottom: -18,
     borderRadius: 26,
+    opacity: 0.6,
   },
   planCardFeatured: {
     borderWidth: 1,
   },
   planCardSelected: {
-    borderColor: "rgba(255,255,255,0.22)",
+    borderWidth: 2,
+    borderColor: "#E3222B",
+    transform: [{ scale: 1.02 }],
   },
   planCardCurrent: {
     borderColor: "rgba(124,255,178,0.35)",
@@ -914,12 +894,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 999,
-    backgroundColor: "rgba(227, 34, 43, 0.22)",
+    backgroundColor: "rgba(227, 34, 43, 0.28)",
     borderWidth: 1,
-    borderColor: "rgba(227, 34, 43, 0.40)",
+    borderColor: "rgba(227, 34, 43, 0.50)",
   },
   badgeFeaturedText: {
-    color: "#FFD166",
+    color: "#FFFFFF",
     fontSize: 12,
     fontWeight: "900",
   },
