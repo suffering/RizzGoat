@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 2,
+    paddingBottom: 0,
   },
   headerLeft: {
     flex: 1,
@@ -493,7 +493,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 20,
     backgroundColor: '#000000',
   },
   scrollInner: {
@@ -501,8 +501,8 @@ const styles = StyleSheet.create({
   },
   logoContainer: {
     alignItems: "center",
-    marginTop: -40,
-    marginBottom: 30,
+    marginTop: -50,
+    marginBottom: 8,
   },
   pulseContainer: {
     alignItems: "center",
@@ -515,19 +515,19 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logoImage: {
-    width: 640,
-    height: 230,
+    width: 480,
+    height: 172,
   },
   tagline: {
     fontSize: 22,
-    marginTop: 10,
+    marginTop: 6,
     fontWeight: "600",
     textAlign: "center",
   },
   taglineAccent: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 4,
+    marginTop: 2,
     gap: 6,
   },
   taglineAccentText: {
@@ -536,8 +536,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 30,
-    gap: 14,
+    marginTop: 16,
+    gap: 12,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -548,19 +548,19 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    padding: 24,
+    padding: 20,
     borderWidth: 1,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 16,
+    marginBottom: 12,
   },
   cardIcon: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     justifyContent: "center",
     alignItems: "center",
     shadowColor: "#000",
@@ -582,20 +582,20 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   cardContent: {
-    gap: 8,
+    gap: 6,
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 19,
     fontWeight: "800",
-    lineHeight: 26,
+    lineHeight: 24,
   },
   cardDescription: {
-    fontSize: 15,
-    lineHeight: 22,
+    fontSize: 14,
+    lineHeight: 20,
     opacity: 0.8,
   },
   cardFooter: {
-    marginTop: 12,
+    marginTop: 8,
   },
   cardFooterText: {
     fontSize: 14,
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 18,
+    marginTop: 12,
     paddingHorizontal: 20,
   },
   footerCard: {
