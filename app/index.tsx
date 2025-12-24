@@ -515,12 +515,12 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logoImage: {
-    width: 540,
-    height: 194,
+    width: 600,
+    height: 216,
   },
   tagline: {
     fontSize: 22,
-    marginTop: 6,
+    marginTop: -16,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -536,8 +536,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 16,
-    gap: 10,
+    marginTop: 12,
+    gap: 8,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -603,7 +603,7 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 12,
+    marginTop: 8,
     paddingHorizontal: 20,
   },
   footerCard: {
