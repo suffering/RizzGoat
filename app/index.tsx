@@ -515,11 +515,11 @@ const styles = StyleSheet.create({
     elevation: 10,
   },
   logoImage: {
-    width: 720,
-    height: 260,
+    width: 600,
+    height: 216,
   },
   tagline: {
-    fontSize: 26,
+    fontSize: 22,
     marginTop: -16,
     fontWeight: "600",
     textAlign: "center",
@@ -531,7 +531,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   taglineAccentText: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: "700",
   },
   cardsContainer: {
