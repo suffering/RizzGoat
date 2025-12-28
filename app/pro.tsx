@@ -448,7 +448,7 @@ export default function ProScreen() {
                       if (isDisabled) return;
                       setSelectedProductId(pkg.product.identifier);
                     }}
-                    activeOpacity={0.92}
+                    activeOpacity={1}
                     disabled={isDisabled}
                     style={[
                       styles.planTouchable,
