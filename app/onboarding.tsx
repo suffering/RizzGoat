@@ -115,6 +115,7 @@ export default function OnboardingScreen() {
 
   useEffect(() => {
     startEpicIntroSequence();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -1036,7 +1037,7 @@ export default function OnboardingScreen() {
                         },
                       ]}
                     />
-                    <Text style={styles.getStartedText}>GET STARTED</Text>
+                    <Text style={styles.getStartedText}>Get Started!</Text>
                     <ArrowRight size={24} color="#FFFFFF" />
                   </LinearGradient>
                 </Animated.View>
