@@ -227,6 +227,15 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
           <View style={styles.headerCenter}>
+            <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]}>
+              <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]}>
+                <Image 
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
+                  style={styles.headerLogoImage}
+                  resizeMode="contain"
+                />
+              </Animated.View>
+            </Animated.View>
           </View>
           <View style={styles.headerRight}>
             <TouchableOpacity 
@@ -252,24 +261,15 @@ export default function HomeScreen() {
         >
           <View style={styles.scrollInner} testID="home_scroll_inner">
 
-            <Animated.View style={[styles.logoContainer, { transform: [{ scale: logoScale }] }]}>
-            <Animated.View style={[styles.pulseContainer, { transform: [{ scale: pulseAnim }] }]}>
-              <View style={styles.logoImageContainer}>
-                <Image 
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
-                  style={styles.logoImage}
-                  resizeMode="contain"
-                />
+            <View style={styles.taglineContainer}>
+              <Text style={[styles.tagline, { color: theme.textSecondary }]}>
+                Level up your dating game
+              </Text>
+              <View style={styles.taglineAccent}>
+                <Zap size={16} color={theme.primary} />
+                <Text style={[styles.taglineAccentText, { color: theme.primary }]}>AI-Powered</Text>
               </View>
-            </Animated.View>
-            <Text style={[styles.tagline, { color: theme.textSecondary }]}>
-              Level up your dating game
-            </Text>
-            <View style={styles.taglineAccent}>
-              <Zap size={16} color={theme.primary} />
-              <Text style={[styles.taglineAccentText, { color: theme.primary }]}>AI-Powered</Text>
             </View>
-          </Animated.View>
 
           <Animated.View
             style={[
@@ -454,7 +454,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 0,
+    paddingBottom: 8,
   },
   headerLeft: {
     flex: 1,
@@ -462,6 +462,17 @@ const styles = StyleSheet.create({
   headerCenter: {
     flex: 2,
     alignItems: "center",
+    justifyContent: "center",
+  },
+  headerLogoContainer: {
+    alignItems: "center",
+  },
+  headerPulseContainer: {
+    alignItems: "center",
+  },
+  headerLogoImage: {
+    width: 200,
+    height: 72,
   },
   headerRight: {
     flex: 1,
@@ -499,24 +510,10 @@ const styles = StyleSheet.create({
   scrollInner: {
     flex: 1,
   },
-  logoContainer: {
+  taglineContainer: {
     alignItems: "center",
-    marginTop: -50,
-    marginBottom: -12,
-  },
-  pulseContainer: {
-    alignItems: "center",
-  },
-  logoImageContainer: {
-    shadowColor: "#E3222B",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  logoImage: {
-    width: 600,
-    height: 216,
+    marginTop: 8,
+    marginBottom: 16,
   },
   tagline: {
     fontSize: 22,
@@ -536,8 +533,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 12,
-    gap: 8,
+    marginTop: 0,
+    gap: 14,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -548,7 +545,7 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    padding: 18,
+    padding: 16,
     borderWidth: 1,
   },
   cardHeader: {
