@@ -223,14 +223,14 @@ export default function HomeScreen() {
           <View style={styles.headerLeft}>
             <TouchableOpacity 
               onPress={() => router.push("/settings")}
-              style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
             >
               <Menu size={20} color={theme.text} />
             </TouchableOpacity>
           </View>
-          <View style={styles.headerCenter}>
-            <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]}>
-              <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]}>
+          <View style={styles.headerCenter} pointerEvents="none">
+            <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]} pointerEvents="none">
+              <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]} pointerEvents="none">
                 <Image 
                   source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
                   style={styles.headerLogoImage}
@@ -242,7 +242,7 @@ export default function HomeScreen() {
           <View style={styles.headerRight}>
             <TouchableOpacity 
               onPress={handleRateUs}
-              style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
             >
               <Heart size={20} color={theme.text} />
             </TouchableOpacity>
@@ -473,8 +473,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogoImage: {
-    width: 390,
-    height: 139,
+    width: 460,
+    height: 164,
   },
   headerRight: {
     flex: 1,
