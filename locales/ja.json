@@ -1,0 +1,134 @@
+{
+  "common": {
+    "back": "戻る",
+    "close": "閉じる",
+    "continue": "続ける",
+    "getStarted": "始めよう!",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "save": "保存",
+    "cancel": "キャンセル"
+  },
+  "home": {
+    "tagline": "デートゲームをレベルアップ",
+    "aiPowered": "AI駆動",
+    "screenshotCard": {
+      "badge": "人気",
+      "title": "スクリーンショットをアップロード",
+      "description": "会話からAI返信提案を取得",
+      "cta": "タップして分析 →"
+    },
+    "pickupCard": {
+      "badge": "新着",
+      "title": "ナンパフレーズジェネレーター",
+      "description": "本当に効果のあるスマートで機知に富んだ上品なフレーズ",
+      "cta": "今すぐ生成 →"
+    },
+    "chatCard": {
+      "badge": "AI",
+      "title": "AIコーチとチャット",
+      "description": "パーソナライズされたデートアドバイスと会話のコツを取得",
+      "cta": "チャットを開始 →"
+    },
+    "proTip": "💡 プロのヒント：お気に入りを保存して成功率を追跡しましょう"
+  },
+  "settings": {
+    "title": "設定",
+    "premium": "プレミアム",
+    "community": "コミュニティ",
+    "legal": "法的",
+    "preferences": "設定",
+    "upgradeToPro": "プロにアップグレード",
+    "upgradeSubtitle": "高度な機能をアンロック",
+    "rateUs": "評価する",
+    "privacyPolicy": "プライバシーポリシー",
+    "termsOfService": "利用規約",
+    "language": "言語",
+    "languageSubtitle": "希望の言語を選択"
+  },
+  "onboarding": {
+    "welcome": "RizzGoatへようこそ",
+    "purpose": "あなたのAIデートコーチ",
+    "subtitle": "専門家のアドバイスと機知に富んだ返信を取得",
+    "getStarted": "始めよう!",
+    "selectSex": "性別",
+    "male": "男性",
+    "female": "女性",
+    "other": "その他",
+    "selectAge": "年齢層",
+    "age1824": "18-24",
+    "age2534": "25-34",
+    "age3544": "35-44",
+    "age45plus": "45+"
+  },
+  "chat": {
+    "title": "AIコーチ",
+    "placeholder": "何でも聞いてください...",
+    "starterChips": {
+      "openers": "彼女の旅行プロフィールの切り出し方",
+      "flowing": "会話を続ける方法",
+      "askDate": "いつデートに誘うか",
+      "redFlags": "注意すべき危険信号"
+    }
+  },
+  "pickupLines": {
+    "title": "ナンパフレーズ",
+    "tone": "トーン",
+    "spiceLevel": "スパイスレベル",
+    "context": "コンテキスト（オプション）",
+    "contextPlaceholder": "例：彼女のプロフィールに犬が好きと書いてある...",
+    "generate": "生成",
+    "regenerate": "再生成",
+    "copy": "コピー",
+    "favorite": "お気に入り",
+    "share": "共有",
+    "tones": {
+      "playful": "遊び心",
+      "confident": "自信",
+      "wholesome": "誠実",
+      "bold": "大胆"
+    },
+    "spiceLevels": {
+      "cute": "かわいい",
+      "medium": "中程度",
+      "spicy": "スパイシー"
+    },
+    "copied": "クリップボードにコピーしました！",
+    "favorited": "お気に入りに追加しました！",
+    "error": "生成に失敗しました。もう一度お試しください。"
+  },
+  "screenshot": {
+    "title": "スクリーンショットアドバイザー",
+    "upload": "スクリーンショットをアップロード",
+    "analyze": "分析",
+    "placeholder": "始めるにはスクリーンショットをアップロード",
+    "analyzing": "分析中..."
+  },
+  "pro": {
+    "title": "プロにアップグレード",
+    "subtitle": "すべての機能をアンロック",
+    "weekly": "週間",
+    "monthly": "月間",
+    "lifetime": "生涯",
+    "bestValue": "最高の価値",
+    "subscribe": "購読",
+    "restore": "購入を復元"
+  },
+  "referral": {
+    "title": "友達を招待",
+    "subtitle": "5人の友達を招待してプロアクセスを取得",
+    "share": "リンクを共有"
+  },
+  "languages": {
+    "en": "英語",
+    "es": "スペイン語",
+    "zh": "中国語",
+    "pt": "ポルトガル語（ブラジル）",
+    "fr": "フランス語",
+    "de": "ドイツ語",
+    "ar": "アラビア語",
+    "ru": "ロシア語",
+    "ja": "日本語",
+    "it": "イタリア語"
+  }
+}

@@ -1,0 +1,134 @@
+{
+  "common": {
+    "back": "Retour",
+    "close": "Fermer",
+    "continue": "Continuer",
+    "getStarted": "Commencer!",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "save": "Sauvegarder",
+    "cancel": "Annuler"
+  },
+  "home": {
+    "tagline": "Améliorez votre jeu de séduction",
+    "aiPowered": "Propulsé par IA",
+    "screenshotCard": {
+      "badge": "CHAUD",
+      "title": "Télécharger une Capture",
+      "description": "Obtenez des suggestions de réponse IA de vos conversations",
+      "cta": "Appuyez pour analyser →"
+    },
+    "pickupCard": {
+      "badge": "NOUVEAU",
+      "title": "Générateur de Phrases",
+      "description": "Phrases intelligentes, spirituelles et de bon goût qui fonctionnent vraiment",
+      "cta": "Générer maintenant →"
+    },
+    "chatCard": {
+      "badge": "IA",
+      "title": "Chat avec Coach IA",
+      "description": "Obtenez des conseils personnalisés de séduction et des astuces de conversation",
+      "cta": "Commencer à discuter →"
+    },
+    "proTip": "💡 Astuce Pro: Enregistrez vos favoris et suivez votre taux de réussite"
+  },
+  "settings": {
+    "title": "Paramètres",
+    "premium": "Premium",
+    "community": "Communauté",
+    "legal": "Légal",
+    "preferences": "Préférences",
+    "upgradeToPro": "Passer à Pro",
+    "upgradeSubtitle": "Débloquez les fonctionnalités avancées",
+    "rateUs": "Évaluez-nous",
+    "privacyPolicy": "Politique de Confidentialité",
+    "termsOfService": "Conditions d'Utilisation",
+    "language": "Langue",
+    "languageSubtitle": "Choisissez votre langue préférée"
+  },
+  "onboarding": {
+    "welcome": "Bienvenue sur RizzGoat",
+    "purpose": "Votre coach de séduction IA",
+    "subtitle": "Obtenez des conseils d'experts et des réponses spirituelles",
+    "getStarted": "Commencer!",
+    "selectSex": "Je m'identifie comme",
+    "male": "Homme",
+    "female": "Femme",
+    "other": "Autre",
+    "selectAge": "Ma tranche d'âge",
+    "age1824": "18-24",
+    "age2534": "25-34",
+    "age3544": "35-44",
+    "age45plus": "45+"
+  },
+  "chat": {
+    "title": "Coach IA",
+    "placeholder": "Demandez-moi n'importe quoi...",
+    "starterChips": {
+      "openers": "Ouvertures pour sa bio de voyage",
+      "flowing": "Comment maintenir la conversation",
+      "askDate": "Quand demander un rendez-vous",
+      "redFlags": "Signaux d'alarme"
+    }
+  },
+  "pickupLines": {
+    "title": "Phrases de Drague",
+    "tone": "Ton",
+    "spiceLevel": "Niveau d'Épice",
+    "context": "Contexte (optionnel)",
+    "contextPlaceholder": "ex., Sa bio dit qu'elle aime les chiens...",
+    "generate": "Générer",
+    "regenerate": "Régénérer",
+    "copy": "Copier",
+    "favorite": "Favori",
+    "share": "Partager",
+    "tones": {
+      "playful": "Enjoué",
+      "confident": "Confiant",
+      "wholesome": "Sain",
+      "bold": "Audacieux"
+    },
+    "spiceLevels": {
+      "cute": "Mignon",
+      "medium": "Moyen",
+      "spicy": "Épicé"
+    },
+    "copied": "Copié dans le presse-papiers!",
+    "favorited": "Ajouté aux favoris!",
+    "error": "Échec de la génération. Veuillez réessayer."
+  },
+  "screenshot": {
+    "title": "Conseiller de Captures",
+    "upload": "Télécharger Capture",
+    "analyze": "Analyser",
+    "placeholder": "Téléchargez une capture pour commencer",
+    "analyzing": "Analyse en cours..."
+  },
+  "pro": {
+    "title": "Passer à Pro",
+    "subtitle": "Débloquez toutes les fonctionnalités",
+    "weekly": "Hebdomadaire",
+    "monthly": "Mensuel",
+    "lifetime": "À vie",
+    "bestValue": "Meilleure Valeur",
+    "subscribe": "S'abonner",
+    "restore": "Restaurer les Achats"
+  },
+  "referral": {
+    "title": "Inviter des Amis",
+    "subtitle": "Obtenez l'accès Pro en invitant 5 amis",
+    "share": "Partager le Lien"
+  },
+  "languages": {
+    "en": "Anglais",
+    "es": "Espagnol",
+    "zh": "Chinois",
+    "pt": "Portugais (Brésil)",
+    "fr": "Français",
+    "de": "Allemand",
+    "ar": "Arabe",
+    "ru": "Russe",
+    "ja": "Japonais",
+    "it": "Italien"
+  }
+}

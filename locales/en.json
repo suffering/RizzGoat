@@ -1,0 +1,134 @@
+{
+  "common": {
+    "back": "Back",
+    "close": "Close",
+    "continue": "Continue",
+    "getStarted": "Get Started!",
+    "loading": "Loading...",
+    "error": "Error",
+    "save": "Save",
+    "cancel": "Cancel"
+  },
+  "home": {
+    "tagline": "Level up your dating game",
+    "aiPowered": "AI-Powered",
+    "screenshotCard": {
+      "badge": "HOT",
+      "title": "Upload a Screenshot",
+      "description": "Get AI-powered reply suggestions from your conversations",
+      "cta": "Tap to analyze →"
+    },
+    "pickupCard": {
+      "badge": "NEW",
+      "title": "Pickup Lines Generator",
+      "description": "Smart, witty, and tasteful one-liners that actually work",
+      "cta": "Generate now →"
+    },
+    "chatCard": {
+      "badge": "AI",
+      "title": "Chat with AI Coach",
+      "description": "Get personalized dating advice and conversation tips",
+      "cta": "Start chatting →"
+    },
+    "proTip": "💡 Pro tip: Save your favorites and track your success rate"
+  },
+  "settings": {
+    "title": "Settings",
+    "premium": "Premium",
+    "community": "Community",
+    "legal": "Legal",
+    "preferences": "Preferences",
+    "upgradeToPro": "Upgrade to Pro",
+    "upgradeSubtitle": "Unlock advanced features",
+    "rateUs": "Rate Us",
+    "privacyPolicy": "Privacy Policy",
+    "termsOfService": "Terms of Service",
+    "language": "Language",
+    "languageSubtitle": "Choose your preferred language"
+  },
+  "onboarding": {
+    "welcome": "Welcome to RizzGoat",
+    "purpose": "Your AI dating coach",
+    "subtitle": "Get expert advice and witty replies",
+    "getStarted": "Get Started!",
+    "selectSex": "I identify as",
+    "male": "Male",
+    "female": "Female",
+    "other": "Other",
+    "selectAge": "My age range",
+    "age1824": "18-24",
+    "age2534": "25-34",
+    "age3544": "35-44",
+    "age45plus": "45+"
+  },
+  "chat": {
+    "title": "AI Coach",
+    "placeholder": "Ask me anything...",
+    "starterChips": {
+      "openers": "Openers for her travel bio",
+      "flowing": "How to keep conversation flowing",
+      "askDate": "When to ask for a date",
+      "redFlags": "Red flags to watch for"
+    }
+  },
+  "pickupLines": {
+    "title": "Pickup Lines",
+    "tone": "Tone",
+    "spiceLevel": "Spice Level",
+    "context": "Context (optional)",
+    "contextPlaceholder": "e.g., Her bio says she loves dogs...",
+    "generate": "Generate",
+    "regenerate": "Regenerate",
+    "copy": "Copy",
+    "favorite": "Favorite",
+    "share": "Share",
+    "tones": {
+      "playful": "Playful",
+      "confident": "Confident",
+      "wholesome": "Wholesome",
+      "bold": "Bold"
+    },
+    "spiceLevels": {
+      "cute": "Cute",
+      "medium": "Medium",
+      "spicy": "Spicy"
+    },
+    "copied": "Copied to clipboard!",
+    "favorited": "Added to favorites!",
+    "error": "Failed to generate. Please try again."
+  },
+  "screenshot": {
+    "title": "Screenshot Advisor",
+    "upload": "Upload Screenshot",
+    "analyze": "Analyze",
+    "placeholder": "Upload a screenshot to get started",
+    "analyzing": "Analyzing..."
+  },
+  "pro": {
+    "title": "Upgrade to Pro",
+    "subtitle": "Unlock all features",
+    "weekly": "Weekly",
+    "monthly": "Monthly",
+    "lifetime": "Lifetime",
+    "bestValue": "Best Value",
+    "subscribe": "Subscribe",
+    "restore": "Restore Purchases"
+  },
+  "referral": {
+    "title": "Invite Friends",
+    "subtitle": "Get Pro access by inviting 5 friends",
+    "share": "Share Link"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Spanish",
+    "zh": "Chinese",
+    "pt": "Portuguese (Brazil)",
+    "fr": "French",
+    "de": "German",
+    "ar": "Arabic",
+    "ru": "Russian",
+    "ja": "Japanese",
+    "it": "Italian"
+  }
+}

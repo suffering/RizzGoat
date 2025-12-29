@@ -1,0 +1,134 @@
+{
+  "common": {
+    "back": "Atrás",
+    "close": "Cerrar",
+    "continue": "Continuar",
+    "getStarted": "¡Comenzar!",
+    "loading": "Cargando...",
+    "error": "Error",
+    "save": "Guardar",
+    "cancel": "Cancelar"
+  },
+  "home": {
+    "tagline": "Mejora tu juego de citas",
+    "aiPowered": "Con IA",
+    "screenshotCard": {
+      "badge": "NUEVO",
+      "title": "Subir una Captura",
+      "description": "Obtén sugerencias de respuesta con IA de tus conversaciones",
+      "cta": "Toca para analizar →"
+    },
+    "pickupCard": {
+      "badge": "NUEVO",
+      "title": "Generador de Frases",
+      "description": "Frases inteligentes, ingeniosas y de buen gusto que realmente funcionan",
+      "cta": "Generar ahora →"
+    },
+    "chatCard": {
+      "badge": "IA",
+      "title": "Chat con Coach IA",
+      "description": "Obtén consejos personalizados de citas y tips de conversación",
+      "cta": "Comenzar a chatear →"
+    },
+    "proTip": "💡 Consejo Pro: Guarda tus favoritos y rastrea tu tasa de éxito"
+  },
+  "settings": {
+    "title": "Configuración",
+    "premium": "Premium",
+    "community": "Comunidad",
+    "legal": "Legal",
+    "preferences": "Preferencias",
+    "upgradeToPro": "Actualizar a Pro",
+    "upgradeSubtitle": "Desbloquea funciones avanzadas",
+    "rateUs": "Califícanos",
+    "privacyPolicy": "Política de Privacidad",
+    "termsOfService": "Términos de Servicio",
+    "language": "Idioma",
+    "languageSubtitle": "Elige tu idioma preferido"
+  },
+  "onboarding": {
+    "welcome": "Bienvenido a RizzGoat",
+    "purpose": "Tu coach de citas con IA",
+    "subtitle": "Obtén consejos expertos y respuestas ingeniosas",
+    "getStarted": "¡Comenzar!",
+    "selectSex": "Me identifico como",
+    "male": "Hombre",
+    "female": "Mujer",
+    "other": "Otro",
+    "selectAge": "Mi rango de edad",
+    "age1824": "18-24",
+    "age2534": "25-34",
+    "age3544": "35-44",
+    "age45plus": "45+"
+  },
+  "chat": {
+    "title": "Coach IA",
+    "placeholder": "Pregúntame lo que sea...",
+    "starterChips": {
+      "openers": "Aperturas para su bio de viajes",
+      "flowing": "Cómo mantener la conversación",
+      "askDate": "Cuándo pedir una cita",
+      "redFlags": "Señales de alerta"
+    }
+  },
+  "pickupLines": {
+    "title": "Frases de Conquista",
+    "tone": "Tono",
+    "spiceLevel": "Nivel de Picante",
+    "context": "Contexto (opcional)",
+    "contextPlaceholder": "ej., Su bio dice que ama los perros...",
+    "generate": "Generar",
+    "regenerate": "Regenerar",
+    "copy": "Copiar",
+    "favorite": "Favorito",
+    "share": "Compartir",
+    "tones": {
+      "playful": "Juguetón",
+      "confident": "Confiado",
+      "wholesome": "Sano",
+      "bold": "Audaz"
+    },
+    "spiceLevels": {
+      "cute": "Tierno",
+      "medium": "Medio",
+      "spicy": "Picante"
+    },
+    "copied": "¡Copiado al portapapeles!",
+    "favorited": "¡Agregado a favoritos!",
+    "error": "Error al generar. Por favor intenta de nuevo."
+  },
+  "screenshot": {
+    "title": "Asesor de Capturas",
+    "upload": "Subir Captura",
+    "analyze": "Analizar",
+    "placeholder": "Sube una captura para comenzar",
+    "analyzing": "Analizando..."
+  },
+  "pro": {
+    "title": "Actualizar a Pro",
+    "subtitle": "Desbloquea todas las funciones",
+    "weekly": "Semanal",
+    "monthly": "Mensual",
+    "lifetime": "De por vida",
+    "bestValue": "Mejor Valor",
+    "subscribe": "Suscribirse",
+    "restore": "Restaurar Compras"
+  },
+  "referral": {
+    "title": "Invitar Amigos",
+    "subtitle": "Obtén acceso Pro invitando a 5 amigos",
+    "share": "Compartir Enlace"
+  },
+  "languages": {
+    "en": "Inglés",
+    "es": "Español",
+    "zh": "Chino",
+    "pt": "Portugués (Brasil)",
+    "fr": "Francés",
+    "de": "Alemán",
+    "ar": "Árabe",
+    "ru": "Ruso",
+    "ja": "Japonés",
+    "it": "Italiano"
+  }
+}

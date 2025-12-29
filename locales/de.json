@@ -1,0 +1,134 @@
+{
+  "common": {
+    "back": "Zurück",
+    "close": "Schließen",
+    "continue": "Weiter",
+    "getStarted": "Loslegen!",
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "save": "Speichern",
+    "cancel": "Abbrechen"
+  },
+  "home": {
+    "tagline": "Verbessere dein Dating-Spiel",
+    "aiPowered": "KI-Angetrieben",
+    "screenshotCard": {
+      "badge": "HEISS",
+      "title": "Screenshot hochladen",
+      "description": "Erhalte KI-gestützte Antwortvorschläge aus deinen Gesprächen",
+      "cta": "Tippen zum Analysieren →"
+    },
+    "pickupCard": {
+      "badge": "NEU",
+      "title": "Anmachsprüche Generator",
+      "description": "Kluge, witzige und geschmackvolle Sprüche, die wirklich funktionieren",
+      "cta": "Jetzt generieren →"
+    },
+    "chatCard": {
+      "badge": "KI",
+      "title": "Chat mit KI-Coach",
+      "description": "Erhalte personalisierte Dating-Tipps und Gesprächstipps",
+      "cta": "Chatten starten →"
+    },
+    "proTip": "💡 Pro-Tipp: Speichere deine Favoriten und verfolge deine Erfolgsrate"
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "premium": "Premium",
+    "community": "Gemeinschaft",
+    "legal": "Rechtliches",
+    "preferences": "Präferenzen",
+    "upgradeToPro": "Auf Pro upgraden",
+    "upgradeSubtitle": "Erweiterte Funktionen freischalten",
+    "rateUs": "Bewerten Sie uns",
+    "privacyPolicy": "Datenschutzrichtlinie",
+    "termsOfService": "Nutzungsbedingungen",
+    "language": "Sprache",
+    "languageSubtitle": "Wählen Sie Ihre bevorzugte Sprache"
+  },
+  "onboarding": {
+    "welcome": "Willkommen bei RizzGoat",
+    "purpose": "Dein KI-Dating-Coach",
+    "subtitle": "Erhalte Expertenrat und witzige Antworten",
+    "getStarted": "Loslegen!",
+    "selectSex": "Ich identifiziere mich als",
+    "male": "Männlich",
+    "female": "Weiblich",
+    "other": "Andere",
+    "selectAge": "Meine Altersgruppe",
+    "age1824": "18-24",
+    "age2534": "25-34",
+    "age3544": "35-44",
+    "age45plus": "45+"
+  },
+  "chat": {
+    "title": "KI-Coach",
+    "placeholder": "Frag mich alles...",
+    "starterChips": {
+      "openers": "Eröffnungen für ihr Reise-Bio",
+      "flowing": "Wie man das Gespräch am Laufen hält",
+      "askDate": "Wann man um ein Date bitten sollte",
+      "redFlags": "Warnsignale"
+    }
+  },
+  "pickupLines": {
+    "title": "Anmachsprüche",
+    "tone": "Ton",
+    "spiceLevel": "Würze-Level",
+    "context": "Kontext (optional)",
+    "contextPlaceholder": "z.B., Ihr Bio sagt, sie liebt Hunde...",
+    "generate": "Generieren",
+    "regenerate": "Neu generieren",
+    "copy": "Kopieren",
+    "favorite": "Favorit",
+    "share": "Teilen",
+    "tones": {
+      "playful": "Verspielt",
+      "confident": "Selbstbewusst",
+      "wholesome": "Aufrichtig",
+      "bold": "Kühn"
+    },
+    "spiceLevels": {
+      "cute": "Süß",
+      "medium": "Mittel",
+      "spicy": "Würzig"
+    },
+    "copied": "In Zwischenablage kopiert!",
+    "favorited": "Zu Favoriten hinzugefügt!",
+    "error": "Generierung fehlgeschlagen. Bitte erneut versuchen."
+  },
+  "screenshot": {
+    "title": "Screenshot-Berater",
+    "upload": "Screenshot hochladen",
+    "analyze": "Analysieren",
+    "placeholder": "Lade einen Screenshot hoch, um zu beginnen",
+    "analyzing": "Analysiere..."
+  },
+  "pro": {
+    "title": "Auf Pro upgraden",
+    "subtitle": "Alle Funktionen freischalten",
+    "weekly": "Wöchentlich",
+    "monthly": "Monatlich",
+    "lifetime": "Lebenslang",
+    "bestValue": "Bester Wert",
+    "subscribe": "Abonnieren",
+    "restore": "Käufe wiederherstellen"
+  },
+  "referral": {
+    "title": "Freunde einladen",
+    "subtitle": "Erhalte Pro-Zugang, indem du 5 Freunde einlädst",
+    "share": "Link teilen"
+  },
+  "languages": {
+    "en": "Englisch",
+    "es": "Spanisch",
+    "zh": "Chinesisch",
+    "pt": "Portugiesisch (Brasilien)",
+    "fr": "Französisch",
+    "de": "Deutsch",
+    "ar": "Arabisch",
+    "ru": "Russisch",
+    "ja": "Japanisch",
+    "it": "Italienisch"
+  }
+}

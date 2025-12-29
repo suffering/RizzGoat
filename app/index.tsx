@@ -17,6 +17,7 @@ import { Menu, Camera, MessageCircle, Sparkles, Zap, Heart } from "lucide-react-
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
 import { useRevenueCat } from "@/providers/RevenueCatProvider";
+import { useLanguage } from "@/providers/LanguageProvider";
 import OnboardingScreen from "./onboarding";
 import * as Haptics from "expo-haptics";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -29,6 +30,7 @@ export default function HomeScreen() {
   const { theme, isDark } = useTheme();
   const { showOnboarding, isPro } = useAppState();
   const { isEntitledToPro, isConfigured } = useRevenueCat();
+  const { t } = useLanguage();
   const prevShowOnboarding = useRef<boolean>(showOnboarding);
   
   const logoScale = useRef(new Animated.Value(0)).current;
@@ -263,11 +265,11 @@ export default function HomeScreen() {
 
             <View style={styles.taglineContainer}>
               <Text style={[styles.tagline, { color: theme.textSecondary }]}>
-                Level up your dating game
+                {t('home.tagline')}
               </Text>
               <View style={styles.taglineAccent}>
                 <Zap size={16} color={theme.primary} />
-                <Text style={[styles.taglineAccentText, { color: theme.primary }]}>AI-Powered</Text>
+                <Text style={[styles.taglineAccentText, { color: theme.primary }]}>{t('home.aiPowered')}</Text>
               </View>
             </View>
 
@@ -301,18 +303,18 @@ export default function HomeScreen() {
                     <Camera size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={styles.cardBadge}>
-                    <Text style={styles.cardBadgeText}>HOT</Text>
+                    <Text style={styles.cardBadgeText}>{t('home.screenshotCard.badge')}</Text>
                   </View>
                 </View>
                 <View style={styles.cardContent}>
                   <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    Upload a Screenshot
+                    {t('home.screenshotCard.title')}
                   </Text>
                   <Text style={[styles.cardDescription, { color: theme.textSecondary }]}>
-                    Get AI-powered reply suggestions from your conversations
+                    {t('home.screenshotCard.description')}
                   </Text>
                   <View style={styles.cardFooter}>
-                    <Text style={[styles.cardFooterText, { color: theme.primary }]}>Tap to analyze →</Text>
+                    <Text style={[styles.cardFooterText, { color: theme.primary }]}>{t('home.screenshotCard.cta')}</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -338,18 +340,18 @@ export default function HomeScreen() {
                     <Sparkles size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={[styles.cardBadge, { backgroundColor: '#FF7A59' }]}>
-                    <Text style={styles.cardBadgeText}>NEW</Text>
+                    <Text style={styles.cardBadgeText}>{t('home.pickupCard.badge')}</Text>
                   </View>
                 </View>
                 <View style={styles.cardContent}>
                   <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    Pickup Lines Generator
+                    {t('home.pickupCard.title')}
                   </Text>
                   <Text style={[styles.cardDescription, { color: theme.textSecondary }]}>
-                    Smart, witty, and tasteful one-liners that actually work
+                    {t('home.pickupCard.description')}
                   </Text>
                   <View style={styles.cardFooter}>
-                    <Text style={[styles.cardFooterText, { color: '#FF7A59' }]}>Generate now →</Text>
+                    <Text style={[styles.cardFooterText, { color: '#FF7A59' }]}>{t('home.pickupCard.cta')}</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -374,18 +376,18 @@ export default function HomeScreen() {
                     <MessageCircle size={26} color="#FFFFFF" />
                   </LinearGradient>
                   <View style={[styles.cardBadge, { backgroundColor: '#8B5CF6' }]}>
-                    <Text style={styles.cardBadgeText}>AI</Text>
+                    <Text style={styles.cardBadgeText}>{t('home.chatCard.badge')}</Text>
                   </View>
                 </View>
                 <View style={styles.cardContent}>
                   <Text style={[styles.cardTitle, { color: theme.text }]}>
-                    Chat with AI Coach
+                    {t('home.chatCard.title')}
                   </Text>
                   <Text style={[styles.cardDescription, { color: theme.textSecondary }]}>
-                    Get personalized dating advice and conversation tips
+                    {t('home.chatCard.description')}
                   </Text>
                   <View style={styles.cardFooter}>
-                    <Text style={[styles.cardFooterText, { color: '#8B5CF6' }]}>Start chatting →</Text>
+                    <Text style={[styles.cardFooterText, { color: '#8B5CF6' }]}>{t('home.chatCard.cta')}</Text>
                   </View>
                 </View>
               </LinearGradient>
@@ -398,7 +400,7 @@ export default function HomeScreen() {
               style={styles.footerCard}
             >
               <Text style={[styles.footerText, { color: theme.textSecondary }]}>
-                💡 Pro tip: Save your favorites and track your success rate
+                {t('home.proTip')}
               </Text>
             </LinearGradient>
           </View>
@@ -471,8 +473,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogoImage: {
-    width: 300,
-    height: 107,
+    width: 390,
+    height: 139,
   },
   headerRight: {
     flex: 1,

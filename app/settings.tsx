@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   ScrollView,
   Linking,
   Platform,
+  Modal,
 } from "react-native";
 import * as StoreReview from "expo-store-review";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -17,8 +18,11 @@ import {
   Crown,
   Shield,
   FileText,
+  Globe,
+  Check,
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
+import { useLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/providers/LanguageProvider";
 import { LinearGradient } from "expo-linear-gradient";
 
 interface SettingItem {
@@ -35,6 +39,8 @@ interface SettingItem {
 export default function SettingsScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { currentLanguage, changeLanguage, t } = useLanguage();
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
 
   const handleRateUs = React.useCallback(async () => {
     console.log("[Settings] Rate Us pressed", { platform: Platform.OS });
@@ -55,15 +61,16 @@ export default function SettingsScreen() {
     }
   }, []);
 
-  const settingsSections: { title: string; items: SettingItem[] }[] = [
+  const currentLangName = SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.nativeName || 'English';
 
+  const settingsSections: { title: string; items: SettingItem[] }[] = [
     {
-      title: "Premium",
+      title: String(t('settings.premium')),
       items: [
         {
           icon: Crown,
-          title: "Upgrade to Pro",
-          subtitle: "Unlock advanced features",
+          title: String(t('settings.upgradeToPro')),
+          subtitle: String(t('settings.upgradeSubtitle')),
           action: () => router.push("/pro" as any),
           showArrow: true,
           highlight: true,
@@ -71,28 +78,40 @@ export default function SettingsScreen() {
       ],
     },
     {
-      title: "Community",
+      title: String(t('settings.preferences')),
+      items: [
+        {
+          icon: Globe,
+          title: String(t('settings.language')),
+          subtitle: currentLangName,
+          action: () => setShowLanguageModal(true),
+          showArrow: true,
+        },
+      ],
+    },
+    {
+      title: String(t('settings.community')),
       items: [
         {
           icon: Star,
-          title: "Rate Us",
+          title: String(t('settings.rateUs')),
           action: handleRateUs,
           showArrow: true,
         },
       ],
     },
     {
-      title: "Legal",
+      title: String(t('settings.legal')),
       items: [
         {
           icon: Shield,
-          title: "Privacy Policy",
+          title: String(t('settings.privacyPolicy')),
           action: () => Linking.openURL("https://rizzgoat.com/privacypolicy"),
           showArrow: true,
         },
         {
           icon: FileText,
-          title: "Terms of Service",
+          title: String(t('settings.termsOfService')),
           action: () => Linking.openURL("https://rizzgoat.com/tos"),
           showArrow: true,
         },
@@ -100,11 +119,16 @@ export default function SettingsScreen() {
     },
   ];
 
+  const handleLanguageSelect = async (lang: SupportedLanguage) => {
+    await changeLanguage(lang);
+    setShowLanguageModal(false);
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
       <SafeAreaView style={styles.safeArea}>
         <View style={styles.header}>
-          <Text style={[styles.headerTitle, { color: theme.text }]}>Settings</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>{String(t('settings.title'))}</Text>
           <TouchableOpacity onPress={() => {
             if ((router as any).canGoBack && (router as any).canGoBack()) {
               router.back();
@@ -187,6 +211,41 @@ export default function SettingsScreen() {
           <View style={styles.footer} />
         </ScrollView>
       </SafeAreaView>
+
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: theme.background }]}>
+            <View style={styles.modalHeader}>
+              <Text style={[styles.modalTitle, { color: theme.text }]}>{String(t('settings.language'))}</Text>
+              <TouchableOpacity onPress={() => setShowLanguageModal(false)} style={styles.modalCloseButton}>
+                <X size={24} color={theme.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.languageList}>
+              {SUPPORTED_LANGUAGES.map((lang) => (
+                <TouchableOpacity
+                  key={lang.code}
+                  style={[styles.languageItem, currentLanguage === lang.code && { backgroundColor: theme.primary + '15' }]}
+                  onPress={() => handleLanguageSelect(lang.code)}
+                >
+                  <View style={styles.languageInfo}>
+                    <Text style={[styles.languageNative, { color: theme.text }]}>{lang.nativeName}</Text>
+                    <Text style={[styles.languageName, { color: theme.textSecondary }]}>{lang.name}</Text>
+                  </View>
+                  {currentLanguage === lang.code && (
+                    <Check size={20} color={theme.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -265,5 +324,54 @@ const styles = StyleSheet.create({
   },
   version: {
     fontSize: 12,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    maxHeight: '70%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0, 0, 0, 0.05)',
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+  },
+  modalCloseButton: {
+    padding: 4,
+  },
+  languageList: {
+    paddingHorizontal: 20,
+  },
+  languageItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    marginVertical: 4,
+    borderRadius: 12,
+  },
+  languageInfo: {
+    flex: 1,
+  },
+  languageNative: {
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  languageName: {
+    fontSize: 13,
+    marginTop: 2,
   },
 });
