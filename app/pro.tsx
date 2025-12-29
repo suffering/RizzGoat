@@ -448,7 +448,7 @@ export default function ProScreen() {
                       if (isDisabled) return;
                       setSelectedProductId(pkg.product.identifier);
                     }}
-                    activeOpacity={1}
+                    activeOpacity={0.98}
                     disabled={isDisabled}
                     style={[
                       styles.planTouchable,
@@ -796,7 +796,6 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   planTouchableSelected: {
-    transform: [{ scale: 1.01 }],
   },
   planCard: {
     borderRadius: 18,
@@ -831,15 +830,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   planCardSelected: {
-    borderWidth: 2,
+    borderWidth: 2.5,
     borderColor: "#E3222B",
-    transform: [{ scale: 1.02 }],
   },
   planCardCurrent: {
     borderColor: "rgba(124,255,178,0.35)",
   },
   planCardDisabled: {
-    opacity: 0.55,
+    opacity: 0.6,
   },
   planTopRow: {
     flexDirection: "row",

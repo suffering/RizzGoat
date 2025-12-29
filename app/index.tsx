@@ -471,8 +471,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogoImage: {
-    width: 200,
-    height: 72,
+    width: 240,
+    height: 86,
   },
   headerRight: {
     flex: 1,
@@ -512,12 +512,12 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: 8,
-    marginBottom: 16,
+    marginTop: 0,
+    marginBottom: 12,
   },
   tagline: {
     fontSize: 22,
-    marginTop: -16,
+    marginTop: 0,
     fontWeight: "600",
     textAlign: "center",
   },
@@ -534,7 +534,7 @@ const styles = StyleSheet.create({
   cardsContainer: {
     paddingHorizontal: 20,
     marginTop: 0,
-    gap: 14,
+    gap: 16,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -545,14 +545,14 @@ const styles = StyleSheet.create({
   },
   card: {
     borderRadius: 28,
-    padding: 16,
+    padding: 14,
     borderWidth: 1,
   },
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    marginBottom: 10,
+    marginBottom: 8,
   },
   cardIcon: {
     width: 48,
