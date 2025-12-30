@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Send } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
+import { useLanguage } from "@/providers/LanguageProvider";
 import { getChatAdvice } from "@/services/openai";
 
 interface Message {
@@ -23,17 +24,20 @@ interface Message {
   timestamp: Date;
 }
 
-const STARTER_CHIPS = [
-  "Openers for her travel bio",
-  "How to keep conversation flowing",
-  "When to ask for a date",
-  "Red flags to watch for",
-];
+
 
 export default function ChatScreen() {
   const router = useRouter();
   const { theme } = useTheme();
+  const { t, currentLanguage } = useLanguage();
   const scrollViewRef = useRef<ScrollView>(null);
+  
+  const STARTER_CHIPS = [
+    t('chat.starterChips.openers'),
+    t('chat.starterChips.flowing'),
+    t('chat.starterChips.askDate'),
+    t('chat.starterChips.redFlags'),
+  ];
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState("");
@@ -71,7 +75,7 @@ export default function ChatScreen() {
         animations.forEach(anim => anim.stop());
       };
     }
-  }, [isTyping]);
+  }, [isTyping, typingDots]);
 
   const sendMessage = async (text: string) => {
     if (!text.trim()) return;
@@ -92,7 +96,7 @@ export default function ChatScreen() {
     }, 100);
     
     try {
-      const advice = await getChatAdvice({ message: text });
+      const advice = await getChatAdvice({ message: text, language: currentLanguage });
       
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -102,10 +106,10 @@ export default function ChatScreen() {
       };
       
       setMessages(prev => [...prev, aiMessage]);
-    } catch (error) {
+    } catch {
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
-        text: "Sorry, I couldn't process that. Please try again.",
+        text: t('chat.error'),
         isUser: false,
         timestamp: new Date(),
       };
@@ -136,7 +140,7 @@ export default function ChatScreen() {
             <ArrowLeft size={24} color={theme.text} />
           </TouchableOpacity>
           <Text style={[styles.headerTitle, { color: theme.text }]}>
-            RizzGoat Chat
+            {t('chat.title')}
           </Text>
           <View style={{ width: 44 }} />
         </View>
@@ -154,10 +158,10 @@ export default function ChatScreen() {
             {messages.length === 0 && (
               <View style={styles.emptyState}>
                 <Text style={[styles.emptyTitle, { color: theme.text }]}>
-                  Ask RizzGoat Anything
+                  {t('chat.emptyTitle')}
                 </Text>
                 <Text style={[styles.emptyDescription, { color: theme.textSecondary }]}>
-                  Get personalized dating advice and conversation tips
+                  {t('chat.emptyDescription')}
                 </Text>
                 <View style={styles.starterChips}>
                   {STARTER_CHIPS.map((chip) => (
@@ -234,7 +238,7 @@ export default function ChatScreen() {
             <View style={[styles.inputWrapper, { backgroundColor: theme.card }]}>
               <TextInput
                 style={[styles.input, { color: theme.text }]}
-                placeholder="Type your message..."
+                placeholder={t('chat.placeholder')}
                 placeholderTextColor={theme.textSecondary}
                 value={inputText}
                 onChangeText={setInputText}

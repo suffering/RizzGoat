@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import {
   View,
   Text,
@@ -12,7 +12,6 @@ import {
   Share,
   Alert,
   StatusBar,
-  LayoutChangeEvent,
   KeyboardAvoidingView,
   Keyboard,
   Easing,
@@ -32,22 +31,36 @@ import {
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
+import { useLanguage } from "@/providers/LanguageProvider";
 import * as Haptics from "expo-haptics";
 import * as Clipboard from "expo-clipboard";
 import { generatePickupLine } from "@/services/openai";
 
-const TONE_PRESETS = ["Playful", "Confident", "Wholesome", "Bold"];
-const SPICE_LEVELS = ["Cute", "Medium", "Spicy"];
+
 
 export default function PickupLinesScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { addFavorite, favorites } = useAppState();
+  const { t, currentLanguage } = useLanguage();
+  
+  const TONE_PRESETS = useMemo(() => [
+    t('pickupLines.tones.playful'),
+    t('pickupLines.tones.confident'),
+    t('pickupLines.tones.wholesome'),
+    t('pickupLines.tones.bold')
+  ], [t]);
+  
+  const SPICE_LEVELS = useMemo(() => [
+    t('pickupLines.spiceLevels.cute'),
+    t('pickupLines.spiceLevels.medium'),
+    t('pickupLines.spiceLevels.spicy')
+  ], [t]);
   
   const [currentLine, setCurrentLine] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [spiceLevel, setSpiceLevel] = useState<number>(1);
-  const [selectedTone, setSelectedTone] = useState<string>("Playful");
+  const [selectedTone, setSelectedTone] = useState<number>(0);
   const [context, setContext] = useState<string>("");
   const [error, setError] = useState<string | null>(null);
   const [keyboardHeight, setKeyboardHeight] = useState<number>(0);
@@ -61,6 +74,7 @@ export default function PickupLinesScreen() {
   const scrollRef = useRef<ScrollView | null>(null);
 
   const generateNewLine = useCallback(async () => {
+    if (!currentLanguage || TONE_PRESETS.length === 0 || SPICE_LEVELS.length === 0) return;
     setLoading(true);
     
     Animated.loop(
@@ -81,15 +95,17 @@ export default function PickupLinesScreen() {
     try {
       setError(null);
       console.log('Generating pickup line with:', {
-        tone: selectedTone,
+        tone: TONE_PRESETS[selectedTone],
         spiceLevel: SPICE_LEVELS[spiceLevel],
         context,
+        language: currentLanguage,
       });
       
       const line = await generatePickupLine({
-        tone: selectedTone,
+        tone: TONE_PRESETS[selectedTone],
         spiceLevel: SPICE_LEVELS[spiceLevel],
         context: context.trim(),
+        language: currentLanguage,
       });
       
       console.log('Generated line:', line);
@@ -106,27 +122,26 @@ export default function PickupLinesScreen() {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       
       if (errorMessage.includes('429')) {
-        setError('Rate limit reached. Please wait a moment and try again.');
-        Alert.alert("Rate Limit", "Too many requests. Please wait a moment and try again.");
+        setError(t('pickupLines.rateLimitError'));
+        Alert.alert(t('pickupLines.rateLimitTitle'), t('pickupLines.rateLimitError'));
       } else if (errorMessage.includes('API key')) {
-        setError('API configuration issue. Please check your setup.');
-        Alert.alert("Configuration Error", "API key not configured properly.");
+        setError(t('pickupLines.configError'));
+        Alert.alert(t('common.error'), t('pickupLines.configError'));
       } else {
-        setError('Failed to generate pickup line. Please try again.');
-        Alert.alert("Error", "Failed to generate pickup line. Please try again.");
+        setError(t('pickupLines.error'));
+        Alert.alert(t('common.error'), t('pickupLines.error'));
       }
     } finally {
       setLoading(false);
       shimmerAnim.stopAnimation();
     }
-  }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale]);
+  }, [selectedTone, spiceLevel, context, shimmerAnim, bubbleScale, currentLanguage, TONE_PRESETS, SPICE_LEVELS, t]);
 
   useEffect(() => {
     if (!currentLine) {
       generateNewLine();
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [currentLine, generateNewLine]);
 
   useEffect(() => {
     if (isFirstRender.current) {
@@ -134,7 +149,7 @@ export default function PickupLinesScreen() {
       return;
     }
     generateNewLine();
-  }, [spiceLevel, selectedTone]);
+  }, [spiceLevel, selectedTone, TONE_PRESETS, generateNewLine]);
 
   useEffect(() => {
     if (contextDebounceRef.current) {
@@ -148,7 +163,7 @@ export default function PickupLinesScreen() {
         clearTimeout(contextDebounceRef.current);
       }
     };
-  }, [context]);
+  }, [context, generateNewLine]);
 
   useEffect(() => {
     Animated.timing(sliderAnim, {
@@ -192,7 +207,7 @@ export default function PickupLinesScreen() {
     if (Platform.OS !== "web") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    Alert.alert("Copied!", "Pickup line copied to clipboard");
+    Alert.alert(t('pickupLines.copied'), t('pickupLines.copiedMessage'));
   };
 
   const handleSave = async (): Promise<void> => {
@@ -283,10 +298,10 @@ export default function PickupLinesScreen() {
             <ArrowLeft size={20} color={theme.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Pickup Lines</Text>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>{t('pickupLines.title')}</Text>
             <View style={styles.headerSubtitle}>
               <Sparkles size={14} color={theme.primary} />
-              <Text style={[styles.headerSubtitleText, { color: theme.primary }]}>AI Generated</Text>
+              <Text style={[styles.headerSubtitleText, { color: theme.primary }]}>{t('pickupLines.aiGenerated')}</Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -341,7 +356,7 @@ export default function PickupLinesScreen() {
                   />
                   <View style={styles.loadingContent}>
                     <ActivityIndicator size="large" color="#FFFFFF" />
-                    <Text style={styles.loadingText}>Crafting the perfect line...</Text>
+                    <Text style={styles.loadingText}>{t('pickupLines.generating')}</Text>
                   </View>
                 </View>
               ) : (
@@ -369,7 +384,7 @@ export default function PickupLinesScreen() {
             >
               <View style={styles.sectionHeader}>
                 <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                  Spice Level
+                  {t('pickupLines.spiceLevel')}
                 </Text>
                 <View style={styles.spiceBadge}>
                   <Flame size={14} color="#FF4444" />
@@ -471,9 +486,9 @@ export default function PickupLinesScreen() {
                 
                 {/* Labels Below Track */}
                 <View style={styles.sliderLabelsContainer}>
-                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Cute</Text>
-                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Medium</Text>
-                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>Spicy</Text>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>{t('pickupLines.spiceLevels.cute')}</Text>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>{t('pickupLines.spiceLevels.medium')}</Text>
+                  <Text style={[styles.sliderLabelText, { color: theme.textSecondary }]}>{t('pickupLines.spiceLevels.spicy')}</Text>
                 </View>
               </View>
             </LinearGradient>
@@ -486,17 +501,17 @@ export default function PickupLinesScreen() {
               style={styles.sectionCard}
             >
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Choose Your Vibe
+                {t('pickupLines.tone')}
               </Text>
               <View style={styles.toneGrid}>
-                {TONE_PRESETS.map((tone) => (
+                {TONE_PRESETS.map((tone, index) => (
                   <TouchableOpacity
                     key={tone}
-                    onPress={() => setSelectedTone(tone)}
+                    onPress={() => setSelectedTone(index)}
                     style={styles.toneChipWrapper}
                     testID={`tone-${tone}`}
                   >
-                    {selectedTone === tone ? (
+                    {selectedTone === index ? (
                       <LinearGradient
                         colors={['#E3222B', '#FF7A59']}
                         style={styles.toneChip}
@@ -530,7 +545,7 @@ export default function PickupLinesScreen() {
               style={styles.sectionCard}
             >
               <Text style={[styles.sectionTitle, { color: theme.text }]}>
-                Add Context (Optional)
+                {t('pickupLines.context')}
               </Text>
               <View style={[styles.inputWrapper, { 
                 backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
@@ -538,7 +553,7 @@ export default function PickupLinesScreen() {
               }]} testID="context-input-wrapper">
                 <TextInput
                   style={[styles.contextInput, { color: theme.text }]}
-                  placeholder="e.g., loves travel, dog person, works in tech..."
+                  placeholder={t('pickupLines.contextPlaceholder')}
                   placeholderTextColor={theme.textSecondary}
                   value={context}
                   onChangeText={setContext}
@@ -574,7 +589,7 @@ export default function PickupLinesScreen() {
               >
                 <RefreshCw size={22} color="#FFFFFF" />
                 <Text style={styles.primaryButtonText}>
-                  {loading ? 'Generating...' : 'Generate New Line'}
+                  {loading ? t('pickupLines.generating') : t('pickupLines.regenerate')}
                 </Text>
               </LinearGradient>
             </TouchableOpacity>

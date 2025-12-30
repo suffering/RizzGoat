@@ -29,15 +29,34 @@ function extractJSON(text: string): ScreenshotAnalysis | null {
 }
 
 r.post("/", async (req: any, res: any) => {
-  const { base64Image, amplifyBold, targetType } = (req.body as {
+  const { base64Image, amplifyBold, targetType, language } = (req.body as {
     base64Image?: string;
     amplifyBold?: boolean;
     targetType?: "Safe" | "Witty" | "Bold";
+    language?: string;
   }) || {};
 
   if (!base64Image) {
     return res.status(400).json({ error: "Missing base64Image" });
   }
+
+  const languageMap: Record<string, string> = {
+    en: "English",
+    es: "Spanish",
+    zh: "Chinese (Simplified)",
+    pt: "Portuguese (Brazil)",
+    fr: "French",
+    de: "German",
+    ar: "Arabic",
+    ru: "Russian",
+    ja: "Japanese",
+    it: "Italian",
+  };
+
+  const targetLanguage = language && languageMap[language] ? languageMap[language] : "English";
+  const languageInstruction = targetLanguage !== "English" 
+    ? ` You MUST provide ALL reply suggestions and rationales ONLY in ${targetLanguage}. Every text field in the JSON (text and rationale for all three options) must be in ${targetLanguage}.`
+    : "";
 
   const boldNote = amplifyBold
     ? " Make the Bold option extra spicy, audacious, and flirty (still PG-13, respectful). Increase boldness by ~20% vs normal."
@@ -47,9 +66,10 @@ r.post("/", async (req: any, res: any) => {
     : "";
 
   const system =
-    "You are RizzGoat, a smooth, clever, dating assistant. Analyze screenshots of conversations and give the best possible next reply. Provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Return ONLY raw JSON with this exact shape and keys: {\"safe\": {\"text\": \"\", \"rationale\": \"\"}, \"witty\": {\"text\": \"\", \"rationale\": \"\"}, \"bold\": {\"text\": \"\", \"rationale\": \"\"}}." +
+    `You are RizzGoat, a smooth, clever, dating assistant. Analyze screenshots of conversations and give the best possible next reply. Provide 3 reply suggestions: Safe (friendly, low-risk), Witty (clever, engaging), and Bold (confident, flirty but respectful). Each reply should be under 30 words with a brief rationale. Return ONLY raw JSON with this exact shape and keys: {"safe": {"text": "", "rationale": ""}, "witty": {"text": "", "rationale": ""}, "bold": {"text": "", "rationale": ""}}.` +
     boldNote +
-    focusNote;
+    focusNote +
+    languageInstruction;
 
   const variation = `${Math.random().toString(36).slice(2)}_${Date.now()}`;
 

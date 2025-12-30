@@ -29,6 +29,7 @@ import {
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useAppState } from "@/providers/AppStateProvider";
+import { useLanguage } from "@/providers/LanguageProvider";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import * as Haptics from "expo-haptics";
@@ -47,6 +48,7 @@ export default function ScreenshotAdvisorScreen() {
   const router = useRouter();
   const { theme, isDark } = useTheme();
   const { addFavorite } = useAppState();
+  const { t, currentLanguage } = useLanguage();
   
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState<boolean>(false);
@@ -131,7 +133,7 @@ export default function ScreenshotAdvisorScreen() {
     ).start();
 
     try {
-      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold, targetType: targetType ?? undefined });
+      const analysisResult = await analyzeScreenshot({ base64Image: base64, amplifyBold, targetType: targetType ?? undefined, language: currentLanguage });
       
       const formattedReplies: Reply[] = [
         {
@@ -173,7 +175,7 @@ export default function ScreenshotAdvisorScreen() {
       }).start();
     } catch (err) {
       console.log('[ScreenshotAdvisor] analyzeImage error', err);
-      Alert.alert("Error", "Couldn't analyze screenshot. Try cropping or using a clearer image.");
+      Alert.alert(t('common.error'), t('screenshot.errorMessage'));
     } finally {
       setAnalyzing(false);
       scanAnimation.stopAnimation();
@@ -185,7 +187,7 @@ export default function ScreenshotAdvisorScreen() {
     if (Platform.OS !== "web") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    Alert.alert("Copied!", "Reply copied to clipboard");
+    Alert.alert(t('pickupLines.copied'), t('screenshot.copiedMessage'));
   };
 
   const handleSave = async (reply: Reply) => {
@@ -202,7 +204,7 @@ export default function ScreenshotAdvisorScreen() {
     if (Platform.OS !== "web") {
       await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     }
-    Alert.alert("Saved!", "Reply saved to favorites");
+    Alert.alert(t('screenshot.saved'), t('screenshot.savedMessage'));
   };
 
   return (
@@ -254,10 +256,10 @@ export default function ScreenshotAdvisorScreen() {
             <ArrowLeft size={20} color={theme.text} />
           </TouchableOpacity>
           <View style={styles.headerCenter}>
-            <Text style={[styles.headerTitle, { color: theme.text }]}>Screenshot Advisor</Text>
+            <Text style={[styles.headerTitle, { color: theme.text }]}>{t('screenshot.title')}</Text>
             <View style={styles.headerSubtitle}>
               <Camera size={14} color={theme.primary} />
-              <Text style={[styles.headerSubtitleText, { color: theme.primary }]}>AI Analysis</Text>
+              <Text style={[styles.headerSubtitleText, { color: theme.primary }]}>{t('screenshot.aiAnalysis')}</Text>
             </View>
           </View>
           <TouchableOpacity 
@@ -284,10 +286,10 @@ export default function ScreenshotAdvisorScreen() {
                 <Upload size={32} color="#FFFFFF" />
               </LinearGradient>
               <Text style={[styles.uploadTitle, { color: theme.text }]}>
-                Upload Screenshot
+                {t('screenshot.upload')}
               </Text>
               <Text style={[styles.uploadDescription, { color: theme.textSecondary }]}>
-                Get AI-powered reply suggestions
+                {t('screenshot.uploadDescription')}
               </Text>
             </TouchableOpacity>
           ) : (
@@ -334,7 +336,7 @@ export default function ScreenshotAdvisorScreen() {
                   style={[styles.changeButton, { backgroundColor: theme.card }]}
                 >
                   <Text style={[styles.changeButtonText, { color: theme.text }]}>
-                    Change Image
+                    {t('screenshot.changeImage')}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -343,7 +345,7 @@ export default function ScreenshotAdvisorScreen() {
                 <View style={styles.analyzingContainer}>
                   <ActivityIndicator size="large" color={theme.primary} />
                   <Text style={[styles.analyzingText, { color: theme.text }]}>
-                    Analyzing conversation...
+                    {t('screenshot.analyzing')}
                   </Text>
                 </View>
               )}
@@ -352,7 +354,7 @@ export default function ScreenshotAdvisorScreen() {
                 <Animated.View style={{ opacity: fadeAnim }}>
                   <View style={styles.repliesHeader}>
                     <Text style={[styles.repliesTitle, { color: theme.text }]}>
-                      Suggested Replies
+                      {t('screenshot.suggestedReplies')}
                     </Text>
                     <View style={styles.replyTabs}>
                       {replies.map((reply, index) => (
@@ -365,7 +367,7 @@ export default function ScreenshotAdvisorScreen() {
                               const isBold = reply.type === "Bold";
                               try {
                                 await analyzeImage(lastBase64, isBold, reply.type);
-                              } catch (e) {}
+                              } catch {}
                             }
                           }}
                           style={[
@@ -410,7 +412,7 @@ export default function ScreenshotAdvisorScreen() {
                     </Text>
                     <View style={styles.rationaleContainer}>
                       <Text style={[styles.rationaleLabel, { color: theme.textSecondary }]}>
-                        Why this works:
+                        {t('screenshot.whyThisWorks')}
                       </Text>
                       <Text style={[styles.rationaleText, { color: theme.textSecondary }]}>
                         {replies[selectedReply].rationale}
@@ -424,7 +426,7 @@ export default function ScreenshotAdvisorScreen() {
                       >
                         <Copy size={18} color={theme.text} />
                         <Text style={[styles.actionButtonText, { color: theme.text }]}>
-                          Copy
+                          {t('pickupLines.copy')}
                         </Text>
                       </TouchableOpacity>
                       <TouchableOpacity
@@ -434,7 +436,7 @@ export default function ScreenshotAdvisorScreen() {
                       >
                         <Save size={18} color={theme.text} />
                         <Text style={[styles.actionButtonText, { color: theme.text }]}>
-                          Save
+                          {t('common.save')}
                         </Text>
                       </TouchableOpacity>
                     </View>

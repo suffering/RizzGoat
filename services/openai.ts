@@ -5,6 +5,7 @@ interface PickupLineParams {
   tone: string;
   spiceLevel: string;
   context?: string;
+  language?: string;
 }
 
 interface ScreenshotAnalysis {
@@ -17,26 +18,15 @@ type ReplyType = 'Safe' | 'Witty' | 'Bold';
 
 interface ChatParams {
   message: string;
+  language?: string;
 }
 
 interface ScreenshotParams {
   base64Image: string;
   amplifyBold?: boolean;
   targetType?: ReplyType;
+  language?: string;
 }
-
-type TextMessage = { role: 'system' | 'user' | 'assistant'; content: string };
-
-type VisionContent =
-  | { type: 'text'; text: string }
-  | { type: 'image_url'; image_url: { url: string } };
-
-type VisionMessage = { role: 'system' | 'user' | 'assistant'; content: VisionContent[] };
-
-type AnyMessage = TextMessage | VisionMessage;
-
-const TEXT_MODEL = 'gpt-4o-mini';
-const VISION_MODEL = 'gpt-4o-mini';
 
 function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
   if (!obj || typeof obj !== 'object') return false;
@@ -48,41 +38,6 @@ function isScreenshotAnalysis(obj: unknown): obj is ScreenshotAnalysis {
     if (typeof g.text !== 'string' || typeof g.rationale !== 'string') return false;
   }
   return true;
-}
-
-function extractJSON(text: string): ScreenshotAnalysis | null {
-  try {
-    const trimmed = text.trim();
-    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-      const parsed = JSON.parse(trimmed);
-      if (isScreenshotAnalysis(parsed)) return parsed;
-    }
-  } catch {}
-  try {
-    const first = text.indexOf('{');
-    const last = text.lastIndexOf('}');
-    if (first >= 0 && last > first) {
-      const slice = text.slice(first, last + 1);
-      const parsed = JSON.parse(slice);
-      if (isScreenshotAnalysis(parsed)) return parsed;
-    }
-  } catch {}
-  try {
-    const codeBlock = text.match(/```(?:json)?\n([\s\S]*?)```/i);
-    if (codeBlock && codeBlock[1]) {
-      const parsed = JSON.parse(codeBlock[1]);
-      if (isScreenshotAnalysis(parsed)) return parsed;
-    }
-  } catch {}
-  return null;
-}
-
-async function callOpenAIChat(
-  _messages: AnyMessage[],
-  _model: string,
-  _retries = 3,
-): Promise<string> {
-  throw new Error("Client no longer calls OpenAI directly. Use backend procedures.");
 }
 
 function readExtra(): Record<string, string | undefined> {

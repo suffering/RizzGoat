@@ -64,6 +64,9 @@
   "chat": {
     "title": "AI Coach",
     "placeholder": "Ask me anything...",
+    "emptyTitle": "Ask RizzGoat Anything",
+    "emptyDescription": "Get personalized dating advice and conversation tips",
+    "error": "Sorry, I couldn't process that. Please try again.",
     "starterChips": {
       "openers": "Openers for her travel bio",
       "flowing": "How to keep conversation flowing",
@@ -79,9 +82,11 @@
     "contextPlaceholder": "e.g., Her bio says she loves dogs...",
     "generate": "Generate",
     "regenerate": "Regenerate",
+    "generating": "Crafting the perfect line...",
     "copy": "Copy",
     "favorite": "Favorite",
     "share": "Share",
+    "aiGenerated": "AI Generated",
     "tones": {
       "playful": "Playful",
       "confident": "Confident",
@@ -93,16 +98,29 @@
       "medium": "Medium",
       "spicy": "Spicy"
     },
-    "copied": "Copied to clipboard!",
+    "copied": "Copied!",
+    "copiedMessage": "Pickup line copied to clipboard",
     "favorited": "Added to favorites!",
-    "error": "Failed to generate. Please try again."
+    "error": "Failed to generate. Please try again.",
+    "rateLimitTitle": "Rate Limit",
+    "rateLimitError": "Rate limit reached. Please wait a moment and try again.",
+    "configError": "API configuration issue. Please check your setup."
   },
   "screenshot": {
     "title": "Screenshot Advisor",
     "upload": "Upload Screenshot",
+    "uploadDescription": "Get AI-powered reply suggestions",
     "analyze": "Analyze",
     "placeholder": "Upload a screenshot to get started",
-    "analyzing": "Analyzing..."
+    "analyzing": "Analyzing conversation...",
+    "changeImage": "Change Image",
+    "suggestedReplies": "Suggested Replies",
+    "whyThisWorks": "Why this works:",
+    "aiAnalysis": "AI Analysis",
+    "errorMessage": "Couldn't analyze screenshot. Try cropping or using a clearer image.",
+    "copiedMessage": "Reply copied to clipboard",
+    "saved": "Saved!",
+    "savedMessage": "Reply saved to favorites"
   },
   "pro": {
     "title": "Upgrade to Pro",

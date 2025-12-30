@@ -64,6 +64,9 @@
   "chat": {
     "title": "Coach IA",
     "placeholder": "Pregúntame lo que sea...",
+    "emptyTitle": "Pregúntale a RizzGoat lo que sea",
+    "emptyDescription": "Obtén consejos personalizados y tips de conversación",
+    "error": "Lo siento, no pude procesar eso. Por favor intenta de nuevo.",
     "starterChips": {
       "openers": "Aperturas para su bio de viajes",
       "flowing": "Cómo mantener la conversación",
@@ -79,9 +82,11 @@
     "contextPlaceholder": "ej., Su bio dice que ama los perros...",
     "generate": "Generar",
     "regenerate": "Regenerar",
+    "generating": "Creando la frase perfecta...",
     "copy": "Copiar",
     "favorite": "Favorito",
     "share": "Compartir",
+    "aiGenerated": "Generado por IA",
     "tones": {
       "playful": "Juguetón",
       "confident": "Confiado",
@@ -93,16 +98,29 @@
       "medium": "Medio",
       "spicy": "Picante"
     },
-    "copied": "¡Copiado al portapapeles!",
+    "copied": "¡Copiado!",
+    "copiedMessage": "Frase copiada al portapapeles",
     "favorited": "¡Agregado a favoritos!",
-    "error": "Error al generar. Por favor intenta de nuevo."
+    "error": "Error al generar. Por favor intenta de nuevo.",
+    "rateLimitTitle": "Límite de Velocidad",
+    "rateLimitError": "Límite alcanzado. Por favor espera un momento e intenta de nuevo.",
+    "configError": "Problema de configuración de API. Por favor verifica tu configuración."
   },
   "screenshot": {
     "title": "Asesor de Capturas",
     "upload": "Subir Captura",
+    "uploadDescription": "Obtén sugerencias de respuesta con IA",
     "analyze": "Analizar",
     "placeholder": "Sube una captura para comenzar",
-    "analyzing": "Analizando..."
+    "analyzing": "Analizando conversación...",
+    "changeImage": "Cambiar Imagen",
+    "suggestedReplies": "Respuestas Sugeridas",
+    "whyThisWorks": "Por qué funciona:",
+    "aiAnalysis": "Análisis IA",
+    "errorMessage": "No se pudo analizar la captura. Intenta recortarla o usa una más clara.",
+    "copiedMessage": "Respuesta copiada al portapapeles",
+    "saved": "¡Guardado!",
+    "savedMessage": "Respuesta guardada en favoritos"
   },
   "pro": {
     "title": "Actualizar a Pro",

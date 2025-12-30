@@ -64,6 +64,9 @@
   "chat": {
     "title": "Coach IA",
     "placeholder": "Demandez-moi n'importe quoi...",
+    "emptyTitle": "Demandez n'importe quoi à RizzGoat",
+    "emptyDescription": "Obtenez des conseils personnalisés et des astuces de conversation",
+    "error": "Désolé, je n'ai pas pu traiter cela. Veuillez réessayer.",
     "starterChips": {
       "openers": "Ouvertures pour sa bio de voyage",
       "flowing": "Comment maintenir la conversation",
@@ -79,9 +82,11 @@
     "contextPlaceholder": "ex., Sa bio dit qu'elle aime les chiens...",
     "generate": "Générer",
     "regenerate": "Régénérer",
+    "generating": "Création de la phrase parfaite...",
     "copy": "Copier",
     "favorite": "Favori",
     "share": "Partager",
+    "aiGenerated": "Généré par IA",
     "tones": {
       "playful": "Enjoué",
       "confident": "Confiant",
@@ -93,16 +98,29 @@
       "medium": "Moyen",
       "spicy": "Épicé"
     },
-    "copied": "Copié dans le presse-papiers!",
+    "copied": "Copié!",
+    "copiedMessage": "Phrase copiée dans le presse-papiers",
     "favorited": "Ajouté aux favoris!",
-    "error": "Échec de la génération. Veuillez réessayer."
+    "error": "Échec de la génération. Veuillez réessayer.",
+    "rateLimitTitle": "Limite de Débit",
+    "rateLimitError": "Limite atteinte. Veuillez patienter un moment et réessayer.",
+    "configError": "Problème de configuration de l'API. Veuillez vérifier votre configuration."
   },
   "screenshot": {
     "title": "Conseiller de Captures",
     "upload": "Télécharger Capture",
+    "uploadDescription": "Obtenez des suggestions de réponse IA",
     "analyze": "Analyser",
     "placeholder": "Téléchargez une capture pour commencer",
-    "analyzing": "Analyse en cours..."
+    "analyzing": "Analyse de la conversation...",
+    "changeImage": "Changer l'Image",
+    "suggestedReplies": "Réponses Suggérées",
+    "whyThisWorks": "Pourquoi ça marche:",
+    "aiAnalysis": "Analyse IA",
+    "errorMessage": "Impossible d'analyser la capture. Essayez de la recadrer ou utilisez une image plus claire.",
+    "copiedMessage": "Réponse copiée dans le presse-papiers",
+    "saved": "Sauvegardé!",
+    "savedMessage": "Réponse sauvegardée dans les favoris"
   },
   "pro": {
     "title": "Passer à Pro",
