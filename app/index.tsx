@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 4,
     marginBottom: 12,
   },
   tagline: {
@@ -599,7 +599,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
     paddingHorizontal: 20,
-    paddingBottom: 200,
+    paddingBottom: 40,
   },
   footerCard: {
     borderRadius: 20,
