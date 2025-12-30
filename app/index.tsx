@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 40,
+    paddingBottom: 100,
     backgroundColor: '#000000',
   },
   scrollInner: {
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: -20,
+    marginTop: 8,
     marginBottom: 12,
   },
   tagline: {
