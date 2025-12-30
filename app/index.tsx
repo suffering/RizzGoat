@@ -223,7 +223,8 @@ export default function HomeScreen() {
           <View style={styles.headerLeft}>
             <TouchableOpacity 
               onPress={() => router.push("/settings")}
-              style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
+              style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Menu size={20} color={theme.text} />
             </TouchableOpacity>
@@ -242,7 +243,8 @@ export default function HomeScreen() {
           <View style={styles.headerRight}>
             <TouchableOpacity 
               onPress={handleRateUs}
-              style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
+              style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)' }]}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
               <Heart size={20} color={theme.text} />
             </TouchableOpacity>
@@ -457,14 +459,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 0,
     paddingBottom: 8,
+    zIndex: 1,
   },
   headerLeft: {
     flex: 1,
+    zIndex: 200,
   },
   headerCenter: {
-    flex: 2,
+    position: "absolute",
+    left: 0,
+    right: 0,
     alignItems: "center",
     justifyContent: "center",
+    zIndex: 1,
   },
   headerLogoContainer: {
     alignItems: "center",
@@ -473,12 +480,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogoImage: {
-    width: 490,
-    height: 175,
+    width: 560,
+    height: 200,
   },
   headerRight: {
     flex: 1,
     alignItems: "flex-end",
+    zIndex: 200,
   },
   headerTitle: {
     fontSize: 20,
