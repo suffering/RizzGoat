@@ -216,36 +216,6 @@ export default function HomeScreen() {
       </Animated.View>
       
       <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
-        <View style={styles.header}>
-          <View style={styles.headerLeft}>
-            <TouchableOpacity 
-              onPress={() => router.push("/settings")}
-              style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
-            >
-              <Menu size={20} color={theme.text} />
-            </TouchableOpacity>
-          </View>
-          <View style={styles.headerCenter} pointerEvents="none">
-            <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]} pointerEvents="none">
-              <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]} pointerEvents="none">
-                <Image 
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ek2ke9nhbppv934qyqow5' }}
-                  style={styles.headerLogoImage}
-                  resizeMode="contain"
-                />
-              </Animated.View>
-            </Animated.View>
-          </View>
-          <View style={styles.headerRight}>
-            <TouchableOpacity 
-              onPress={handleRateUs}
-              style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
-            >
-              <Heart size={20} color={theme.text} />
-            </TouchableOpacity>
-          </View>
-        </View>
-
         <ScrollView
           contentContainerStyle={[styles.scrollContent, { backgroundColor: '#000000' }]}
           showsVerticalScrollIndicator={false}
@@ -257,6 +227,35 @@ export default function HomeScreen() {
           style={[styles.scrollView, { backgroundColor: '#000000' }]}
         >
           <View style={styles.scrollInner} testID="home_scroll_inner">
+            <View style={styles.header}>
+              <View style={styles.headerLeft}>
+                <TouchableOpacity 
+                  onPress={() => router.push("/settings")}
+                  style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
+                >
+                  <Menu size={20} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+              <View style={styles.headerCenter} pointerEvents="none">
+                <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]} pointerEvents="none">
+                  <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]} pointerEvents="none">
+                    <Image 
+                      source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ek2ke9nhbppv934qyqow5' }}
+                      style={styles.headerLogoImage}
+                      resizeMode="contain"
+                    />
+                  </Animated.View>
+                </Animated.View>
+              </View>
+              <View style={styles.headerRight}>
+                <TouchableOpacity 
+                  onPress={handleRateUs}
+                  style={[styles.notificationButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
+                >
+                  <Heart size={20} color={theme.text} />
+                </TouchableOpacity>
+              </View>
+            </View>
 
             <View style={styles.taglineContainer}>
               <Text style={[styles.tagline, { color: theme.textSecondary }]}>
