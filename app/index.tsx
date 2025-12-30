@@ -509,8 +509,8 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: -10,
-    marginBottom: 20,
+    marginTop: -20,
+    marginBottom: 10,
   },
   tagline: {
     fontSize: 22,
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 0,
+    marginTop: -10,
     gap: 16,
   },
   cardWrapper: {
