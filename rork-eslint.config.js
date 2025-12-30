@@ -4,7 +4,6 @@ const expoConfig = require('eslint-config-expo/flat');
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ['rork-eslint.config.js'],
     plugins: {
       '@tanstack/query': require('@tanstack/eslint-plugin-query'),
       '@rork/linters': require('@rork/linters')
@@ -17,8 +16,16 @@ module.exports = defineConfig([
       '@tanstack/query/no-unstable-deps': 'error',
       '@tanstack/query/infinite-query-property-order': 'error',
       '@tanstack/query/no-void-query-fn': 'error',
-      '@tanstack/query/mutation-property-order': 'error',
-      "import/no-extraneous-dependencies": "error",
+      '@tanstack/query/mutation-property-order': 'error'
     },
+  },
+  {
+    files: ['backend/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      'import/no-unresolved': 'off',
+    },
+  },
+  {
+    ignores: ['.rorkai/**']
   }
 ]);
