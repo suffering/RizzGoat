@@ -218,7 +218,7 @@ export default function HomeScreen() {
         />
       </Animated.View>
       
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <TouchableOpacity 
@@ -258,8 +258,6 @@ export default function HomeScreen() {
           )}
           scrollEventThrottle={16}
           style={[styles.scrollView, { backgroundColor: '#000000' }]}
-          bounces={false}
-          overScrollMode="never"
         >
           <View style={styles.scrollInner} testID="home_scroll_inner">
 
@@ -506,11 +504,11 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 20,
+    paddingBottom: 40,
     backgroundColor: '#000000',
   },
   scrollInner: {
-    flex: 1,
+    minHeight: '100%',
   },
   taglineContainer: {
     alignItems: "center",
