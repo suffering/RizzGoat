@@ -600,7 +600,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 24,
     paddingHorizontal: 20,
-    paddingBottom: 60,
+    paddingBottom: 200,
   },
   footerCard: {
     borderRadius: 20,
