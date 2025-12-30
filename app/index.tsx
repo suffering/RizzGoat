@@ -501,15 +501,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingBottom: 100,
+    paddingBottom: 80,
     backgroundColor: '#000000',
+    flexGrow: 1,
   },
   scrollInner: {
     backgroundColor: '#000000',
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 16,
     marginBottom: 12,
   },
   tagline: {
@@ -597,8 +598,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 8,
+    marginTop: 24,
     paddingHorizontal: 20,
+    paddingBottom: 60,
   },
   footerCard: {
     borderRadius: 20,
