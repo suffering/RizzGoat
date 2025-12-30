@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: 0,
+    marginTop: -20,
     marginBottom: 12,
   },
   tagline: {

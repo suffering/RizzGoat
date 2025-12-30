@@ -112,7 +112,8 @@ export const [LanguageProvider, useLanguage] = createContextHook(() => {
 
 
 
-  const t = useCallback((key: string, options?: any) => i18n.t(key, options) as string, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const t = useCallback((key: string, options?: any) => i18n.t(key, options) as string, [currentLanguage]);
 
   return {
     currentLanguage,
