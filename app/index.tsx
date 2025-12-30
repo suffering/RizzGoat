@@ -185,9 +185,6 @@ export default function HomeScreen() {
   return (
     <View style={[styles.container, { backgroundColor: '#000000' }]}>
       <StatusBar barStyle="light-content" backgroundColor="#000000" translucent />
-      
-      {/* Single consistent background */}
-      <View style={[StyleSheet.absoluteFillObject, { backgroundColor: '#000000' }]} />
 
       {/* Floating Background Elements */}
       <Animated.View 
@@ -508,7 +505,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#000000',
   },
   scrollInner: {
-    minHeight: '100%',
+    backgroundColor: '#000000',
   },
   taglineContainer: {
     alignItems: "center",
