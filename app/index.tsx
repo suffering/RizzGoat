@@ -232,7 +232,7 @@ export default function HomeScreen() {
             <Animated.View style={[styles.headerLogoContainer, { transform: [{ scale: logoScale }] }]} pointerEvents="none">
               <Animated.View style={[styles.headerPulseContainer, { transform: [{ scale: pulseAnim }] }]} pointerEvents="none">
                 <Image 
-                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/gfyt5wf0zoi6wrlcu8elw' }}
+                  source={{ uri: 'https://pub-e001eb4506b145aa938b5d3badbff6a5.r2.dev/attachments/ek2ke9nhbppv934qyqow5' }}
                   style={styles.headerLogoImage}
                   resizeMode="contain"
                 />
@@ -473,8 +473,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   headerLogoImage: {
-    width: 460,
-    height: 164,
+    width: 490,
+    height: 175,
   },
   headerRight: {
     flex: 1,
