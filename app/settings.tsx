@@ -8,6 +8,7 @@ import {
   Linking,
   Platform,
   Modal,
+  Share,
 } from "react-native";
 import * as StoreReview from "expo-store-review";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -20,6 +21,8 @@ import {
   FileText,
   Globe,
   Check,
+  Mail,
+  Share2,
 } from "lucide-react-native";
 import { useTheme } from "@/providers/ThemeProvider";
 import { useLanguage, SUPPORTED_LANGUAGES, SupportedLanguage } from "@/providers/LanguageProvider";
@@ -61,6 +64,23 @@ export default function SettingsScreen() {
     }
   }, []);
 
+  const handleEmailUs = React.useCallback(() => {
+    console.log("[Settings] Email Us pressed");
+    Linking.openURL("mailto:support@rizzgoat.com");
+  }, []);
+
+  const handleShareApp = React.useCallback(async () => {
+    console.log("[Settings] Share App pressed");
+    try {
+      await Share.share({
+        message: "Check out RizzGoat - Level up your dating game with AI-powered advice! https://rizzgoat.com",
+        url: "https://rizzgoat.com",
+      });
+    } catch (error) {
+      console.log("[Settings] Share error", error);
+    }
+  }, []);
+
   const currentLangName = SUPPORTED_LANGUAGES.find(l => l.code === currentLanguage)?.nativeName || 'English';
 
   const settingsSections: { title: string; items: SettingItem[] }[] = [
@@ -96,6 +116,19 @@ export default function SettingsScreen() {
           icon: Star,
           title: String(t('settings.rateUs')),
           action: handleRateUs,
+          showArrow: true,
+        },
+        {
+          icon: Mail,
+          title: "Email Us",
+          subtitle: "support@rizzgoat.com",
+          action: handleEmailUs,
+          showArrow: true,
+        },
+        {
+          icon: Share2,
+          title: "Share App",
+          action: handleShareApp,
           showArrow: true,
         },
       ],
