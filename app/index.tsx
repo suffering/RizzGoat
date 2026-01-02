@@ -215,8 +215,10 @@ export default function HomeScreen() {
         />
       </Animated.View>
       
-      <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <ScrollView
+          contentInsetAdjustmentBehavior="never"
+          automaticallyAdjustContentInsets={false}
           contentContainerStyle={[styles.scrollContent, { backgroundColor: '#000000' }]}
           showsVerticalScrollIndicator={false}
           onScroll={Animated.event(
