@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
   taglineContainer: {
     alignItems: "center",
     marginTop: -95,
-    marginBottom: 30,
+    marginBottom: 16,
   },
   tagline: {
     fontSize: 22,
@@ -532,8 +532,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 10,
-    gap: 16,
+    marginTop: 0,
+    gap: 12,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -599,9 +599,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 24,
+    marginTop: 16,
     paddingHorizontal: 20,
-    paddingBottom: 40,
+    paddingBottom: 20,
   },
   footerCard: {
     borderRadius: 20,
