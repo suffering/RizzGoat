@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 4,
-    paddingBottom: 4,
+    paddingTop: 0,
+    paddingBottom: 0,
   },
   headerLeft: {
     flex: 1,
@@ -512,8 +512,8 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: -95,
-    marginBottom: 16,
+    marginTop: -110,
+    marginBottom: 12,
   },
   tagline: {
     fontSize: 22,
@@ -533,7 +533,7 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: 0,
+    marginTop: -4,
     gap: 12,
   },
   cardWrapper: {
