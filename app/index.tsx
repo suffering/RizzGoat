@@ -601,7 +601,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginTop: 16,
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 40,
   },
   footerCard: {
     borderRadius: 20,
