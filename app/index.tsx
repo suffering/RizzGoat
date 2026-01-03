@@ -452,7 +452,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingTop: 0,
-    paddingBottom: 0,
+    paddingBottom: 16,
   },
   headerLeft: {
     flex: 1,
@@ -512,8 +512,8 @@ const styles = StyleSheet.create({
   },
   taglineContainer: {
     alignItems: "center",
-    marginTop: -110,
-    marginBottom: 12,
+    marginTop: -105,
+    marginBottom: 28,
   },
   tagline: {
     fontSize: 22,
@@ -533,8 +533,8 @@ const styles = StyleSheet.create({
   },
   cardsContainer: {
     paddingHorizontal: 20,
-    marginTop: -4,
-    gap: 12,
+    marginTop: 4,
+    gap: 24,
   },
   cardWrapper: {
     shadowColor: "#000",
@@ -600,9 +600,9 @@ const styles = StyleSheet.create({
   },
   footer: {
     alignItems: "center",
-    marginTop: 16,
+    marginTop: 32,
     paddingHorizontal: 20,
-    paddingBottom: 60,
+    paddingBottom: 50,
   },
   footerCard: {
     borderRadius: 20,
