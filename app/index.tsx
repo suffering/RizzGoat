@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 8,
+    paddingTop: 4,
+    paddingBottom: 4,
   },
   headerLeft: {
     flex: 1,
