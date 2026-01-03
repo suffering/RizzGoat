@@ -215,7 +215,7 @@ export default function HomeScreen() {
         />
       </Animated.View>
       
-      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           automaticallyAdjustContentInsets={false}
@@ -451,7 +451,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 16,
     paddingBottom: 8,
   },
   headerLeft: {
