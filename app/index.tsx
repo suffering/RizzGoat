@@ -215,7 +215,7 @@ export default function HomeScreen() {
         />
       </Animated.View>
       
-      <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
+      <SafeAreaView style={styles.safeArea} edges={['bottom']}>
         <ScrollView
           contentInsetAdjustmentBehavior="never"
           automaticallyAdjustContentInsets={false}
@@ -232,7 +232,7 @@ export default function HomeScreen() {
             <View style={styles.header}>
               <View style={styles.headerLeft}>
                 <TouchableOpacity 
-                  onPress={() => router.push("/settings")}
+                  onPress={() => router.push("/settings" as any)}
                   style={[styles.menuButton, { backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)', zIndex: 100 }]}
                 >
                   <Menu size={20} color={theme.text} />
